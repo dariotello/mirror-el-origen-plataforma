@@ -1,5 +1,10 @@
 <!DOCTYPE html>
 <html lang="es">
+<!-- ════════════════════════════════════════════════════════════
+     MIRROR «El Origen» — PLATAFORMA · v9 · 2026-06-19
+     Privacidad/Licencia visibles en la UI + Insumos premium honestos.
+     Idea original de Darío Alejandro Tello · Apache 2.0.
+     ════════════════════════════════════════════════════════════ -->
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -842,6 +847,7 @@ export default {
       <span class="fsound" id="sndBtn" onclick="toggleSound()" title="Música ambiental El Origen">🔇 sonido</span>
       <span class="fpres" onclick="openPres()" title="Pantalla completa para la defensa">◬ presentación</span>
       <span class="ftip">🌐 web · ⊕ doc</span>
+      <span class="fver" title="versión de la plataforma — verificá que sea la última deployada" style="opacity:0.5;letter-spacing:0.12em;font-size:10px;margin-left:auto;">v9</span>
     </div>
   </div>
 </div>
@@ -857,6 +863,7 @@ export default {
 // ── CATÁLOGO DE MOTORES DE IA ─────────────────────────────────────────────
 // Todos hablan el formato OpenAI (chat completions), así que el motor interno
 // es uno solo. El proxy rutea a cada proveedor con la clave que el usuario guardó.
+const PLATFORM_VERSION = 'v9';  // ← actualizar en cada deploy (regla de Darío)
 const MOTORES = {
   groq: {
     nombre: 'Groq', tipo: 'gratuito', ruta: 'groq',
