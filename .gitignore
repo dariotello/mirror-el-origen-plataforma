@@ -1,0 +1,30 @@
+# === Secretos: NUNCA subir claves ===
+# Las claves de IA viven como secrets del proxy en Cloudflare, jamás en el repo.
+.env
+.env.*
+*.key
+*.pem
+secrets.json
+.dev.vars
+
+# === Cloudflare / Wrangler ===
+.wrangler/
+node_modules/
+dist/
+.cache/
+
+# === Sistema operativo ===
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# === Editores ===
+.vscode/
+.idea/
+*.swp
+
+# === Logs y temporales ===
+*.log
+npm-debug.log*
+.tmp/
+tmp/
