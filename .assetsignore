@@ -1,0 +1,10 @@
+# Estos archivos viven en el repo pero NO se sirven como parte del sitio:
+.git
+.gitignore
+.assetsignore
+wrangler.jsonc
+mirror-proxy.js
+README.md
+LICENSE
+NOTICE
+docs
