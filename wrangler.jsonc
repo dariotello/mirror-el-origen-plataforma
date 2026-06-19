@@ -1,0 +1,10 @@
+{
+  // Nombre del Worker en Cloudflare. Debe coincidir con el del panel.
+  "name": "mirror-el-origen-plataforma",
+  "compatibility_date": "2026-06-19",
+  // Servimos archivos estáticos desde la raíz del repo.
+  // No hay código de Worker (no hay "main"): solo sirve el index.html.
+  "assets": {
+    "directory": "."
+  }
+}
