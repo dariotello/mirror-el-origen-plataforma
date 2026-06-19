@@ -583,6 +583,53 @@ export default {
   </div>
 </div>
 
+<div id="legal-ov" style="position:fixed;inset:0;z-index:100000;display:none;overflow-y:auto;background:radial-gradient(ellipse 80% 60% at 50% 0%, #11112a 0%, #05050c 70%);color:#d8d8f0;font-family:'Space Mono',monospace;padding:0;">
+  <div style="max-width:760px;margin:0 auto;padding:2.4rem 1.4rem 4rem;">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;border-bottom:1px solid rgba(120,120,255,0.18);padding-bottom:1rem;margin-bottom:1.6rem;">
+      <div>
+        <div style="font-size:10px;letter-spacing:0.3em;color:#646488;text-transform:uppercase;">Proyecto MIRROR · Lo que tenés que saber</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:300;color:#f4f4ff;line-height:1.15;">Privacidad y <em style="color:#7070ff;font-style:italic;">Licencia</em></div>
+      </div>
+      <button onclick="cerrarLegal()" style="flex-shrink:0;background:transparent;border:1px solid rgba(120,120,255,0.3);color:#9494c4;border-radius:6px;padding:8px 14px;cursor:pointer;font-family:'Space Mono',monospace;font-size:12px;">✕ cerrar</button>
+    </div>
+
+    <p style="font-size:13.5px;line-height:1.7;color:#bcbcd8;margin-bottom:1.8rem;">Acá te decimos, sin vueltas, <b style="color:#e8e8ff;">dónde viven tus datos</b> y <b style="color:#e8e8ff;">bajo qué licencia</b> está esto. La regla es simple: <b style="color:#4ade80;">tus datos son tuyos</b> y nadie te miente sobre lo que pasa con ellos.</p>
+
+    <!-- PRIVACIDAD -->
+    <div style="border:1px solid rgba(120,120,255,0.14);border-radius:12px;padding:1.2rem 1.3rem;margin-bottom:1.3rem;background:rgba(120,120,255,0.03);">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:24px;color:#cfcfff;margin-bottom:0.8rem;">🔒 Tus datos en <em style="color:#7070ff;font-style:italic;">tu</em> base. Sin servidor central.</div>
+      <ul style="font-size:13px;line-height:1.8;color:#c4c4dc;padding-left:1.15rem;margin:0;">
+        <li><b style="color:#e8e8ff;">No hay servidor central.</b> MIRROR no tiene una base donde se junten los datos de todas las personas. No existe ese lugar.</li>
+        <li><b style="color:#e8e8ff;">Tu memoria vive en TU Firebase</b> — la base de datos que creaste vos, en tu cuenta. Lo que charlás y los documentos o audios que subís se guardan ahí, bajo tu control.</li>
+        <li><b style="color:#e8e8ff;">Tu clave de IA vive en TU proxy</b> (tu Worker de Cloudflare), del lado del servidor. Nunca viaja al navegador ni pasa por nosotros.</li>
+        <li><b style="color:#e8e8ff;">Nadie más mira.</b> Ni Darío, ni la plataforma, ni un tercero ven tu memoria. No hay analítica, no hay rastreo, no se vende nada — entre otras cosas porque no lo tenemos.</li>
+        <li><b style="color:#e8e8ff;">Lo borrás cuando quieras.</b> Con <i>borrar memoria</i> en el pie, o directo desde tu Firebase. Es tuyo: lo controlás vos.</li>
+      </ul>
+      <div style="margin-top:0.9rem;font-size:11.5px;color:#ffd9a0;background:rgba(255,180,0,0.06);border:1px solid rgba(255,180,0,0.22);border-radius:8px;padding:9px 12px;line-height:1.55;">⚠ <b>Honestidad:</b> para responderte, MIRROR le manda tu mensaje al proveedor de IA que vos elegiste (Groq, OpenAI, etc.). Ese proveedor lo procesa según <b>sus</b> políticas. MIRROR solo te conecta con él; no se queda con nada. Las reglas de acceso a tu Firebase las configurás vos (te las muestra la guía): vos decidís quién entra a tu memoria.</div>
+    </div>
+
+    <!-- LICENCIA -->
+    <div style="border:1px solid rgba(120,120,255,0.14);border-radius:12px;padding:1.2rem 1.3rem;margin-bottom:1.3rem;background:rgba(120,120,255,0.03);">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:24px;color:#cfcfff;margin-bottom:0.8rem;">📜 Código libre. <em style="color:#7070ff;font-style:italic;">Marca</em> protegida.</div>
+      <ul style="font-size:13px;line-height:1.8;color:#c4c4dc;padding-left:1.15rem;margin:0;">
+        <li><b style="color:#4ade80;">El código es libre — Apache 2.0.</b> Podés usarlo, estudiarlo, modificarlo y distribuirlo, incluso para fines comerciales, mientras respetes los términos de la licencia.</li>
+        <li><b style="color:#e8e8ff;">La marca NO se cede.</b> El nombre «MIRROR — El Origen», la idea y el rumbo del proyecto son de <b style="color:#cfcfff;">Darío Alejandro Tello</b> (protegido por el archivo NOTICE). El código es de todos; la marca, no.</li>
+        <li><b style="color:#e8e8ff;">Si publicás tu propia copia</b>, conservá el aviso de licencia y de autoría. Es lo único que se pide.</li>
+      </ul>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:1rem;">
+        <a href="https://github.com/dariotello/mirror-el-origen-plataforma" target="_blank" rel="noopener" style="text-decoration:none;background:rgba(112,112,255,0.12);border:1px solid rgba(112,112,255,0.35);color:#aeaeff;border-radius:6px;padding:7px 14px;font-size:12px;">⌥ Repositorio en GitHub</a>
+        <a href="https://github.com/dariotello/mirror-el-origen-plataforma/blob/main/LICENSE" target="_blank" rel="noopener" style="text-decoration:none;background:rgba(112,112,255,0.12);border:1px solid rgba(112,112,255,0.35);color:#aeaeff;border-radius:6px;padding:7px 14px;font-size:12px;">📜 Ver licencia (Apache 2.0)</a>
+        <a href="https://github.com/dariotello/mirror-el-origen-plataforma/blob/main/NOTICE" target="_blank" rel="noopener" style="text-decoration:none;background:rgba(112,112,255,0.12);border:1px solid rgba(112,112,255,0.35);color:#aeaeff;border-radius:6px;padding:7px 14px;font-size:12px;">© Aviso de marca (NOTICE)</a>
+      </div>
+    </div>
+
+    <div style="text-align:center;margin-top:1.8rem;font-size:10px;letter-spacing:0.15em;color:#5a5a7a;">MIRROR «El Origen» · una idea original de Darío Alejandro Tello</div>
+    <div style="text-align:center;margin-top:1.2rem;">
+      <button onclick="cerrarLegal()" style="background:rgba(112,112,255,0.12);border:1px solid rgba(112,112,255,0.4);color:#cfcfff;border-radius:8px;padding:10px 22px;cursor:pointer;font-family:'Space Mono',monospace;font-size:13px;">Entendido ▸</button>
+    </div>
+  </div>
+</div>
+
 <div class="app" id="app">
   <header>
     <div class="symbol" id="symbol" title="Tocá el logo: pulso de MIRROR"><canvas id="hdrOrb" width="340" height="96"></canvas></div>
@@ -724,6 +771,8 @@ export default {
     </div>
     <div class="fnote">
       <span class="fcredit">MIRROR · sobre "El Origen", idea de Darío A. Tello</span>
+      <span class="fsep">·</span>
+      <span onclick="abrirLegal()" title="Privacidad y licencia">🔒 privacidad · licencia</span>
       <span onclick="clearMem()">borrar memoria</span>
       <span class="fsep">·</span>
       <span onclick="showDocs()">mis documentos</span>
@@ -3923,7 +3972,7 @@ function duckMusic(){
        <div class="cons-h" style="text-align:center;">Tu MIRROR <em>respira</em>.</div>
        <div class="cons-p" style="text-align:center;">Ya es tuyo, único, irrepetible. Lo podés ajustar cuando quieras desde el modo de conexiones. El origen está; el espejo, ahora, es tuyo.</div>
        <div class="cons-nav"><button class="cons-btn prim" onclick="consEnter()">Entrar a mi MIRROR ▸</button></div>
-       <div class="cons-foot">MIRROR «El Origen» · una idea original de Darío Alejandro Tello<br>construido para que cada persona tenga el suyo</div>
+       <div class="cons-foot">MIRROR «El Origen» · una idea original de Darío Alejandro Tello<br>construido para que cada persona tenga el suyo<br><a onclick="abrirLegal()" style="color:#9aa0ff;cursor:pointer;text-decoration:underline;">🔒 Privacidad y licencia</a></div>
      </div>
    </div>`;
   document.body.appendChild(ov);
@@ -4070,6 +4119,8 @@ function duckMusic(){
 
   window.abrirGuia = function(){ var g=document.getElementById('guia-ov'); if(g){ g.style.display='block'; g.scrollTop=0; } };
   window.cerrarGuia = function(){ var g=document.getElementById('guia-ov'); if(g) g.style.display='none'; };
+  window.abrirLegal = function(){ var g=document.getElementById('legal-ov'); if(g){ g.style.display='block'; g.scrollTop=0; } };
+  window.cerrarLegal = function(){ var g=document.getElementById('legal-ov'); if(g) g.style.display='none'; };
   window.guiaCopiar = function(id, btn){
     var el=document.getElementById(id); if(!el) return;
     var txt = (el.value!==undefined && el.value!==null) ? el.value : el.textContent;
