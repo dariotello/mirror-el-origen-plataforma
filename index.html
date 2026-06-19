@@ -847,7 +847,7 @@ export default {
       <span class="fsound" id="sndBtn" onclick="toggleSound()" title="Música ambiental El Origen">🔇 sonido</span>
       <span class="fpres" onclick="openPres()" title="Pantalla completa para la defensa">◬ presentación</span>
       <span class="ftip">🌐 web · ⊕ doc</span>
-      <span class="fver" title="versión de la plataforma — verificá que sea la última deployada" style="opacity:0.5;letter-spacing:0.12em;font-size:10px;margin-left:auto;">v9</span>
+      <span class="fver" data-ver title="versión de la plataforma — verificá que sea la última deployada" style="opacity:0.5;letter-spacing:0.12em;font-size:10px;margin-left:auto;"></span>
     </div>
   </div>
 </div>
@@ -863,7 +863,8 @@ export default {
 // ── CATÁLOGO DE MOTORES DE IA ─────────────────────────────────────────────
 // Todos hablan el formato OpenAI (chat completions), así que el motor interno
 // es uno solo. El proxy rutea a cada proveedor con la clave que el usuario guardó.
-const PLATFORM_VERSION = 'v9';  // ← actualizar en cada deploy (regla de Darío)
+const PLATFORM_VERSION = 'v9';  // ← ÚNICA fuente de verdad: actualizar SOLO acá en cada deploy (regla de Darío)
+window.addEventListener('load', function(){ try{ document.querySelectorAll('[data-ver]').forEach(function(e){ e.textContent = PLATFORM_VERSION; }); }catch(_){} });
 const MOTORES = {
   groq: {
     nombre: 'Groq', tipo: 'gratuito', ruta: 'groq',
@@ -3882,6 +3883,8 @@ function duckMusic(){
   .cons-logo b{color:var(--cons-accent,#7070ff);font-style:normal;}
   .cons-sub{text-align:center;font-size:9.5px;letter-spacing:3px;color:#6a6a92;text-transform:uppercase;margin-bottom:4px;}
   .cons-author{text-align:center;font-size:9px;letter-spacing:2px;color:#4a4a6a;margin-bottom:8px;font-style:italic;}
+  .cons-ver{text-align:center;font-size:10px;letter-spacing:2.5px;color:#8a8ac8;margin-bottom:10px;opacity:0.9;}
+  .cons-ver::before{content:'· ';opacity:0.5;}.cons-ver::after{content:' ·';opacity:0.5;}
   .cons-prog{display:flex;gap:6px;justify-content:center;margin:20px 0 30px;}
   .cons-prog span{width:26px;height:3px;border-radius:3px;background:rgba(120,120,255,0.15);transition:.4s;}
   .cons-prog span.on{background:var(--cons-accent,#7070ff);box-shadow:0 0 10px var(--cons-accent,#7070ff);}
@@ -3954,6 +3957,7 @@ function duckMusic(){
      <div class="cons-logo">MIR<b>[Я]</b>OR</div>
      <div class="cons-sub">El Origen · Constructor</div>
      <div class="cons-author">una idea de Darío A. Tello</div>
+     <div class="cons-ver" data-ver></div>
      <div class="cons-prog" id="cons-prog"></div>
 
      <div class="cons-step" data-step="0">
