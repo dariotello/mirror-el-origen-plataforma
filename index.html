@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="es">
 <!-- ════════════════════════════════════════════════════════════
-     MIRROR «El Origen» — PLATAFORMA · v9 · 2026-06-19
-     Privacidad/Licencia visibles en la UI + Insumos premium honestos.
+     MIRROR «El Origen» — PLATAFORMA · v10 · 2026-06-19
+     Privacidad/Licencia visibles + Insumos premium honestos + versión visible + transcripción es.
      Idea original de Darío Alejandro Tello · Apache 2.0.
      ════════════════════════════════════════════════════════════ -->
 <head>
@@ -863,7 +863,7 @@ export default {
 // ── CATÁLOGO DE MOTORES DE IA ─────────────────────────────────────────────
 // Todos hablan el formato OpenAI (chat completions), así que el motor interno
 // es uno solo. El proxy rutea a cada proveedor con la clave que el usuario guardó.
-const PLATFORM_VERSION = 'v9';  // ← ÚNICA fuente de verdad: actualizar SOLO acá en cada deploy (regla de Darío)
+const PLATFORM_VERSION = 'v10';  // ← ÚNICA fuente de verdad: actualizar SOLO acá en cada deploy (regla de Darío)
 window.addEventListener('load', function(){ try{ document.querySelectorAll('[data-ver]').forEach(function(e){ e.textContent = PLATFORM_VERSION; }); }catch(_){} });
 const MOTORES = {
   groq: {
@@ -2321,6 +2321,9 @@ async function transcribeAudio(file, prev) {
     prev.textContent = '🎧 Transcribiendo «'+file.name+'»... (puede tardar según el tamaño)';
     const fd = new FormData();
     fd.append('file', file, file.name);
+    // v10: le decimos a Whisper el idioma (mejora mucho la precisión vs autodetectar).
+    // Tomamos el del navegador; si no hay, español (público hispanohablante de la plataforma).
+    fd.append('language', (navigator.language || 'es').slice(0,2).toLowerCase());
     const res = await fetch(TRANSCRIBE_URL, { method:'POST', body: fd });
     if (!res.ok) {
       let msg = 'No se pudo transcribir (HTTP '+res.status+').';
