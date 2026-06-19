@@ -583,6 +583,65 @@ export default {
   </div>
 </div>
 
+<div id="premium-ov" style="position:fixed;inset:0;z-index:100000;display:none;overflow-y:auto;background:radial-gradient(ellipse 80% 60% at 50% 0%, #11112a 0%, #05050c 70%);color:#d8d8f0;font-family:'Space Mono',monospace;padding:0;">
+  <div style="max-width:760px;margin:0 auto;padding:2.4rem 1.4rem 4rem;">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;border-bottom:1px solid rgba(120,120,255,0.18);padding-bottom:1rem;margin-bottom:1.6rem;">
+      <div>
+        <div style="font-size:10px;letter-spacing:0.3em;color:#646488;text-transform:uppercase;">Proyecto MIRROR · Insumos</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:300;color:#f4f4ff;line-height:1.15;">Lo gratis y lo <em style="color:#ffb86b;font-style:italic;">premium</em></div>
+      </div>
+      <button onclick="cerrarPremium()" style="flex-shrink:0;background:transparent;border:1px solid rgba(120,120,255,0.3);color:#9494c4;border-radius:6px;padding:8px 14px;cursor:pointer;font-family:'Space Mono',monospace;font-size:12px;">✕ cerrar</button>
+    </div>
+
+    <p style="font-size:13.5px;line-height:1.7;color:#bcbcd8;margin-bottom:1.8rem;">Tu MIRROR funciona <b style="color:#4ade80;">completo siendo gratis</b>. De verdad. Acá el pago nunca compra «que ande» — compra <b style="color:#ffb86b;">MÁS</b>. Te decimos qué cuesta y por qué, <b style="color:#e8e8ff;">sin humo</b>.</p>
+
+    <!-- GRATIS -->
+    <div style="border:1px solid rgba(74,222,128,0.22);border-radius:12px;padding:1.2rem 1.3rem;margin-bottom:1.3rem;background:rgba(74,222,128,0.04);">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:24px;color:#bdf0cf;margin-bottom:0.8rem;">✓ Gratis — y alcanza <em style="color:#4ade80;font-style:italic;">de sobra</em></div>
+      <ul style="font-size:13px;line-height:1.8;color:#c4dcc8;padding-left:1.15rem;margin:0;">
+        <li><b style="color:#e8e8ff;">Motores Groq y Cerebras:</b> rápidos y potentes, sin tarjeta.</li>
+        <li><b style="color:#e8e8ff;">Toda la app:</b> chat, memoria, documentos, transcripción de audio y video (Whisper), lectura en voz alta, dictado por voz, búsqueda web (Tavily tiene cuota gratis) y la fachada cinematográfica.</li>
+        <li><b style="color:#e8e8ff;">Tu memoria</b> (Firebase, plan gratis) y <b style="color:#e8e8ff;">tu proxy</b> (Cloudflare Worker, plan gratis).</li>
+      </ul>
+      <div style="margin-top:0.9rem;font-size:12px;color:#bdf0cf;background:rgba(74,222,128,0.06);border:1px solid rgba(74,222,128,0.22);border-radius:8px;padding:9px 12px;line-height:1.55;">Si no querés pagar un peso, <b>no hace falta</b>. Tu MIRROR ya está entero.</div>
+    </div>
+
+    <!-- PREMIUM -->
+    <div style="border:1px solid rgba(255,184,107,0.25);border-radius:12px;padding:1.2rem 1.3rem;margin-bottom:1.3rem;background:rgba(255,184,107,0.04);">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:24px;color:#ffd9a0;margin-bottom:0.5rem;">💎 Premium — el pago compra <em style="color:#ffb86b;font-style:italic;">MÁS</em></div>
+      <p style="font-size:12px;color:#c8b89a;line-height:1.6;margin:0 0 1rem;">No para «que funcione» (ya funciona gratis), sino para tener más músculo cuando lo necesites. En todos pagás <b style="color:#ffd9a0;">por uso</b>: sin suscripción obligatoria, empezás gratis y subís solo si querés.</p>
+
+      <div style="border-top:1px solid rgba(255,184,107,0.15);padding-top:0.9rem;margin-bottom:0.9rem;">
+        <div style="font-size:13.5px;color:#f0e0c8;margin-bottom:0.3rem;">🧠 Modelos más potentes</div>
+        <div style="font-size:12px;color:#b8a888;line-height:1.6;">Claude o GPT-4o vía <b style="color:#ffd9a0;">OpenRouter</b> (una sola clave, cientos de modelos). Mejor razonamiento y matices. Pagás por uso. <a href="https://openrouter.ai/models" target="_blank" rel="noopener" style="color:#ffd9a0;text-decoration:underline;">ver precios actuales ↗</a></div>
+      </div>
+      <div style="border-top:1px solid rgba(255,184,107,0.15);padding-top:0.9rem;margin-bottom:0.9rem;">
+        <div style="font-size:13.5px;color:#f0e0c8;margin-bottom:0.3rem;">💾 Más memoria</div>
+        <div style="font-size:12px;color:#b8a888;line-height:1.6;">El plan gratis de Firebase es generoso. Si guardás muchísimo, el plan Blaze cobra <b>por uso</b> solo lo que excedas. <a href="https://firebase.google.com/pricing" target="_blank" rel="noopener" style="color:#ffd9a0;text-decoration:underline;">ver precios actuales ↗</a></div>
+      </div>
+      <div style="border-top:1px solid rgba(255,184,107,0.15);padding-top:0.9rem;">
+        <div style="font-size:13.5px;color:#f0e0c8;margin-bottom:0.3rem;">🌐 Más búsqueda web</div>
+        <div style="font-size:12px;color:#b8a888;line-height:1.6;"><b style="color:#ffd9a0;">Tavily</b> da búsquedas gratis por mes. Si necesitás más volumen, hay plan pago por uso. <a href="https://tavily.com/#pricing" target="_blank" rel="noopener" style="color:#ffd9a0;text-decoration:underline;">ver precios actuales ↗</a></div>
+      </div>
+    </div>
+
+    <!-- PRÓXIMAMENTE -->
+    <div style="border:1px dashed rgba(120,120,255,0.28);border-radius:12px;padding:1.2rem 1.3rem;margin-bottom:1.3rem;background:rgba(120,120,255,0.02);">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:24px;color:#9a9ac4;margin-bottom:0.5rem;">⏳ Próximamente — todavía <em style="color:#7070ff;font-style:italic;">no</em>, y no te mentimos</div>
+      <p style="font-size:12px;color:#8484a8;line-height:1.6;margin:0 0 0.9rem;">No vas a encontrar un botón que prometa estas cosas. Hoy <b>no están</b>. Cuando estén, las vas a ver acá de verdad.</p>
+      <ul style="font-size:12.5px;line-height:1.75;color:#a0a0c0;padding-left:1.15rem;margin:0;">
+        <li><b style="color:#c4c4dc;">👁 Ver imágenes y video.</b> Hoy MIRROR transcribe lo que se <i>dice</i> en un audio o video; entender lo que se <i>ve</i> llega después.</li>
+        <li><b style="color:#c4c4dc;">📧 Gmail + WhatsApp.</b> Que MIRROR lea tus mensajes y te prepare borradores de respuesta para revisar. En construcción.</li>
+      </ul>
+    </div>
+
+    <div style="text-align:center;margin-top:1.8rem;font-size:10px;letter-spacing:0.15em;color:#5a5a7a;">MIRROR «El Origen» · una idea original de Darío Alejandro Tello</div>
+    <div style="text-align:center;margin-top:1.2rem;">
+      <button onclick="cerrarPremium()" style="background:rgba(112,112,255,0.12);border:1px solid rgba(112,112,255,0.4);color:#cfcfff;border-radius:8px;padding:10px 22px;cursor:pointer;font-family:'Space Mono',monospace;font-size:13px;">Entendido ▸</button>
+    </div>
+  </div>
+</div>
+
 <div id="legal-ov" style="position:fixed;inset:0;z-index:100000;display:none;overflow-y:auto;background:radial-gradient(ellipse 80% 60% at 50% 0%, #11112a 0%, #05050c 70%);color:#d8d8f0;font-family:'Space Mono',monospace;padding:0;">
   <div style="max-width:760px;margin:0 auto;padding:2.4rem 1.4rem 4rem;">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;border-bottom:1px solid rgba(120,120,255,0.18);padding-bottom:1rem;margin-bottom:1.6rem;">
@@ -3845,6 +3904,10 @@ function duckMusic(){
   .cons-mcard .badge.free{background:rgba(74,222,128,0.16);color:#4ade80;}
   .cons-mcard .badge.prem{background:rgba(255,184,107,0.16);color:#ffb86b;}
   .cons-mcard .md{font-size:11px;color:#7c7c9e;margin-top:5px;line-height:1.5;}
+  .cons-mcard .mcost{font-size:10.5px;margin-top:8px;line-height:1.5;color:#9a9ac0;border-top:1px solid rgba(120,120,255,0.1);padding-top:7px;}
+  .cons-mcard .mcost a{color:#9aa0ff;text-decoration:underline;}
+  .cons-mcard .mcost.free{color:#7fcf9a;}
+  .cons-premlink{display:inline-block;margin:14px 0 2px;color:#ffd9a0;cursor:pointer;font-size:12px;text-decoration:underline;}
   /* Toggles de capacidad */
   .cons-tog{display:flex;align-items:center;justify-content:space-between;gap:12px;
     border:1px solid rgba(120,120,255,0.14);border-radius:12px;padding:13px 16px;margin-bottom:10px;transition:.2s;}
@@ -3917,6 +3980,7 @@ function duckMusic(){
        <label class="cons-label">Modelo</label>
        <select class="cons-sel" id="c-modelo"></select>
        <div class="cons-hint" id="c-motor-clave"></div>
+       <a class="cons-premlink" onclick="abrirPremium()">💎 ¿Gratis o premium? Mirá qué cuesta cada cosa, sin humo</a>
        <div class="cons-nav"><button class="cons-btn sec" onclick="consGo(1)">◂ Atrás</button><button class="cons-btn prim" onclick="consGo(3)">Siguiente ▸</button></div>
      </div>
 
@@ -3924,6 +3988,7 @@ function duckMusic(){
        <div class="cons-h">¿Qué <em>sabe hacer</em> tu MIRROR?</div>
        <div class="cons-p">Activá solo lo que quieras. Cada cosa es real y ya está construida — nada de humo. Algunos prefieren su MIRROR en silencio; otros, con voz y micrófono. Es tu decisión.</div>
        <div id="cons-toggles"></div>
+       <a class="cons-premlink" onclick="abrirPremium()">💎 Insumos premium (honestos) y qué viene próximamente</a>
        <label class="cons-label">Color de tu MIRROR</label>
        <div class="cons-colors" id="cons-colors"></div>
        <div class="cons-nav"><button class="cons-btn sec" onclick="consGo(2)">◂ Atrás</button><button class="cons-btn prim" onclick="consGo(4)">Siguiente ▸</button></div>
@@ -4016,6 +4081,21 @@ function duckMusic(){
     if(n===3){ renderToggles(); renderColors(); }
   };
 
+  // ── COSTO HONESTO POR MOTOR (sin números que caduquen: modelo de costo + link al pricing real) ──
+  const PRICING = {
+    groq:       { free:true,  txt:'✓ Gratis, sin tarjeta. Alcanza de sobra para volar.' },
+    cerebras:   { free:true,  txt:'✓ Gratis, sin tarjeta. Ideal como respaldo del principal.' },
+    openai:     { free:false, txt:'💳 Pagás por uso, sin abono mensual. ', url:'https://openai.com/api/pricing/' },
+    openrouter: { free:false, txt:'💳 Pagás por uso/crédito, sin abono. Una sola clave → cientos de modelos (Claude, GPT-4o…). ', url:'https://openrouter.ai/models' },
+    deepseek:   { free:false, txt:'💳 Pagás por uso, muy económico. ', url:'https://api-docs.deepseek.com/quick_start/pricing' },
+    together:   { free:false, txt:'💳 Pagás por uso, sin abono. ', url:'https://www.together.ai/pricing' },
+    mistral:    { free:false, txt:'💳 Pagás por uso, sin abono. ', url:'https://mistral.ai/pricing' }
+  };
+  function costoLinea(k){
+    const p = PRICING[k]; if(!p) return '';
+    const link = p.url ? '<a href="'+p.url+'" target="_blank" rel="noopener">ver precios actuales ↗</a>' : '';
+    return '<div class="mcost'+(p.free?' free':'')+'">'+p.txt+link+'</div>';
+  }
   function renderMotores(){
     const cont = document.getElementById('cons-motores'); cont.innerHTML='';
     Object.keys(MOTORES).forEach(k=>{
@@ -4024,7 +4104,7 @@ function duckMusic(){
       card.className = 'cons-mcard' + (k===motorSel?' sel':'');
       card.onclick = ()=>{ motorSel=k; renderMotores(); };
       card.innerHTML = '<div class="mt">'+m.nombre+'<span class="badge '+(m.tipo==='gratuito'?'free':'prem')+'">'+
-        (m.tipo==='gratuito'?'Gratis':'Premium')+'</span></div><div class="md">'+m.desc+'</div>';
+        (m.tipo==='gratuito'?'Gratis':'Premium')+'</span></div><div class="md">'+m.desc+'</div>'+costoLinea(k);
       cont.appendChild(card);
     });
     const sel = document.getElementById('c-modelo'); sel.innerHTML='';
@@ -4121,6 +4201,8 @@ function duckMusic(){
   window.cerrarGuia = function(){ var g=document.getElementById('guia-ov'); if(g) g.style.display='none'; };
   window.abrirLegal = function(){ var g=document.getElementById('legal-ov'); if(g){ g.style.display='block'; g.scrollTop=0; } };
   window.cerrarLegal = function(){ var g=document.getElementById('legal-ov'); if(g) g.style.display='none'; };
+  window.abrirPremium = function(){ var g=document.getElementById('premium-ov'); if(g){ g.style.display='block'; g.scrollTop=0; } };
+  window.cerrarPremium = function(){ var g=document.getElementById('premium-ov'); if(g) g.style.display='none'; };
   window.guiaCopiar = function(id, btn){
     var el=document.getElementById(id); if(!el) return;
     var txt = (el.value!==undefined && el.value!==null) ? el.value : el.textContent;
