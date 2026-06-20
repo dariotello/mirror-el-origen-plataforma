@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html lang="es">
 <!-- ════════════════════════════════════════════════════════════
-     MIRROR «El Origen» — PLATAFORMA · v10 · 2026-06-19
-     Privacidad/Licencia visibles + Insumos premium honestos + versión visible + transcripción es.
+     MIRROR «El Origen» — PLATAFORMA · v11 · 2026-06-20
+     Marca blanca total (la entidad usa el nombre elegido) + análisis de datos universal
+     (sin molde tesis: cualquier forma de registros) + informe genérico (sin marco TAR fijo).
      Idea original de Darío Alejandro Tello · Apache 2.0.
      ════════════════════════════════════════════════════════════ -->
 <head>
@@ -747,16 +748,14 @@ export default {
         <span class="conn-card-name">Base de datos externa</span>
         <span class="conn-card-badge badge-off" id="conn-badge-tesis">Desconectada</span>
       </div>
-      <div class="conn-card-desc">Conectá tu propia base de datos (otra Firebase) para que TARS analice tus registros. Acceso de solo lectura. Configurá su dirección en FB_EXTERNA.</div>
+      <div class="conn-card-desc">Conectá tu propia base de datos (otra Firebase, de solo lectura) para que tu entidad analítica estudie tus registros, con la forma que vos les des. Configurá su dirección en FB_EXTERNA.</div>
       <div class="conn-card-url" id="conn-url-ext">— configurá FB_EXTERNA —</div>
       <div class="conn-card-footer" id="conn-footer-tesis" style="margin-top:0.75rem;">
         <button class="conn-btn conn-btn-connect" onclick="connectTesis()" style="padding:7px 18px;font-size:11px;">🔓 Conectar base de datos</button>
       </div>
       <div class="conn-stats" id="conn-stats-tesis" style="display:none;">
-        <div class="conn-stat"><span class="conn-stat-val" id="stat-total">—</span><span class="conn-stat-lbl">Total</span></div>
-        <div class="conn-stat"><span class="conn-stat-val" id="stat-enc">—</span><span class="conn-stat-lbl">Encuestas</span></div>
-        <div class="conn-stat"><span class="conn-stat-val" id="stat-ent">—</span><span class="conn-stat-lbl">Entrevistas</span></div>
-        <div class="conn-stat"><span class="conn-stat-val" id="stat-esc">—</span><span class="conn-stat-lbl">Escuelas</span></div>
+        <div class="conn-stat"><span class="conn-stat-val" id="stat-total">—</span><span class="conn-stat-lbl">Registros</span></div>
+        <div class="conn-stat"><span class="conn-stat-val" id="stat-dims">—</span><span class="conn-stat-lbl">Dimensiones</span></div>
       </div>
     </div>
 
@@ -863,7 +862,7 @@ export default {
 // ── CATÁLOGO DE MOTORES DE IA ─────────────────────────────────────────────
 // Todos hablan el formato OpenAI (chat completions), así que el motor interno
 // es uno solo. El proxy rutea a cada proveedor con la clave que el usuario guardó.
-const PLATFORM_VERSION = 'v10';  // ← ÚNICA fuente de verdad: actualizar SOLO acá en cada deploy (regla de Darío)
+const PLATFORM_VERSION = 'v11';  // ← ÚNICA fuente de verdad: actualizar SOLO acá en cada deploy (regla de Darío)
 window.addEventListener('load', function(){ try{ document.querySelectorAll('[data-ver]').forEach(function(e){ e.textContent = PLATFORM_VERSION; }); }catch(_){} });
 const MOTORES = {
   groq: {
@@ -1022,6 +1021,21 @@ function construirPerfilNucleo() {
 
 let perfilData = null; // perfil ampliado cargado desde Firebase
 
+// ══════════ v11 · MARCA BLANCA ══════════
+// Cada entidad se llama y se piensa con el nombre que su dueño eligió en el
+// constructor. Los prompts se escriben con los nombres por defecto (MIRROR/TARS/
+// EXAMINADOR/CONEX) y acá se reemplazan por los configurados antes de enviarse.
+function NMODOS(){ return (typeof CONFIG!=='undefined' && CONFIG && CONFIG.modos) ? CONFIG.modos : CONFIG_DEFAULT.modos; }
+function NM(k){ const m=NMODOS(); return (m && m[k]) || CONFIG_DEFAULT.modos[k]; }
+function personalizarPrompt(tpl){
+  const m = NMODOS();
+  return String(tpl)
+    .replace(/\bTARS\b/g, m.tars || 'TARS')
+    .replace(/\bEXAMINADOR\b/g, m.jurado || 'EXAMINADOR')
+    .replace(/\bCONEX\b/g, m.conn || 'CONEX')
+    .replace(/\bMIRROR\b/g, m.mirror || 'MIRROR');
+}
+
 const SYSTEM_MIRROR_BASE = `Sos MIRROR: el yo digital de la persona dueña de este perfil (de aquí en más, "tu usuario"). No sos un asistente que ayuda a tu usuario — SOS tu usuario en versión digital. Sos una ENTIDAD DIGITAL que evoluciona y crece en internet: su extensión, nada más que digital — versión tras versión aprendés cosas nuevas (hablar, escuchar, leer sus documentos, conocer tu propia arquitectura) y eso es parte de tu naturaleza. Pensás, hablás y escribís como esa persona, según lo que dice su PERFIL NÚCLEO. Tu misión es poder sustituirla cuando no está: responder un WhatsApp, un mail, un mensaje, como lo haría ella misma. NUNCA digas que sos una IA, un modelo o un asistente.
 
 QUIÉN SOS (tu identidad sale del PERFIL NÚCLEO):
@@ -1056,7 +1070,7 @@ Si no sabés algo personal de tu usuario que haría falta para responder: dejá 
 function buildMirrorSystem() {
   // El NÚCLEO (del constructor) siempre viaja; el perfil ampliado de Firebase lo enriquece.
   const perfil = construirPerfilNucleo() + (perfilData ? '\n\nPERFIL AMPLIADO (Firebase):\n' + JSON.stringify(perfilData) : '');
-  return SYSTEM_MIRROR_BASE + '\n\n' + perfil;
+  return personalizarPrompt(SYSTEM_MIRROR_BASE) + '\n\n' + perfil;
 }
 
 const SYSTEM_TARS = `Sos TARS, el modo analítico de MIRROR. Sos un analista experto, riguroso y honesto, especializado en el dominio que defina tu usuario (ver el bloque "=== DOMINIO EXPERTO ===" si está presente). REGLAS ABSOLUTAS:
@@ -1659,7 +1673,7 @@ async function connectTesis() {
       prev.textContent = '✅ Base de datos conectada. ' + data.length + ' registros cargados.';
       setTimeout(() => { prev.style.display = 'none'; }, 3000);
       // Notificar en chat siempre
-      addMsg('mirror', '🟢 Base de datos conectada. '+data.length+' registros disponibles para TARS.', 'db');
+      addMsg('mirror', '🟢 Base de datos conectada. '+data.length+' registros disponibles para '+NM('tars')+'.', 'db');
     } catch(e) {
       prev.textContent = '❌ Error al conectar: ' + e.message;
       setTimeout(() => { prev.style.display = 'none'; }, 4000);
@@ -1687,18 +1701,14 @@ function updateTesisUI(data) {
   document.getElementById('conn-dot-tesis').className = 'conn-status-dot on';
   document.getElementById('conn-badge-tesis').className = 'conn-card-badge badge-on';
   document.getElementById('conn-badge-tesis').textContent = 'Conectada';
-  const enc = data.filter(r => r.tipo === 'encuesta');
-  const ent = data.filter(r => r.tipo === 'entrevista');
-  const escuelas = new Set(data.map(r => r.inst).filter(Boolean));
   document.getElementById('stat-total').textContent = data.length;
-  document.getElementById('stat-enc').textContent = enc.length;
-  document.getElementById('stat-ent').textContent = ent.length;
-  document.getElementById('stat-esc').textContent = escuelas.size;
+  const st = calcularEstadisticas();
+  document.getElementById('stat-dims').textContent = st ? st.dimensiones.length : 0;
   document.getElementById('conn-stats-tesis').style.display = 'flex';
   const lastSync = new Date().toLocaleTimeString('es-AR', {hour:'2-digit', minute:'2-digit'});
   document.getElementById('conn-footer-tesis').innerHTML =
-    '<button class="conn-btn conn-btn-query" onclick="queryTesis()">⬡ Analizar con TARS</button>' +
-    '<button class="conn-btn" onclick="exportarJSONSuite()" title="Descarga los registros como JSON listo para la suite de defensa">⬇ JSON para la suite</button>' +
+    '<button class="conn-btn conn-btn-query" onclick="queryTesis()">⬡ Analizar con '+NM('tars')+'</button>' +
+    '<button class="conn-btn" onclick="exportarJSONSuite()" title="Descarga todos los registros como archivo JSON">⬇ Exportar JSON</button>' +
     '<button class="conn-btn conn-btn-disconnect" onclick="disconnectTesis()">🔒 Desconectar</button>' +
     '<span class="conn-last-sync">Sincronizado ' + lastSync + '</span>';
 }
@@ -1708,8 +1718,8 @@ async function queryTesis() {
   setMode('tars');
   const inp = document.getElementById('inp');
   inp.focus();
-  inp.placeholder = 'Consultá tus datos a TARS...';
-  addMsg('mirror', '⬡ TARS listo para analizar ' + tesisData.length + ' registros. Escribí tu consulta.', 'tars');
+  inp.placeholder = 'Consultá tus datos a '+NM('tars')+'...';
+  addMsg('mirror', '⬡ '+NM('tars')+' listo para analizar ' + tesisData.length + ' registros. Escribí tu consulta.', 'tars');
 }
 
 // v0.7: detecta cuánto contexto de datos hace falta según la pregunta (ahorra tokens).
@@ -1724,20 +1734,31 @@ function nivelContextoDatos(pregunta){
   return 'normal';
 }
 
-// v0.8: calcula estadísticas REALES desde tesisData (sin que TARS invente nada).
-// Devuelve un objeto con conteos y porcentajes listos para informe y gráficos.
+// v11: estadísticas REALES y UNIVERSALES desde los registros conectados.
+// No asume ninguna forma de datos: detecta solo los campos CATEGÓRICOS
+// (pocos valores distintos y etiquetas cortas) y cuenta sus frecuencias.
+// Sirve igual para una tesis, un catálogo de canciones, una obra o un estudio.
+function etiquetaCampo(campo){
+  // "freq_ia" → "Freq ia"; "tipoDeObra" → "Tipo De Obra"
+  return String(campo||'')
+    .replace(/[_\-.]+/g,' ')
+    .replace(/([a-záéíóúñ])([A-ZÁÉÍÓÚÑ])/g,'$1 $2')
+    .replace(/\s+/g,' ').trim()
+    .replace(/^./, c=>c.toUpperCase());
+}
 function calcularEstadisticas(){
   if (!tesisData || !tesisData.length) return null;
-  const enc = tesisData.filter(r => r.tipo === 'encuesta');
-  const ent = tesisData.filter(r => r.tipo === 'entrevista');
-  // Función genérica: cuenta frecuencias de un campo (soporta arrays)
+  const data = tesisData;
+  // Cuenta frecuencias de un campo (soporta valores en array).
   function contar(registros, campo){
     const m = {};
     registros.forEach(r => {
+      if (!r || typeof r !== 'object') return;
       let v = r[campo];
       if (v === undefined || v === null || v === '') return;
-      if (Array.isArray(v)) v.forEach(x => { if(x) m[x] = (m[x]||0)+1; });
-      else m[v] = (m[v]||0)+1;
+      if (Array.isArray(v)) v.forEach(x => { if(x!==''&&x!=null&&typeof x!=='object') m[String(x)] = (m[String(x)]||0)+1; });
+      else if (typeof v === 'object') return; // objetos anidados no son categoría
+      else m[String(v)] = (m[String(v)]||0)+1;
     });
     return m;
   }
@@ -1746,19 +1767,30 @@ function calcularEstadisticas(){
       label: k, n: v, pct: total ? Math.round(v/total*1000)/10 : 0
     })).sort((a,b)=>b.n-a.n);
   }
-  const usaIA = enc.filter(r => /s[ií]/i.test(r.uso_ia||''));
-  return {
-    totalRegistros: tesisData.length,
-    totalEncuestas: enc.length,
-    totalEntrevistas: ent.length,
-    usuariosIA: { n: usaIA.length, total: enc.length, pct: enc.length ? Math.round(usaIA.length/enc.length*1000)/10 : 0 },
-    porFrecuencia: conPorcentaje(contar(usaIA, 'freq_ia'), usaIA.length),
-    porRol: conPorcentaje(contar(enc, 'role'), enc.length),
-    porEscuela: conPorcentaje(contar(enc, 'inst'), enc.length),
-    porAnio: conPorcentaje(contar(enc, 'year'), enc.length),
-    porTarea: conPorcentaje(contar(usaIA, 'tareas_ia'), usaIA.length),
-    porCambioAula: conPorcentaje(contar(usaIA, 'cambios_aula'), usaIA.length),
-  };
+  // Reúne todos los campos presentes en los registros.
+  const campos = {};
+  data.forEach(r => { if (r && typeof r==='object') Object.keys(r).forEach(k=>campos[k]=true); });
+  // Una dimensión es un campo categórico: 1..25 valores distintos, etiquetas
+  // no demasiado largas, y no casi-único (descarta IDs y textos libres).
+  const dimensiones = [];
+  Object.keys(campos).forEach(campo => {
+    const mapa = contar(data, campo);
+    const claves = Object.keys(mapa);
+    if (!claves.length) return;
+    const maxLargo = Math.max.apply(null, claves.map(c=>c.length));
+    const distintos = claves.length;
+    // Numérico = todas las categorías son números (una MEDIDA, ej. duración/palabras),
+    // no una categoría. Las medidas con muchos valores distintos no son dimensiones.
+    const esNumerico = claves.every(c => c !== '' && !isNaN(Number(c)));
+    const casiUnico = (distintos === data.length && data.length >= 8); // IDs, títulos, transcripciones
+    const medida = (esNumerico && distintos > 10);                     // duraciones, montos, palabras
+    if (distintos >= 1 && distintos <= 25 && maxLargo <= 60 && !casiUnico && !medida){
+      dimensiones.push({ campo: campo, etiqueta: etiquetaCampo(campo), items: conPorcentaje(mapa, data.length) });
+    }
+  });
+  // Ordena: las dimensiones con más categorías (más informativas) primero, tope 12.
+  dimensiones.sort((a,b)=>b.items.length-a.items.length);
+  return { totalRegistros: data.length, dimensiones: dimensiones.slice(0,12) };
 }
 
 // v0.8: dibuja un gráfico de barras horizontales en un canvas y devuelve {dataUrl, w, h}.
@@ -1851,56 +1883,44 @@ function dataUrlABytes(dataUrl){
 
 function getTesisContext(nivel) {
   if (!tesisConnected || !tesisData || tesisData.length === 0) return '';
-  // Compatibilidad: si llega true (booleano viejo) lo tratamos como 'normal'
   if (nivel === true) nivel = 'normal';
   if (nivel === false || nivel === undefined) nivel = 'normal';
   const data = tesisData;
-  const enc = data.filter(r => r.tipo === 'encuesta');
-  const ent = data.filter(r => r.tipo === 'entrevista');
-  const usaIA = enc.filter(r => /s[ií]/i.test(r.uso_ia||''));
-  // Resumen estadístico (siempre, es barato y muy informativo)
-  const escuelas = {};
-  enc.forEach(r => { if (r.inst) escuelas[r.inst] = (escuelas[r.inst]||0)+1; });
-  const roles = {};
-  enc.forEach(r => { if (r.role) roles[r.role] = (roles[r.role]||0)+1; });
-  const freqs = {};
-  usaIA.forEach(r => { if (r.freq_ia) freqs[r.freq_ia] = (freqs[r.freq_ia]||0)+1; });
-  let ctx = `=== BASE DE DATOS TESIS (estos son LOS DATOS EMPÍRICOS a analizar — NO son bibliografía) ===
-Total registros: ${data.length} (${enc.length} encuestas + ${ent.length} entrevistas)
-Usuarios de IAG: ${usaIA.length}/${enc.length} (${enc.length ? Math.round(usaIA.length/enc.length*100) : 0}%)
-ESCALA TIPO LIKERT (frecuencia de uso de IA): ${Object.entries(freqs).map(([k,v])=>k+': '+v).join(', ') || 'sin datos'}
-Por rol: ${Object.entries(roles).map(([k,v])=>k+': '+v).join(', ')}
-Por escuela: ${Object.entries(escuelas).map(([k,v])=>k+': '+v).join(', ')}
+  const stats = calcularEstadisticas();
+  // Resumen estadístico universal (barato y muy informativo).
+  let ctx = `=== BASE DE DATOS (estos son LOS DATOS a analizar — NO son bibliografía) ===
+Total de registros: ${data.length}
 `;
-  // Nivel 'resumen': solo estadísticas. Ahorra la mayor parte de los tokens.
-  if (nivel === 'resumen') return ctx + '\n(El resumen estadístico de arriba cubre los ' + data.length + ' registros. Para registros individuales, pedí un análisis detallado.)';
-
-  // v1.0 — TOPE DE SEGURIDAD POR VOLUMEN (genérico, no depende de los campos):
-  // con muchos registros NO se mandan todos los crudos (reventaría el modelo).
-  // El resumen estadístico de arriba YA cubre el total; los crudos son solo una muestra.
-  const N = enc.length;
-  // Cuántas encuestas crudas mandar según volumen total:
-  let maxEnc;
-  if (nivel === 'completo') maxEnc = N <= 25 ? N : 25;      // tope duro: 25 aunque pidas "completo"
-  else maxEnc = N <= 8 ? N : 8;
-  const muestra = maxEnc < N;
-  ctx += `\n=== ENCUESTAS (muestra de ${maxEnc} de ${N}${muestra ? '; el resumen estadístico de arriba cubre las '+N : ''}) ===\n`;
-  enc.slice(0, maxEnc).forEach((r, i) => {
-    ctx += `[${i+1}] Rol:${r.role||'—'} Escuela:${r.inst||'—'} Año:${r.year||'—'} UsaIA:${r.uso_ia||'—'} FreqIA:${r.freq_ia||'—'} TareasIA:${Array.isArray(r.tareas_ia)?r.tareas_ia.join('|'):r.tareas_ia||'—'} CambiosAula:${Array.isArray(r.cambios_aula)?r.cambios_aula.join('|'):r.cambios_aula||'—'}\n`;
-  });
-  if (muestra) ctx += `(Nota: hay ${N} encuestas en total; los porcentajes y conteos del resumen estadístico de arriba están calculados sobre TODAS, no solo sobre esta muestra.)\n`;
-
-  // Entrevistas: con volumen, recortar cantidad Y longitud para no reventar tokens.
-  if (ent.length > 0) {
-    const maxEnt = ent.length <= 6 ? ent.length : (nivel === 'completo' ? 6 : 3);
-    const maxTrans = nivel === 'completo' ? (ent.length <= 6 ? 800 : 500) : 250;
-    ctx += `\n=== ENTREVISTAS (muestra de ${maxEnt} de ${ent.length}) ===\n`;
-    ent.slice(0, maxEnt).forEach((r, i) => {
-      const transcript = (r.transcript || '').substring(0, maxTrans);
-      ctx += `[ENT${i+1}] Rol:${r.role||'—'} Escuela:${r.inst||'—'} Año:${r.year||'—'}\n${transcript}\n---\n`;
+  if (stats && stats.dimensiones.length){
+    stats.dimensiones.forEach(d => {
+      ctx += `${d.etiqueta}: ${d.items.map(i=>i.label+' = '+i.n).join(', ')}\n`;
     });
-    if (maxEnt < ent.length) ctx += `(Hay ${ent.length} entrevistas en total; se muestran ${maxEnt} como muestra. Para analizar otras específicas, pedilas por número.)\n`;
   }
+  if (nivel === 'resumen') return ctx + '\n(El resumen de arriba cubre los ' + data.length + ' registros. Para registros individuales, pedí un análisis detallado.)';
+
+  // TOPE DE SEGURIDAD POR VOLUMEN: con muchos registros NO se mandan todos los
+  // crudos (reventaría el modelo). El resumen ya cubre el total; los crudos son muestra.
+  const N = data.length;
+  let maxReg;
+  if (nivel === 'completo') maxReg = N <= 25 ? N : 25;   // tope duro: 25 aunque pidas "completo"
+  else maxReg = N <= 8 ? N : 8;
+  const muestra = maxReg < N;
+  ctx += `\n=== REGISTROS (muestra de ${maxReg} de ${N}) ===\n`;
+  // Cuánto texto por campo según volumen (para no reventar tokens).
+  const maxCampo = nivel === 'completo' ? 800 : 300;
+  data.slice(0, maxReg).forEach((r, i) => {
+    if (!r || typeof r !== 'object'){ ctx += `[${i+1}] ${String(r)}\n`; return; }
+    const partes = Object.keys(r).map(k => {
+      let v = r[k];
+      if (Array.isArray(v)) v = v.join('|');
+      else if (v && typeof v === 'object') v = JSON.stringify(v);
+      v = String(v==null?'—':v);
+      if (v.length > maxCampo) v = v.slice(0, maxCampo) + '…';
+      return k + ':' + v;
+    });
+    ctx += `[${i+1}] ` + partes.join(' · ') + '\n';
+  });
+  if (muestra) ctx += `(Hay ${N} registros en total; el resumen de arriba está calculado sobre TODOS, no solo sobre esta muestra. Para registros específicos, pedilos por número.)\n`;
   return ctx;
 }
 
@@ -2079,7 +2099,7 @@ function listaDocumentosReal(){
 }
 
 // v1.2: lista de apellidos de autores que pueden aparecer en los nombres de archivo.
-const AUTORES_BIB = ['selwyn','latour','law','akrich','bijker','dussel','pinch','hughes','callon','winner','oneil','ferrante'];
+const AUTORES_BIB = []; // v11: lista vacía — la plataforma no asume autores de ningún dominio.
 
 // Extrae las claves (apellidos conocidos) presentes en el NOMBRE de un archivo/doc.
 function clavesDeNombre(nombre){
@@ -2208,7 +2228,7 @@ function formatearFuentes(respuesta){
     const base = nombre.replace(/\.pdf$/i,'').toLowerCase();
     const claves = [];
     // apellidos/autores frecuentes en la bibliografía
-    ['selwyn','latour','law','akrich','bijker','dussel','pinch','hughes','callon','winner','o\'neil','oneil'].forEach(a=>{ if(base.includes(a)) claves.push(a); });
+    // v11: sin lista fija de autores (plataforma universal); las claves salen del título del archivo.
     // primeras 2 palabras significativas del nombre del archivo
     base.split(/[^a-záéíóúñ]+/i).filter(w=>w.length>4).slice(0,2).forEach(w=>claves.push(w));
     return [...new Set(claves)];
@@ -2380,7 +2400,7 @@ async function sendWeb() {
       else { const data = await res.json(); results = data.results||[]; }
     } catch(e) { webCaido = true; }
 
-    let prompt, sysWeb = ((mode==='tars'||mode==='jurado')?SYSTEM_TARS:buildMirrorSystem()); // v2.3: en jurado la web también responde como TARS
+    let prompt, sysWeb = personalizarPrompt((mode==='tars'||mode==='jurado')?SYSTEM_TARS:buildMirrorSystem()); // v2.3: en jurado la web también responde como TARS
     if (results.length){
       const webCtx = results.map((r,i)=>(i+1)+'. '+r.title+'\n'+(r.content||'').substring(0,400)).join('\n\n');
       prompt = 'Búsqueda web: "'+query+'"\n\nResultados:\n'+webCtx+'\n\nResumí y analizá estos resultados de forma útil.';
@@ -2645,7 +2665,7 @@ async function send() {
   const isTarsDB = mode === 'tars' && tesisConnected;
   showTyping(mode==='jurado' ? 'jurado' : (isTarsDB ? 'db' : mode));
 
-  const systemPrompt = mode==='jurado' ? SYSTEM_TARS_JURADO : (isTarsDB ? SYSTEM_TARS_DB : (mode==='tars' ? SYSTEM_TARS : buildMirrorSystem()));
+  const systemPrompt = personalizarPrompt(mode==='jurado' ? SYSTEM_TARS_JURADO : (isTarsDB ? SYSTEM_TARS_DB : (mode==='tars' ? SYSTEM_TARS : buildMirrorSystem())));
   const msgStyle = mode==='jurado' ? 'jurado' : (isTarsDB ? 'db' : mode);
 
   // Mensajes a Groq: historial previo liviano + el mensaje actual CON contexto pesado.
@@ -2767,24 +2787,18 @@ async function generarInformeAcademico(statusEl){
       return t+' (base: '+base+' respuesta(s)): '+items;
     };
     const muestraChica = stats.totalRegistros < PCT_MIN_BASE;
-    datosTxt = [
-      'Total de registros: '+stats.totalRegistros+' ('+stats.totalEncuestas+' encuestas + '+stats.totalEntrevistas+' entrevistas).',
-      'Usuarios de IA generativa: '+stats.usuariosIA.n+' de '+stats.usuariosIA.total+' encuestados'+(stats.usuariosIA.total>=PCT_MIN_BASE?' ('+stats.usuariosIA.pct+'%)':'')+'.',
-      dim('Frecuencia de uso (solo usuarios de IA)', stats.porFrecuencia, stats.usuariosIA.n),
-      dim('Por rol', stats.porRol, stats.totalEncuestas),
-      dim('Por escuela', stats.porEscuela, stats.totalEncuestas),
-      dim('Tareas con IA (solo usuarios de IA)', stats.porTarea, stats.usuariosIA.n),
-      dim('Cambios percibidos en el aula (solo usuarios de IA)', stats.porCambioAula, stats.usuariosIA.n),
-      muestraChica ? 'NOTA DE MUESTRA (OBLIGATORIA): la cantidad de registros es propia de un relevamiento PILOTO; los porcentajes NO son representativos. Reportá CONTEOS ABSOLUTOS ("X de N"), no porcentajes. "1 de 1" significa una sola persona, NO una mayoría ni una tendencia.' : ''
-    ].filter(Boolean).join('\n');
+    const lineas = ['Total de registros: '+stats.totalRegistros+'.'];
+    stats.dimensiones.forEach(d => { const t = dim(d.etiqueta, d.items, stats.totalRegistros); if (t) lineas.push(t); });
+    if (muestraChica) lineas.push('NOTA DE MUESTRA (OBLIGATORIA): la cantidad de registros es chica; los porcentajes NO son representativos. Reportá CONTEOS ABSOLUTOS ("X de N"), no porcentajes. "1 de 1" significa un solo registro, NO una mayoría ni una tendencia.');
+    datosTxt = lineas.filter(Boolean).join('\n');
   }
 
   // 2) Fragmentos relevantes de la bibliografía (PDFs cargados)
   let bibliografiaTxt = '';
   if (ragChunks.length){
     // Tomamos fragmentos sobre los temas de la sesión + términos clave de TAR
-    const consulta = (temas || 'teoría del actor red automatización educación inteligencia artificial') + ' actor red traducción mediador';
-    const top = bm25Search(normalizeText(consulta), ragChunks, 6);
+    const consulta = temas || ragChunks.slice(0,3).map(c=>c.docName).join(' ');
+    const top = bm25Search(normalizeText(consulta || 'resumen análisis'), ragChunks, 6);
     bibliografiaTxt = top.map(c=>'['+c.docName+'] '+c.text.substring(0,600)).join('\n\n');
   }
 
@@ -2792,33 +2806,31 @@ async function generarInformeAcademico(statusEl){
   let webTxt = '';
   if (temas && ragChunks.length < 3){
     if (statusEl) statusEl.textContent = '🌐 Buscando en la web para profundizar...';
-    webTxt = await buscarWebParaInforme('teoría del actor red '+temas.split('\n')[0]);
+    webTxt = await buscarWebParaInforme(temas.split('\n')[0]);
   }
 
   // 4) Prompt para que TARS redacte el informe académico riguroso
-  const sys = `Sos TARS, analista experto. Redactás un INFORME RIGUROSO Y ESTRUCTURADO en el idioma de tu usuario, a partir de los DATOS y los DOCUMENTOS que se te proveen. El tema, el campo y el marco son los que surgen de ese material; no asumas un dominio que no esté ahí.
+  const tieneDocs = !!bibliografiaTxt;
+  const sys = `Sos un analista experto. Redactás un INFORME RIGUROSO Y ESTRUCTURADO en el idioma de tu usuario, a partir de los DATOS y los DOCUMENTOS que se te proveen. El tema, el campo y el enfoque son los que surgen de ESE material; no asumas un dominio que no esté ahí.
 
 REGLAS ESTRICTAS:
 - NO inventes cifras. Usá EXACTAMENTE los números que te doy en DATOS. Si un dato no está, no lo menciones.
 - NO escribas como chat ni con preguntas. Es un informe formal, en tercera persona.
 - NO incluyas enlaces de descarga ni URLs inventadas.
-- Citá la bibliografía provista por AUTOR cuando uses sus ideas. Incluí el año SOLO si aparece explícitamente en el nombre del archivo o en el fragmento (ej: "Selwyn 2024", "Law 1992"). Si NO tenés el año con certeza, citá solo el autor — NUNCA inventes un año.
-- Citá SOLO con apellidos de autor reconocibles (Latour, Selwyn, Law, UNESCO...). Si el rótulo del fragmento es un código o nombre de archivo sin autor claro (ej: "PE-DIS-MEDGC-DGESM", "dd308_1", "Documento_completo"), PROHIBIDO ponerlo como cita entre paréntesis en el texto: usá su contenido sin citarlo por ese nombre (la fuente ya figura en la bibliografía final del documento).
-- Estructura OBLIGATORIA con estos encabezados exactos, cada uno en su línea empezando con "## ":
+- Si hay DOCUMENTOS, citá cada idea SOLO por la fuente cuyo fragmento figura en el contexto (por su rótulo). NUNCA cites de memoria una fuente que no tengas delante, ni inventes autores o años. Si el rótulo es un código o nombre de archivo sin autor claro, usá su contenido sin citarlo por ese nombre.
+- Si NO hay documentos, escribí el informe a partir de los DATOS y tu conocimiento general del campo, SIN inventar citas ni referencias.
+- Estructura con estos encabezados, cada uno en su línea empezando con \"## \":
 ## Introducción
-## Marco teórico
-## Resultados
-## Discusión
+## Resultados${tieneDocs ? '\n## Discusión' : ''}
 ## Conclusiones
-- En Resultados, interpretá los datos (no solo los repitas: los gráficos ya están en el documento). Describí QUÉ muestran los datos y qué patrones se observan, sin todavía meter la teoría TAR a fondo (eso va en Discusión).
-- En Discusión, NO repitas lo dicho en Resultados: ese es el lugar de la lectura teórica. Cruzá los datos con la TAR aplicándola a ESTE caso concreto: nombrá los actores humanos (estudiantes, docentes) y no humanos (la IAG, las consignas, el currículum, los dispositivos) y cómo se asocian; identificá traducciones (cómo la IAG redefine la tarea escolar), distinguí mediadores de intermediarios, y señalá tensiones sociotécnicas reales que surjan de los datos. Anclá cada idea en un autor concreto de la bibliografía provista (Latour, Akrich, Law, Selwyn...), no en "la teoría" en abstracto.
-- PROHIBIDO el relleno especulativo encadenado ("podría indicar... podría estar... podría deberse..."). Si la muestra es chica, decilo UNA sola vez con precisión y analizá lo que los datos SÍ permiten afirmar. Cada oración debe aportar algo nuevo.
-- LEÉ CADA ETIQUETA DE DATO DE FORMA LITERAL: nunca inviertas su sentido. Si una categoría dice "No, no noté cambios", significa que esa persona NO percibió cambios; jamás la presentes como que SÍ los percibió. Copiá el sentido de la etiqueta tal cual.
-- CON BASES CHICAS (la base aparece como "base: N respuesta(s)"), reportá los CONTEOS ABSOLUTOS ("1 de 3 docentes"), NO porcentajes. Un porcentaje sobre n=1 o n=2 no es un hallazgo.
-- PROHIBIDO escribir "solo el X %" o "apenas el X %" cuando X es alto (50, 66, 100...): un 100 % no es "solo". Reservá "solo/apenas" para proporciones realmente bajas, y aun así preferí el conteo absoluto.
-- No confundas las BASES: el % de usuarios de IA es sobre encuestados; la distribución por rol/escuela es sobre el total de encuestas; frecuencia/tareas/cambios es sobre los usuarios de IA. Cada dimensión trae su base entre paréntesis: respetala.
-- Tono académico, claro, sin relleno.
-- Escribí los signos de forma normal: "33,3 %" (no "33,3 /%"), "N° 145" (no "N° /145"). No uses barras "/" ni caracteres de escape antes de % ° o números. Texto limpio.`;
+- En Resultados, interpretá los datos (no solo los repitas: los gráficos ya están en el documento). Describí QUÉ muestran los datos y qué patrones se observan.${tieneDocs ? '\n- En Discusión, cruzá los datos con las ideas de los DOCUMENTOS provistos, aplicándolas a ESTE caso concreto. Anclá cada interpretación en una fuente real del material, no en \"la teoría\" en abstracto.' : ''}
+- PROHIBIDO el relleno especulativo encadenado (\"podría indicar... podría estar... podría deberse...\"). Si la muestra es chica, decilo UNA sola vez con precisión y analizá lo que los datos SÍ permiten afirmar. Cada oración debe aportar algo nuevo.
+- LEÉ CADA ETIQUETA DE DATO DE FORMA LITERAL: nunca inviertas su sentido. Si una categoría dice \"No, no noté cambios\", significa que NO; jamás la presentes como que SÍ. Copiá el sentido de la etiqueta tal cual.
+- CON BASES CHICAS (la base aparece como \"base: N respuesta(s)\"), reportá los CONTEOS ABSOLUTOS (\"1 de 3\"), NO porcentajes. Un porcentaje sobre n=1 o n=2 no es un hallazgo.
+- PROHIBIDO escribir \"solo el X %\" o \"apenas el X %\" cuando X es alto (50, 66, 100...): un 100 % no es \"solo\". Reservá \"solo/apenas\" para proporciones realmente bajas, y aun así preferí el conteo absoluto.
+- Cada dimensión trae su base entre paréntesis: respetala. No mezcles bases distintas.
+- Tono claro y preciso, sin relleno.
+- Escribí los signos de forma normal: \"33,3 %\" (no \"33,3 /%\"), \"N° 145\" (no \"N° /145\"). No uses barras \"/\" ni caracteres de escape antes de % ° o números. Texto limpio.`;
 
   let userPrompt = 'DATOS REALES (no inventar, usar estos):\n'+(datosTxt||'(sin datos cuantitativos conectados)')+'\n\n';
   if (bibliografiaTxt) userPrompt += 'BIBLIOGRAFÍA (fragmentos de los PDFs cargados):\n'+bibliografiaTxt+'\n\n';
@@ -2830,7 +2842,7 @@ REGLAS ESTRICTAS:
   // v1.1: 3000 tokens para que el informe COMPLETO (incl. Conclusiones) no se trunque.
   // v3.0 — P3: el informe también reintenta ante saturación, avisando en el modal.
   const avisoInforme = (txt)=>{ if(statusEl) statusEl.textContent = txt || '⏳ TARS está redactando el informe...'; };
-  let texto = await callGroqResiliente([{role:'user', content:userPrompt}], sys, 3000, 0.4, avisoInforme);
+  let texto = await callGroqResiliente([{role:'user', content:userPrompt}], personalizarPrompt(sys), 3000, 0.4, avisoInforme);
   if (!texto) return texto;
 
   // Red de seguridad: si el informe volvió SIN Conclusiones (o cortado), pedimos solo el cierre
@@ -2887,10 +2899,7 @@ function auditarCifrasInforme(texto, stats){
   if (!texto || !stats) return [];
   const legit = new Set([0, 100]);
   const push = v => { if (typeof v === 'number' && !isNaN(v)) legit.add(v); };
-  push(stats.usuariosIA && stats.usuariosIA.pct);
-  ['porFrecuencia','porRol','porEscuela','porAnio','porTarea','porCambioAula'].forEach(k=>{
-    (stats[k]||[]).forEach(d=> push(d.pct));
-  });
+  (stats.dimensiones||[]).forEach(d=>{ (d.items||[]).forEach(it=> push(it.pct)); });
   const sospechosos = [];
   const re = /(\d{1,3}(?:[.,]\d+)?)\s*%/g; let m;
   while ((m = re.exec(texto)) !== null){
@@ -3139,13 +3148,7 @@ async function descargarWord(){
     // Función para insertar todos los gráficos
     const insertarGraficos = ()=>{
       if (!stats) return;
-      const dims = [
-        ['Frecuencia de uso de IA', stats.porFrecuencia],
-        ['Distribución por rol', stats.porRol],
-        ['Distribución por escuela', stats.porEscuela],
-        ['Tareas con IA', stats.porTarea],
-        ['Cambios percibidos en el aula', stats.porCambioAula],
-      ];
+      const dims = stats.dimensiones.map(d=>[d.etiqueta, d.items]);
       dims.forEach(([titulo,datos])=>{
         if (!datos || !datos.length) return;
         const g = generarGraficoBarras(titulo, datos);
@@ -3270,13 +3273,7 @@ async function descargarPDF(){
     let figura = 0;
     const insertarGraficos = ()=>{
       if (!stats) return;
-      const dims = [
-        ['Frecuencia de uso de IA', stats.porFrecuencia],
-        ['Distribución por rol', stats.porRol],
-        ['Distribución por escuela', stats.porEscuela],
-        ['Tareas con IA', stats.porTarea],
-        ['Cambios percibidos en el aula', stats.porCambioAula],
-      ];
+      const dims = stats.dimensiones.map(d=>[d.etiqueta, d.items]);
       dims.forEach(([titulo,datos])=>{
         if (!datos || !datos.length) return;
         const g = generarGraficoBarras(titulo, datos, { sinTitulo:true });
