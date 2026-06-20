@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="es">
 <!-- ════════════════════════════════════════════════════════════
-     MIRROR «El Origen» — PLATAFORMA · v13 · 2026-06-20
-     Agente Gmail con CONTROL MANUAL: MIRROR solo redacta los mails que el usuario marca con
-     la etiqueta «MIRROR-contestar» (Apps Script + tu proxy, gratis, solo borradores, nunca envía).
+     MIRROR «El Origen» — PLATAFORMA · v14 · 2026-06-20
+     Motores pagos: el Paso 2 ahora explica DÓNDE va la clave (nombre de secreto + Add + Deploy),
+     cerrando el círculo. + Agente Gmail control manual (v13) + marca blanca + datos universales.
      Idea original de Darío Alejandro Tello · Apache 2.0.
      ════════════════════════════════════════════════════════════ -->
 <head>
@@ -1107,7 +1107,7 @@ function recortar_(s, max) {
 // ── CATÁLOGO DE MOTORES DE IA ─────────────────────────────────────────────
 // Todos hablan el formato OpenAI (chat completions), así que el motor interno
 // es uno solo. El proxy rutea a cada proveedor con la clave que el usuario guardó.
-const PLATFORM_VERSION = 'v13';  // ← ÚNICA fuente de verdad: actualizar SOLO acá en cada deploy (regla de Darío)
+const PLATFORM_VERSION = 'v14';  // ← ÚNICA fuente de verdad: actualizar SOLO acá en cada deploy (regla de Darío)
 window.addEventListener('load', function(){ try{ document.querySelectorAll('[data-ver]').forEach(function(e){ e.textContent = PLATFORM_VERSION; }); }catch(_){} });
 const MOTORES = {
   groq: {
@@ -4365,7 +4365,14 @@ function duckMusic(){
     });
     const sel = document.getElementById('c-modelo'); sel.innerHTML='';
     MOTORES[motorSel].modelos.forEach(md=>{ const o=document.createElement('option'); o.value=md; o.textContent=md; sel.appendChild(o); });
-    document.getElementById('c-motor-clave').innerHTML = '<b>¿Cómo saco la clave?</b> '+MOTORES[motorSel].comoClave;
+    const secret = motorSel.toUpperCase()+'_KEY';
+    const esPago = MOTORES[motorSel].tipo!=='gratuito';
+    document.getElementById('c-motor-clave').innerHTML =
+      '<b>1) ¿Cómo saco la clave?</b> '+MOTORES[motorSel].comoClave +
+      (esPago ? ' <span style="color:#ffd9a0;">Es de pago por uso: cargá un crédito en el proveedor.</span>' : '') +
+      '<br><b>2) ¿Dónde la pongo?</b> En TU proxy, como secreto <code style="color:#ffd9a0;">'+secret+'</code> '+
+      '(Cloudflare → tu Worker → <b>Settings → Variables and Secrets → Add</b> → nombre <code style="color:#ffd9a0;">'+secret+'</code>, valor = tu clave → <b>Deploy</b>). '+
+      'La clave NUNCA va en MIRROR: queda blindada dentro del proxy.';
   }
 
   const CAPS_INFO = [
