@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="es">
 <!-- ════════════════════════════════════════════════════════════
-     MIRROR «El Origen» — PLATAFORMA · v14 · 2026-06-20
-     Motores pagos: el Paso 2 ahora explica DÓNDE va la clave (nombre de secreto + Add + Deploy),
-     cerrando el círculo. + Agente Gmail control manual (v13) + marca blanca + datos universales.
+     MIRROR «El Origen» — PLATAFORMA · v16 · 2026-06-20
+     Auditoría de confiabilidad: sin IDs duplicados, sin handlers/funciones sin definir, sin
+     excepciones en constructor/overlays/envío (probado con Playwright). Resiliencia: pdf.js y
+     mammoth ahora cargan con respaldo multi-CDN (igual que docx/jspdf). v15: limpieza marca blanca.
      Idea original de Darío Alejandro Tello · Apache 2.0.
      ════════════════════════════════════════════════════════════ -->
 <head>
@@ -1107,7 +1108,7 @@ function recortar_(s, max) {
 // ── CATÁLOGO DE MOTORES DE IA ─────────────────────────────────────────────
 // Todos hablan el formato OpenAI (chat completions), así que el motor interno
 // es uno solo. El proxy rutea a cada proveedor con la clave que el usuario guardó.
-const PLATFORM_VERSION = 'v14';  // ← ÚNICA fuente de verdad: actualizar SOLO acá en cada deploy (regla de Darío)
+const PLATFORM_VERSION = 'v16';  // ← ÚNICA fuente de verdad: actualizar SOLO acá en cada deploy (regla de Darío)
 window.addEventListener('load', function(){ try{ document.querySelectorAll('[data-ver]').forEach(function(e){ e.textContent = PLATFORM_VERSION; }); }catch(_){} });
 const MOTORES = {
   groq: {
@@ -2605,7 +2606,8 @@ async function transcribeAudio(file, prev) {
 }
 async function extractPDF(file) {
   if (!window.pdfjsLib) {
-    await new Promise((res,rej) => { const s=document.createElement('script'); s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js'; s.onload=res; s.onerror=rej; document.head.appendChild(s); });
+    // v16: multi-CDN con respaldo (antes era un solo servidor; si cdnjs caía, fallaba subir PDF).
+    await cargarConFallback(CDN_PDFJS, 'pdfjsLib');
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
   }
   const ab = await file.arrayBuffer();
@@ -2616,7 +2618,8 @@ async function extractPDF(file) {
 }
 async function extractDOCX(file) {
   if (!window.mammoth) {
-    await new Promise((res,rej) => { const s=document.createElement('script'); s.src='https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js'; s.onload=res; s.onerror=rej; document.head.appendChild(s); });
+    // v16: multi-CDN con respaldo (igual que docx/jspdf/pdf.js).
+    await cargarConFallback(CDN_MAMMOTH, 'mammoth');
   }
   const ab = await file.arrayBuffer();
   const result = await mammoth.extractRawText({arrayBuffer:ab});
@@ -3303,6 +3306,17 @@ const CDN_JSPDF = [
   'https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js',
   'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js'
 ];
+// v16: respaldo multi-CDN también para lectura de documentos (subir PDF/DOCX).
+const CDN_PDFJS = [
+  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',
+  'https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.min.js',
+  'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js'
+];
+const CDN_MAMMOTH = [
+  'https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js',
+  'https://unpkg.com/mammoth@1.6.0/mammoth.browser.min.js',
+  'https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js'
+];
 
 // Filtra el log dejando solo el intercambio analítico (preguntas + respuestas),
 // descartando mensajes de sistema/estado (conexiones, memoria restaurada, etc.).
@@ -3333,28 +3347,14 @@ function abrirModalInforme(){
 }
 function cerrarModalInforme(){ document.getElementById('modal-informe').classList.remove('visible'); }
 
-// v3.7: BIBLIOGRAFÍA APA — lista verificada por el autor (reconstruida desde el proyecto de
-// tesis embebido; solo limpieza de espaciado, sin inventar datos). El informe la usa tal cual.
-// Si en el futuro cargás más fuentes, sumá su cita APA acá (a mano) para que aparezcan.
-const BIBLIOGRAFIA_APA = [
-  "Akrich, M. (1992). The de-scription of technical objects. En W. E. Bijker & J. Law (Eds.), Shaping technology/building society: Studies in sociotechnical change (pp. 205-224). MIT Press.",
-  "Callon, M. (1986). Some elements of a sociology of translation: domestication of the scallops and the fishermen of St Brieuc Bay. En J. Law (Ed.), Power, action and belief: a new sociology of knowledge? (pp. 196-223). Routledge & Kegan Paul.",
-  "Dussel, I. (2020). La escuela en la pandemia. Reflexiones sobre lo escolar en tiempos dislocados. Práxis Educativa, 15, 2016482, 1-16. https://doi.org/10.5212/PraxEduc.v.15.16482.090",
-  "Ferrante, E. (2021). Inteligencia artificial y sesgos algorítmicos: ¿Por qué deberían importarnos? Nueva Sociedad, (294), 27-36.",
-  "Latour, B. (2005). Reassembling the Social: An Introduction to Actor-Network-Theory. Oxford University Press.",
-  "Law, J. (1992). Notes on the theory of the actor-network: Ordering, strategy, and heterogeneity. Systems Practice, 5(4), 379-393.",
-  "Maturana, L. A. (2024). La educación para el pensamiento en la era digital: Pensamiento crítico e IA. Revista de Investigaciones Científicas de la Universidad de Morón, 8(15), 47-62. https://doi.org/10.34073/391",
-  "Ministerio de Educación de la Ciudad Autónoma de Buenos Aires. (2025). Marco de gobernanza y uso responsable de la inteligencia artificial: criterios para una implementación segura y situada en el ámbito educativo (Versión 2.0). Gerencia Operativa de Educación Digital (GOED).",
-  "O'Neil, C. (2016). Weapons of Math Destruction: How Big Data Increases Inequality and Threatens Democracy. Crown.",
-  "Pérez, J. C. M. (2024, mayo). La inteligencia artificial como herramienta de fraude académico. En Conference proceedings CIVINEDU 2024: 8th International Virtual Conference on Educational Research and Innovation (pp. 452-456). Adaya Press.",
-  "Plan Ceibal. (s.f.). EduIA Lab. https://ceibal.edu.uy/institucional/eduia/",
-  "Selwyn, N. (2021). Education and technology: Key issues and debates. Bloomsbury Publishing.",
-  "Selwyn, N., Hillman, T., Bergviken Rensfeldt, A., & Perrotta, C. (2023). Making sense of the digital automation of education: key questions and concerns. Postdigital Science and Education, 5(1), 1-14. https://doi.org/10.1007/s42438-022-00362-9",
-  "Selwyn, N. (2024). On the limits of artificial intelligence (AI) in education. Nordisk tidsskrift for pedagogikk og kritikk: Special Issue on Artificial Intelligence in Education, 10, 3-14. https://doi.org/10.23865/ntpk.v10.6062",
-  "UNESCO. (2024). Guía para el uso de IA generativa en educación e investigación. Organización de las Naciones Unidas para la Educación, la Ciencia y la Cultura. https://unesdoc.unesco.org/ark:/48223/pf0000385877",
-  "Villalobo, D. J. P. (2025). La inteligencia artificial y el fraude académico en el contexto universitario. Revista Digital de Investigación y Postgrado, 6, 77-93.",
-  "Winner, L. (1980). Do artifacts have politics? Daedalus, 109(1), 121-136."
-];
+// v15: BIBLIOGRAFÍA del informe — VACÍA por defecto (marca blanca / universal).
+// Antes traía hardcodeada la bibliografía de la tesis de TAR/ANT, que se colaba en el
+// informe de CUALQUIER usuario (músico, escritor, etc.) rotulada "verificada por el autor".
+// Eso rompía marca blanca + no-mentir, así que se quitó (mismo criterio que AUTORES_BIB).
+// Con el array vacío, el informe lista AUTOMÁTICAMENTE los documentos REALES que cargó el
+// usuario (fallback meta.docNames ya codeado en los generadores Word/PDF). Si algún usuario
+// quiere una bibliografía curada a mano, suma sus citas APA acá.
+const BIBLIOGRAFIA_APA = [];
 
 function metadatosInforme(){
   const fecha = new Date().toLocaleString('es-AR',{dateStyle:'long',timeStyle:'short'});
