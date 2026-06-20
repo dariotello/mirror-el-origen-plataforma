@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="es">
 <!-- ════════════════════════════════════════════════════════════
-     MIRROR «El Origen» — PLATAFORMA · v12 · 2026-06-20
-     Agente Gmail: tu MIRROR deja borradores de respuesta (Apps Script + tu proxy, gratis,
-     solo borradores, nunca envía). Marca blanca + datos universales + informe genérico (v11).
+     MIRROR «El Origen» — PLATAFORMA · v13 · 2026-06-20
+     Agente Gmail con CONTROL MANUAL: MIRROR solo redacta los mails que el usuario marca con
+     la etiqueta «MIRROR-contestar» (Apps Script + tu proxy, gratis, solo borradores, nunca envía).
      Idea original de Darío Alejandro Tello · Apache 2.0.
      ════════════════════════════════════════════════════════════ -->
 <head>
@@ -656,13 +656,15 @@ export default {
     </div>
     <p style="font-size:13px;color:#b8b8d8;line-height:1.7;margin:0 0 1rem;">Tu MIRROR lee los mails que vos elijas y te deja <b style="color:#e8e8ff;">borradores de respuesta</b> escritos con tu estilo, en la carpeta <b>Borradores</b> de Gmail. <b style="color:#4ade80;">Nunca envía solo</b>: vos leés, corregís y mandás. Honesto por diseño.</p>
     <div style="border:1px solid rgba(74,222,128,0.25);border-radius:10px;background:rgba(74,222,128,0.05);padding:0.9rem 1.1rem;margin-bottom:1.3rem;font-size:12px;color:#bdf0cf;line-height:1.65;">✓ <b>Gratis y sin clave nueva.</b> Reusa el mismo proxy y la misma clave de IA que ya configuraste para tu MIRROR. Corre en los servidores de Google, dentro de TU cuenta. Sin servidor central, sin costo extra.</div>
-    <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:#cfcfff;margin-bottom:0.6rem;">Paso a paso (5 minutos)</div>
+    <div style="border:1px solid rgba(112,112,255,0.3);border-radius:10px;background:rgba(112,112,255,0.05);padding:0.9rem 1.1rem;margin-bottom:1.2rem;font-size:12.5px;color:#cfcfff;line-height:1.65;">🖐 <b>Vos tenés el control.</b> MIRROR no escanea tu bandeja. Solo redacta los mails que VOS marcás a mano con la etiqueta <b style="color:#00ffcc;">MIRROR-contestar</b>. El resto ni los mira.</div>
+    <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:#cfcfff;margin-bottom:0.6rem;">Paso a paso</div>
     <ol style="font-size:12.5px;color:#c4c4dc;line-height:1.85;padding-left:1.2rem;margin:0 0 1.3rem;">
-      <li>Tocá <b style="color:#9aa0ff;">Copiar mi script ya configurado</b> (abajo): se copia con tu proxy y tu estilo ya puestos.</li>
-      <li>Entrá a <b style="color:#ffd9a0;">script.google.com</b> → <b>Nuevo proyecto</b>. Borrá todo y pegá el script.</li>
-      <li>Guardá (💾). Ejecutá una vez la función <b style="color:#00ffcc;">mirrorProbar</b> → Gmail te pide permiso para leer/redactar TUS mails: aceptá (es tu cuenta).</li>
-      <li>Mirá el registro: te muestra el borrador <b>sin crearlo</b> (prueba segura). Ajustá el FILTRO o tu estilo si querés.</li>
-      <li>Cuando estés conforme, ejecutá una vez <b style="color:#00ffcc;">mirrorInstalarDisparador</b>: revisa tus mails cada 30 min y deja borradores. Para frenarlo: <b>mirrorQuitarDisparador</b>.</li>
+      <li>Tocá <b style="color:#9aa0ff;">Copiar mi script ya configurado</b> (abajo): viene con tu proxy y tu estilo puestos.</li>
+      <li>Entrá a <b style="color:#ffd9a0;">script.google.com</b> → <b>Nuevo proyecto</b>. Borrá todo y pegá el script. Guardá (💾).</li>
+      <li>Ejecutá una vez <b style="color:#00ffcc;">mirrorCrearEtiquetas</b> → crea en Gmail las etiquetas del flujo. (Google pide permiso para tus mails: aceptá, es tu cuenta.)</li>
+      <li>En <b>Gmail</b>, ponele la etiqueta <b style="color:#00ffcc;">MIRROR-contestar</b> a los mails que quieras contestar (🏷 → tildás la etiqueta). Un clic por mail.</li>
+      <li>Probá seguro: ejecutá <b style="color:#00ffcc;">mirrorProbar</b> → te muestra el borrador <b>sin crearlo</b>. Cuando te guste, ejecutá <b style="color:#00ffcc;">mirrorRevisarMails</b> y revisá el borrador en Gmail.</li>
+      <li><b>Opcional automático:</b> <b style="color:#00ffcc;">mirrorInstalarDisparador</b> revisa cada 15 min, pero <b>siempre solo</b> los mails que etiquetaste. Para frenar: <b>mirrorQuitarDisparador</b>.</li>
     </ol>
     <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:0.6rem;">
       <button onclick="generarScriptGmail()" style="background:rgba(112,112,255,0.16);border:1px solid rgba(112,112,255,0.5);color:#dcdcff;border-radius:8px;padding:10px 18px;cursor:pointer;font-family:'Space Mono',monospace;font-size:12.5px;">📋 Copiar mi script ya configurado</button>
@@ -670,29 +672,38 @@ export default {
     </div>
     <pre id="gmail-code" style="background:#05050c;border:1px solid rgba(120,120,255,0.18);border-radius:8px;padding:1rem;font-size:10.5px;line-height:1.5;color:#b8c0e8;overflow-x:auto;max-height:300px;white-space:pre;font-family:'Space Mono',monospace;">/**
  * ════════════════════════════════════════════════════════════════════════
- *  MIRROR «El Origen» — AGENTE DE GMAIL  ·  v1.0
- *  Tu MIRROR lee tus mails y te deja BORRADORES de respuesta para revisar.
- *  NUNCA envía solo: vos leés, corregís y mandás. Honesto por diseño.
+ *  MIRROR «El Origen» — AGENTE DE GMAIL  ·  v1.1  (control manual)
+ *  Tu MIRROR te deja BORRADORES de respuesta, pero SOLO en los mails que
+ *  VOS elegís. NUNCA envía solo: vos leés, corregís y mandás.
  *
  *  Idea original de Darío Alejandro Tello · Apache 2.0
  *
- *  CÓMO FUNCIONA (sin servidor central, gratis):
+ *  CÓMO FUNCIONA (vos tenés el control, gratis, sin servidor central):
  *   • Corre en los servidores de Google, dentro de TU cuenta (Apps Script).
  *   • Reusa el MISMO proxy y la MISMA clave de IA gratis que ya tiene tu MIRROR.
- *     No hace falta ninguna clave nueva: tu proxy guarda la clave como secreto.
- *   • Busca mails según TU filtro, redacta un borrador con tu estilo y lo deja
- *     en Gmail (Borradores). Marca el hilo para no repetir.
+ *   • NO escanea tu bandeja. Solo mira los mails que VOS marcaste a mano con
+ *     la etiqueta «MIRROR-contestar». A esos les deja un borrador con tu estilo
+ *     y les saca la etiqueta. El resto ni los toca.
  *
  *  INSTALACIÓN (5 minutos):
- *   1. Entrá a  https://script.google.com  →  Nuevo proyecto.
- *   2. Borrá todo y pegá ESTE archivo entero.
- *   3. Completá el bloque CONFIG de abajo (proxy, modelo, tu estilo, tu filtro).
- *   4. Guardá (💾). Ejecutá una vez la función  mirrorProbar  → Gmail te va a
- *      pedir permiso para leer/redactar tus mails: aceptá (es tu propia cuenta).
- *   5. Mirá el registro: te muestra el borrador SIN crearlo (prueba segura).
- *   6. Cuando estés conforme, ejecutá  mirrorInstalarDisparador  una vez:
- *      a partir de ahí revisa tus mails solo, cada 30 minutos, y deja borradores.
- *   7. Para frenarlo:  mirrorQuitarDisparador.
+ *   1. https://script.google.com → Nuevo proyecto. Borrá todo y pegá ESTO.
+ *   2. Completá el bloque CONFIG (proxy, modelo, tu estilo).
+ *   3. Guardá (💾). Ejecutá una vez  mirrorCrearEtiquetas  → crea en Gmail las
+ *      etiquetas «MIRROR-contestar» y «MIRROR-borrador-listo».
+ *      (Google te va a pedir permiso para tus mails: aceptá, es tu cuenta.)
+ *
+ *  USO DIARIO (así controlás qué contesta y qué no):
+ *   • En Gmail, abrí (o seleccioná) el mail que querés contestar y ponele la
+ *     etiqueta «MIRROR-contestar» (ícono 🏷 → tildás la etiqueta). Un clic.
+ *   • Ejecutá  mirrorRevisarMails  (o dejá el disparador, ver abajo): MIRROR
+ *     deja el borrador en Borradores, y le cambia la etiqueta a «borrador-listo».
+ *   • Revisás el borrador, lo corregís y lo mandás VOS.
+ *
+ *  PRUEBA SEGURA:  mirrorProbar  → muestra el borrador del primer mail
+ *  etiquetado, SIN crearlo (mirá  Ver → Registro).
+ *
+ *  AUTOMÁTICO (opcional):  mirrorInstalarDisparador  → cada 15 min revisa SOLO
+ *  los mails que etiquetaste. Para frenar:  mirrorQuitarDisparador.
  * ════════════════════════════════════════════════════════════════════════
  */
 
@@ -700,79 +711,79 @@ export default {
 const CONFIG = {
 
   // Tu proxy (el mismo .workers.dev de tu MIRROR) + la ruta del motor gratis.
-  // Ej. de ruta: &#x27;groq&#x27; (gratis), &#x27;cerebras&#x27;, &#x27;openrouter&#x27;, etc.
   PROXY_URL: &#x27;https://TU-PROXY.fisica-dat.workers.dev&#x27;,
   RUTA:      &#x27;groq&#x27;,
 
-  // El modelo. Para Groq gratis suele andar bien:
+  // El modelo (para Groq gratis suele andar bien):
   MODELO:    &#x27;llama-3.3-70b-versatile&#x27;,
 
-  // IDIOMA de las respuestas (el modelo igual respeta el idioma del mail entrante).
+  // IDIOMA de las respuestas (igual respeta el idioma del mail entrante).
   IDIOMA:    &#x27;español rioplatense&#x27;,
 
-  // TU ESTILO / QUIÉN SOS  → para que el borrador suene como vos.
-  // Pegá acá el mismo &quot;núcleo&quot; que pusiste en tu MIRROR (nombre, rol, tono, lo que
-  // te importa). Cuanto más claro, más se parece a vos.
+  // TU ESTILO / QUIÉN SOS → para que el borrador suene como vos.
+  // Pegá acá el mismo &quot;núcleo&quot; que pusiste en tu MIRROR.
   PERFIL: &#x27;Describí acá quién sos y tu estilo de escritura (lo mismo que pusiste en tu MIRROR).&#x27;,
 
-  // FILTRO de Gmail: qué mails revisar. Es una búsqueda normal de Gmail.
-  // Ejemplos:
-  //   &#x27;is:unread newer_than:3d&#x27;                         → no leídos de los últimos 3 días
-  //   &#x27;is:unread from:(@escuela1.edu OR @escuela2.edu)&#x27; → solo de esas escuelas
-  //   &#x27;is:unread -category:promotions -category:social&#x27; → sin promos ni redes
-  FILTRO: &#x27;is:unread newer_than:3d -category:promotions -category:social&#x27;,
+  // ── CONTROL MANUAL: las dos etiquetas del flujo ──
+  // La que VOS aplicás a mano a los mails que querés contestar:
+  ETIQUETA_PEDIR: &#x27;MIRROR-contestar&#x27;,
+  // La que el script pone cuando ya dejó el borrador (para no repetir):
+  ETIQUETA_LISTO: &#x27;MIRROR-borrador-listo&#x27;,
 
-  // Firma del borrador (dejala vacía &#x27;&#x27; si no querés firma).
+  // Firma del borrador (dejala &#x27;&#x27; si no querés firma).
   FIRMA: &#x27;— [Tu nombre]&#x27;,
 
-  // Cuántos hilos procesar por corrida (para no agotar cuota gratis de golpe).
-  MAX_HILOS: 8,
-
-  // Etiqueta que se aplica a los hilos ya procesados (para no repetir borradores).
-  ETIQUETA_LISTO: &#x27;MIRROR/borrador-listo&#x27;,
+  // Cuántos mails procesar por corrida.
+  MAX_HILOS: 10,
 
   // Parámetros del modelo.
   TEMPERATURA: 0.5,
   MAX_TOKENS:  700,
 
-  // Tope de caracteres del mail entrante que se le manda al modelo (ahorra tokens).
+  // Tope de caracteres del mail entrante que se manda al modelo (ahorra tokens).
   MAX_CHARS_ENTRANTE: 3500
 };
 // ───────────────────────────────────────────────────────────────────────────────
 
 
-/** PRUEBA SEGURA: arma el borrador del mail más reciente que matchee, pero NO lo crea.
- *  Mostrá el resultado en  Ver → Registro (Ctrl+Enter).  */
+/** Crea en Gmail las dos etiquetas del flujo. Ejecutar UNA vez al principio. */
+function mirrorCrearEtiquetas() {
+  obtenerEtiqueta_(CONFIG.ETIQUETA_PEDIR);
+  obtenerEtiqueta_(CONFIG.ETIQUETA_LISTO);
+  Logger.log(&#x27;✅ Etiquetas listas. En Gmail, ponele «&#x27; + CONFIG.ETIQUETA_PEDIR +
+             &#x27;» a los mails que quieras que MIRROR conteste.&#x27;);
+}
+
+/** PRUEBA SEGURA: arma el borrador del primer mail etiquetado, pero NO lo crea. */
 function mirrorProbar() {
-  const hilos = GmailApp.search(CONFIG.FILTRO, 0, 1);
+  const hilos = GmailApp.search(&#x27;label:&#x27; + queryLabel_(CONFIG.ETIQUETA_PEDIR), 0, 1);
   if (!hilos.length) {
-    Logger.log(&#x27;No hay mails que coincidan con el filtro: &#x27; + CONFIG.FILTRO);
+    Logger.log(&#x27;No hay mails con la etiqueta «&#x27; + CONFIG.ETIQUETA_PEDIR +
+               &#x27;». Ponésela a un mail en Gmail y volvé a probar.&#x27;);
     return;
   }
   const msg = ultimoEntrante_(hilos[0]);
-  if (!msg) { Logger.log(&#x27;El hilo no tiene un mensaje entrante para responder.&#x27;); return; }
+  if (!msg) { Logger.log(&#x27;Ese hilo no tiene un mensaje entrante para responder.&#x27;); return; }
   Logger.log(&#x27;── MAIL ENTRANTE ──\nDe: &#x27; + msg.getFrom() + &#x27;\nAsunto: &#x27; + msg.getSubject() +
              &#x27;\n\n&#x27; + recortar_(msg.getPlainBody(), 800));
-  const borrador = redactarBorrador_(msg);
-  Logger.log(&#x27;\n── BORRADOR QUE MIRROR DEJARÍA (prueba, NO creado) ──\n\n&#x27; + borrador);
+  Logger.log(&#x27;\n── BORRADOR QUE MIRROR DEJARÍA (prueba, NO creado) ──\n\n&#x27; + redactarBorrador_(msg));
 }
 
-/** CORRIDA REAL: revisa los mails y deja borradores en Gmail. */
+/** CORRIDA REAL: solo los mails que VOS etiquetaste. Deja borradores. */
 function mirrorRevisarMails() {
-  const etiqueta = obtenerEtiqueta_(CONFIG.ETIQUETA_LISTO);
-  // Excluye los que ya tienen la etiqueta para no duplicar borradores.
-  const query = CONFIG.FILTRO + &#x27; -label:&#x27; + CONFIG.ETIQUETA_LISTO.replace(/\//g, &#x27;-&#x27;).replace(/\s/g, &#x27;-&#x27;);
-  const hilos = GmailApp.search(query, 0, CONFIG.MAX_HILOS);
+  const elPedir = obtenerEtiqueta_(CONFIG.ETIQUETA_PEDIR);
+  const elListo = obtenerEtiqueta_(CONFIG.ETIQUETA_LISTO);
+  const hilos = GmailApp.search(&#x27;label:&#x27; + queryLabel_(CONFIG.ETIQUETA_PEDIR), 0, CONFIG.MAX_HILOS);
   let hechos = 0, saltados = 0;
   hilos.forEach(function (hilo) {
     try {
-      if (yaTieneEtiqueta_(hilo, etiqueta)) { saltados++; return; }
       const msg = ultimoEntrante_(hilo);
       if (!msg) { saltados++; return; }
       const texto = redactarBorrador_(msg);
       if (!texto) { saltados++; return; }
-      hilo.createDraftReply(texto);     // ← SOLO borrador. Nunca envía.
-      hilo.addLabel(etiqueta);
+      hilo.createDraftReply(texto);   // ← SOLO borrador. Nunca envía.
+      hilo.removeLabel(elPedir);      // sale de la cola: ya está hecho
+      hilo.addLabel(elListo);
       hechos++;
     } catch (e) {
       Logger.log(&#x27;Error en un hilo: &#x27; + e);
@@ -781,11 +792,12 @@ function mirrorRevisarMails() {
   Logger.log(&#x27;MIRROR dejó &#x27; + hechos + &#x27; borrador(es). Saltados: &#x27; + saltados + &#x27;.&#x27;);
 }
 
-/** Instala el disparador automático (cada 30 minutos). Ejecutar UNA vez. */
+/** Disparador automático (cada 15 min). Igual SOLO toca los mails que etiquetaste. */
 function mirrorInstalarDisparador() {
   mirrorQuitarDisparador();
-  ScriptApp.newTrigger(&#x27;mirrorRevisarMails&#x27;).timeBased().everyMinutes(30).create();
-  Logger.log(&#x27;✅ Listo: MIRROR va a revisar tus mails cada 30 minutos y dejar borradores.&#x27;);
+  ScriptApp.newTrigger(&#x27;mirrorRevisarMails&#x27;).timeBased().everyMinutes(15).create();
+  Logger.log(&#x27;✅ Listo: cada 15 min MIRROR revisa SOLO los mails con «&#x27; +
+             CONFIG.ETIQUETA_PEDIR + &#x27;» y deja borradores.&#x27;);
 }
 
 /** Quita el disparador automático. */
@@ -818,11 +830,11 @@ function llamarIA_(mensajes) {
   });
   const code = res.getResponseCode();
   const data = JSON.parse(res.getContentText() || &#x27;{}&#x27;);
-  if (code === 429) throw new Error(&#x27;La cuota gratis del motor está ocupada (429). Reintentá más tarde o bajá MAX_HILOS.&#x27;);
+  if (code === 429) throw new Error(&#x27;La cuota gratis del motor está ocupada (429). Reintentá luego o bajá MAX_HILOS.&#x27;);
   if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
   if (code &gt;= 400) throw new Error(&#x27;El proxy respondió &#x27; + code + &#x27;. Revisá PROXY_URL y RUTA.&#x27;);
-  const contenido = data.choices &amp;&amp; data.choices[0] &amp;&amp; data.choices[0].message &amp;&amp; data.choices[0].message.content;
-  return (contenido || &#x27;&#x27;).replace(/&lt;\|[^|]*\|&gt;/g, &#x27;&#x27;).replace(/&lt;think&gt;[\s\S]*?&lt;\/think&gt;/gi, &#x27;&#x27;).trim();
+  const c = data.choices &amp;&amp; data.choices[0] &amp;&amp; data.choices[0].message &amp;&amp; data.choices[0].message.content;
+  return (c || &#x27;&#x27;).replace(/&lt;\|[^|]*\|&gt;/g, &#x27;&#x27;).replace(/&lt;think&gt;[\s\S]*?&lt;\/think&gt;/gi, &#x27;&#x27;).trim();
 }
 
 /** Construye el prompt y devuelve el cuerpo del borrador. */
@@ -835,7 +847,7 @@ function redactarBorrador_(msg) {
     &#x27;- Idioma: &#x27; + CONFIG.IDIOMA + &#x27; (pero respetá el idioma del mail entrante si es otro).\n&#x27; +
     &#x27;- Tono y registro: los del perfil de arriba.\n&#x27; +
     &#x27;- HONESTIDAD: no inventes datos, fechas, cifras ni compromisos que no surjan del mail o del perfil. &#x27; +
-    &#x27;Si falta un dato para responder bien, dejá un hueco entre corchetes, ej: [confirmar fecha], para que tu usuario lo complete.\n&#x27; +
+    &#x27;Si falta un dato, dejá un hueco entre corchetes, ej: [confirmar fecha], para que tu usuario lo complete.\n&#x27; +
     &#x27;- Devolvé SOLO el cuerpo del mail (sin asunto, sin &quot;Para:&quot;, sin explicaciones tuyas).\n&#x27; +
     (CONFIG.FIRMA ? &#x27;- Cerrá con la firma: &#x27; + CONFIG.FIRMA + &#x27;\n&#x27; : &#x27;&#x27;);
   const entrante =
@@ -847,13 +859,13 @@ function redactarBorrador_(msg) {
   ]);
 }
 
-/** Devuelve el último mensaje ENTRANTE del hilo (no escrito por el dueño). */
+/** Último mensaje ENTRANTE del hilo (no escrito por vos). */
 function ultimoEntrante_(hilo) {
   const yo = (Session.getActiveUser().getEmail() || &#x27;&#x27;).toLowerCase();
   const msgs = hilo.getMessages();
   for (let i = msgs.length - 1; i &gt;= 0; i--) {
     const from = (msgs[i].getFrom() || &#x27;&#x27;).toLowerCase();
-    if (yo &amp;&amp; from.indexOf(yo) !== -1) continue; // saltar los míos
+    if (yo &amp;&amp; from.indexOf(yo) !== -1) continue;
     return msgs[i];
   }
   return null;
@@ -862,15 +874,16 @@ function ultimoEntrante_(hilo) {
 function obtenerEtiqueta_(nombre) {
   return GmailApp.getUserLabelByName(nombre) || GmailApp.createLabel(nombre);
 }
-function yaTieneEtiqueta_(hilo, etiqueta) {
-  return hilo.getLabels().some(function (l) { return l.getName() === etiqueta.getName(); });
+/** Formato del nombre de etiqueta para la búsqueda (espacios → guiones). */
+function queryLabel_(nombre) {
+  return String(nombre).replace(/\s+/g, &#x27;-&#x27;);
 }
 function recortar_(s, max) {
   s = String(s || &#x27;&#x27;).replace(/\r/g, &#x27;&#x27;).trim();
   return s.length &gt; max ? s.slice(0, max) + &#x27;\n…[recortado]&#x27; : s;
 }
 </pre>
-    <p style="font-size:11px;color:#8484a8;line-height:1.6;margin:1rem 0;">El FILTRO usa la búsqueda normal de Gmail. Para tus escuelas, por ejemplo: <code style="color:#ffd9a0;">is:unread from:(@dominio-escuela1 OR @dominio-escuela2)</code>. Los mails ya procesados quedan con la etiqueta <b>MIRROR/borrador-listo</b> para no repetir.</p>
+    <p style="font-size:11px;color:#8484a8;line-height:1.6;margin:1rem 0;">Honesto: para escribir el borrador, MIRROR le manda el texto del mail a tu proveedor de IA (el de tu proxy), que lo procesa según sus políticas. Por eso elegís vos, mail por mail, cuáles contestar — evitá etiquetar mails con datos sensibles. Cada borrador lo revisás y lo enviás vos.</p>
     <div style="text-align:center;margin-top:1.6rem;">
       <button onclick="cerrarGmail()" style="background:rgba(112,112,255,0.12);border:1px solid rgba(112,112,255,0.4);color:#cfcfff;border-radius:8px;padding:10px 22px;cursor:pointer;font-family:'Space Mono',monospace;font-size:13px;">Entendido ▸</button>
     </div>
@@ -1094,7 +1107,7 @@ function recortar_(s, max) {
 // ── CATÁLOGO DE MOTORES DE IA ─────────────────────────────────────────────
 // Todos hablan el formato OpenAI (chat completions), así que el motor interno
 // es uno solo. El proxy rutea a cada proveedor con la clave que el usuario guardó.
-const PLATFORM_VERSION = 'v12';  // ← ÚNICA fuente de verdad: actualizar SOLO acá en cada deploy (regla de Darío)
+const PLATFORM_VERSION = 'v13';  // ← ÚNICA fuente de verdad: actualizar SOLO acá en cada deploy (regla de Darío)
 window.addEventListener('load', function(){ try{ document.querySelectorAll('[data-ver]').forEach(function(e){ e.textContent = PLATFORM_VERSION; }); }catch(_){} });
 const MOTORES = {
   groq: {
