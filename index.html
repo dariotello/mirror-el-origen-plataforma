@@ -1,10 +1,9 @@
 <!DOCTYPE html>
 <html lang="es">
 <!-- ════════════════════════════════════════════════════════════
-     MIRROR «El Origen» — PLATAFORMA · v18 · 2026-06-21 — CAPA DE DINAMISMO: micro-press táctil en todo
-     control, respiración en avatar/input/send, glows que laten, entrada de mensajes con más vuelo, y
-     CAMPO ORBITAL de partículas alrededor del monolito en boot/presentación (lo complementa, no lo
-     reemplaza). Todo aditivo + prefers-reduced-motion. v17: bump (prueba auto-deploy, sin cambios).
+     MIRROR «El Origen» — PLATAFORMA · v19 · 2026-06-21 — REACTIVIDAD: el wordmark del header (la
+     I-monolito) pulsa también al ENVIAR y al CAMBIAR DE MODO (antes solo al recibir/click). Sobre la
+     CAPA DE DINAMISMO v18 (micro-press, respiración, glows, campo orbital de partículas). Todo aditivo.
      Auditoría de confiabilidad: sin IDs duplicados, sin handlers/funciones sin definir, sin
      excepciones en constructor/overlays/envío (probado con Playwright). Resiliencia: pdf.js y
      mammoth ahora cargan con respaldo multi-CDN (igual que docx/jspdf). v15: limpieza marca blanca.
@@ -1164,7 +1163,7 @@ function recortar_(s, max) {
 // ── CATÁLOGO DE MOTORES DE IA ─────────────────────────────────────────────
 // Todos hablan el formato OpenAI (chat completions), así que el motor interno
 // es uno solo. El proxy rutea a cada proveedor con la clave que el usuario guardó.
-const PLATFORM_VERSION = 'v18';  // ← ÚNICA fuente de verdad: actualizar SOLO acá en cada deploy (regla de Darío)
+const PLATFORM_VERSION = 'v19';  // ← ÚNICA fuente de verdad: actualizar SOLO acá en cada deploy (regla de Darío)
 window.addEventListener('load', function(){ try{ document.querySelectorAll('[data-ver]').forEach(function(e){ e.textContent = PLATFORM_VERSION; }); }catch(_){} });
 const MOTORES = {
   groq: {
@@ -2273,6 +2272,7 @@ function setMode(m) {
       document.getElementById('inp').placeholder = 'Hablá conmigo o pegá un mensaje para que lo conteste por vos...';
     }
   }
+  if (typeof trigPulse === 'function') trigPulse(); // v19: el header reacciona al cambiar de modo
 }
 
 function addMsg(role, text, style) {
@@ -2879,6 +2879,7 @@ async function send() {
   const inp = document.getElementById('inp');
   const text = inp.value.trim();
   if (!text) return;
+  if (typeof trigPulse === 'function') trigPulse(); // v19: el header reacciona al enviar
   inp.value = ''; inp.style.height = 'auto';
   if(window.speechSynthesis) speechSynthesis.cancel(); // v2.2: nueva consulta corta la lectura anterior
   micStop(); // v2.3: el envío cierra la sesión de dictado — el próximo mensaje arranca limpio
