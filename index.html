@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="es">
 <!-- ════════════════════════════════════════════════════════════
-     MIRROR «El Origen» — PLATAFORMA · v19 · 2026-06-21 — REACTIVIDAD: el wordmark del header (la
-     I-monolito) pulsa también al ENVIAR y al CAMBIAR DE MODO (antes solo al recibir/click). Sobre la
-     CAPA DE DINAMISMO v18 (micro-press, respiración, glows, campo orbital de partículas). Todo aditivo.
+     MIRROR «El Origen» — PLATAFORMA · v20 · 2026-06-21 — PALANCA A: botón «Deploy to Cloudflare» en la
+     guía (Paso 2) → el proxy del usuario de ~30 min a 2 clics, apuntando al repo público mirror-proxy.
+     Sobre reactividad v19 + dinamismo v18. REQUIERE que el repo dariotello/mirror-proxy exista y sea
+     público antes de deployar (si no, el botón da 404).
      Auditoría de confiabilidad: sin IDs duplicados, sin handlers/funciones sin definir, sin
      excepciones en constructor/overlays/envío (probado con Playwright). Resiliencia: pdf.js y
      mammoth ahora cargan con respaldo multi-CDN (igual que docx/jspdf). v15: limpieza marca blanca.
@@ -453,6 +454,15 @@ var a=document.getElementById('app');if(a)a.classList.add('ready');}catch(e){}},
     <div style="border:1px solid rgba(120,120,255,0.14);border-radius:12px;padding:1.2rem 1.3rem;margin-bottom:1.3rem;background:rgba(120,120,255,0.03);">
       <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:#cfcfff;margin-bottom:0.5rem;"><b style="color:#7070ff;">2.</b> Tu proxy <span style="font-size:11px;color:#9494c4;font-family:'Space Mono';">· la caja fuerte (Cloudflare)</span></div>
       <p style="font-size:12.5px;color:#9a9ac0;line-height:1.6;margin-bottom:0.7rem;">El proxy guarda tu clave del lado del servidor, para que nunca viaje al navegador. Es un "Worker" de Cloudflare, gratis.</p>
+      <div style="margin-bottom:1.1rem;padding:0.95rem 1.05rem;border:1px solid rgba(112,112,255,0.32);border-radius:10px;background:rgba(112,112,255,0.06);">
+        <div style="font-size:12.5px;color:#aeaeff;letter-spacing:0.04em;margin-bottom:0.55rem;"><b>⚡ La forma rápida — 2 clics</b></div>
+        <p style="font-size:12px;color:#9a9ac0;line-height:1.55;margin:0 0 0.75rem;">Tocá el botón: Cloudflare clona el proxy en tu cuenta, te pide tu clave de Groq (la del Paso 1) y lo deja andando. La dirección <b style="color:#ffd9a0;">.workers.dev</b> que te queda es tu <b>PROXY</b>. No tenés que copiar ni pegar nada de código.</p>
+        <a href="https://deploy.workers.cloudflare.com/?url=https://github.com/dariotello/mirror-proxy" target="_blank" rel="noopener" style="display:inline-block;text-decoration:none;">
+          <img src="https://deploy.workers.cloudflare.com/button" alt="Deploy to Cloudflare" height="32" style="height:32px;vertical-align:middle;border:0;" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-block';">
+          <span style="display:none;padding:7px 16px;border:1px solid rgba(112,112,255,0.5);border-radius:6px;color:#aeaeff;font-size:12px;">▸ Deploy to Cloudflare</span>
+        </a>
+      </div>
+      <div style="font-size:10.5px;color:#646488;text-transform:uppercase;letter-spacing:0.12em;margin:0 0 0.7rem;text-align:center;">— o a mano, si preferís —</div>
       <ol style="font-size:13px;line-height:1.75;color:#c4c4dc;padding-left:1.2rem;margin:0;">
         <li>Entrá a <b>dash.cloudflare.com</b> y creá una cuenta gratis.</li>
         <li><b>Workers &amp; Pages</b> → <b>Create</b> → <b>Create Worker</b> → ponele un nombre (ej: <code style="color:#ffd9a0;">mi-mirror-api</code>) → <b>Deploy</b>.</li>
@@ -1163,7 +1173,7 @@ function recortar_(s, max) {
 // ── CATÁLOGO DE MOTORES DE IA ─────────────────────────────────────────────
 // Todos hablan el formato OpenAI (chat completions), así que el motor interno
 // es uno solo. El proxy rutea a cada proveedor con la clave que el usuario guardó.
-const PLATFORM_VERSION = 'v19';  // ← ÚNICA fuente de verdad: actualizar SOLO acá en cada deploy (regla de Darío)
+const PLATFORM_VERSION = 'v20';  // ← ÚNICA fuente de verdad: actualizar SOLO acá en cada deploy (regla de Darío)
 window.addEventListener('load', function(){ try{ document.querySelectorAll('[data-ver]').forEach(function(e){ e.textContent = PLATFORM_VERSION; }); }catch(_){} });
 const MOTORES = {
   groq: {
