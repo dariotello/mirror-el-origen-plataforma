@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <!-- ════════════════════════════════════════════════════════════
-     MIRROR «El Origen» — PLATAFORMA · v23 · 2026-06-22 — Sobre v22 (Palanca D): el visitante que abre un link compartido (#m=...) ve un teaser breve del monolito (~2.6s) en vez de la cinemática completa, para que la carta de solo-lectura aparezca rápido al abrir desde el celu (el flujo normal mantiene los 10s). PALANCA D: compartir tu MIRROR por un link de SOLO LECTURA. El dueño genera un link (footer → «🔗 compartir») que serializa SOLO la carta de presentación pública (nombre, modos, color, rol, estilo, en qué trabaja) en el hash de la URL — NUNCA proxy, Firebase, PIN, claves ni ubicación. Quien lo abre ve una vista de solo lectura con la fachada y un botón «Creá tu propio MIRROR». El payload va en el hash (#m=...), que no viaja al servidor. Sobre v21 (plantillas por oficio): PALANCA C: plantillas por oficio en el constructor (docente, emprendedor, músico, escritor, salud, oficina, estudiante) que pre-llenan rol+estilo+algo del perfil, editables. Sobre Palanca A: botón «Deploy to Cloudflare» en la
+     MIRROR «El Origen» — PLATAFORMA · v24 · 2026-06-22 — BANNER «nueva versión disponible»: como el sw.js no cambia entre deploys, el aviso compara PLATFORM_VERSION cargada vs la del index fresco de la red (chequeo a los 8s y al volver a la pestaña, throttle 1/min, se saltea en modo compartido). Botón «Actualizar» recarga; el sw.js queda intacto. Sobre v23 (Palanca D): el visitante de un link compartido (#m=...) ve un teaser breve del monolito (~2.6s). El dueño genera un link (footer → «🔗 compartir») que serializa SOLO la carta de presentación pública (nombre, modos, color, rol, estilo, en qué trabaja) en el hash de la URL — NUNCA proxy, Firebase, PIN, claves ni ubicación. Quien lo abre ve una vista de solo lectura con la fachada y un botón «Creá tu propio MIRROR». El payload va en el hash (#m=...), que no viaja al servidor. Sobre v21 (plantillas por oficio): PALANCA C: plantillas por oficio en el constructor (docente, emprendedor, músico, escritor, salud, oficina, estudiante) que pre-llenan rol+estilo+algo del perfil, editables. Sobre Palanca A: botón «Deploy to Cloudflare» en la
      guía (Paso 2) → el proxy del usuario de ~30 min a 2 clics, apuntando al repo público mirror-proxy.
      Sobre reactividad v19 + dinamismo v18. REQUIERE que el repo dariotello/mirror-proxy exista y sea
      público antes de deployar (si no, el botón da 404).
@@ -380,6 +380,19 @@ body.tars .mono-title em{color:var(--tars);}
 .share-btn:active{ transform:scale(.96); }
 .share-msg{ font-size:11px; color:#4ade80; min-height:16px; margin:4px 0 16px; }
 @media (max-width:600px){ .sv-card,.sv-note{ max-width:100%; } .share-box{ padding:40px 18px 60px; } }
+
+/* ════ v24 — banner «nueva versión disponible» (compara PLATFORM_VERSION cargada vs la de la red) ════ */
+#pwa-update{ position:fixed; left:50%; bottom:22px; transform:translate(-50%,160%); z-index:95000; display:flex; align-items:center; gap:13px; max-width:calc(100% - 32px); padding:13px 16px; background:rgba(18,18,38,0.96); border:1px solid rgba(120,120,255,0.4); border-radius:13px; box-shadow:0 10px 40px rgba(80,80,200,0.35); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); font-family:'Space Mono',monospace; color:#e4e4f4; opacity:0; transition:transform .5s cubic-bezier(.2,.9,.3,1), opacity .5s; pointer-events:none; }
+#pwa-update.show{ transform:translate(-50%,0); opacity:1; pointer-events:auto; }
+.pwa-u-txt{ font-size:12px; line-height:1.4; }
+.pwa-u-txt b{ color:#cfcfff; letter-spacing:0.06em; }
+.pwa-u-go{ font-family:'Space Mono',monospace; font-size:12px; color:#fff; background:#7070ff; border:none; border-radius:8px; padding:9px 16px; cursor:pointer; white-space:nowrap; transition:transform .15s ease, box-shadow .3s ease; box-shadow:0 4px 16px rgba(112,112,255,0.4); }
+.pwa-u-go:hover{ transform:translateY(-1px); box-shadow:0 7px 22px rgba(112,112,255,0.55); }
+.pwa-u-go:active{ transform:scale(.95); }
+.pwa-u-x{ background:none; border:none; color:#8a8aa8; font-size:16px; cursor:pointer; padding:2px 5px; line-height:1; transition:color .2s; }
+.pwa-u-x:hover{ color:#cfcfff; }
+@media (max-width:600px){ #pwa-update{ left:12px; right:12px; bottom:14px; transform:translateY(160%); max-width:none; } #pwa-update.show{ transform:translateY(0); } }
+@media (prefers-reduced-motion: reduce){ #pwa-update{ transition:opacity .3s; } }
 </style>
 </head>
 <body>
@@ -1238,6 +1251,13 @@ function recortar_(s, max) {
   </div>
 </div>
 
+<!-- ════ v24 · banner «nueva versión disponible» ════ -->
+<div id="pwa-update">
+  <span class="pwa-u-txt">✦ Nueva versión <b id="pwa-update-ver"></b> lista</span>
+  <button class="pwa-u-go" onclick="pwaActualizar()">Actualizar</button>
+  <button class="pwa-u-x" onclick="pwaDescartarUpdate()" title="Ahora no">✕</button>
+</div>
+
 <script>
 /* ════════════════════════════════════════════════════════════════════════
    CONFIGURACIÓN DE TU MIRROR
@@ -1249,7 +1269,7 @@ function recortar_(s, max) {
 // ── CATÁLOGO DE MOTORES DE IA ─────────────────────────────────────────────
 // Todos hablan el formato OpenAI (chat completions), así que el motor interno
 // es uno solo. El proxy rutea a cada proveedor con la clave que el usuario guardó.
-const PLATFORM_VERSION = 'v23';  // ← ÚNICA fuente de verdad: actualizar SOLO acá en cada deploy (regla de Darío)
+const PLATFORM_VERSION = 'v24';  // ← ÚNICA fuente de verdad: actualizar SOLO acá en cada deploy (regla de Darío)
 window.addEventListener('load', function(){ try{ document.querySelectorAll('[data-ver]').forEach(function(e){ e.textContent = PLATFORM_VERSION; }); }catch(_){} });
 const MOTORES = {
   groq: {
@@ -3842,9 +3862,37 @@ function fechaArchivo(){ const d=new Date(); return d.getFullYear()+'-'+String(d
     updateRagUI();
   }
 })();
-// ══════════ PWA (v2.2) — MIRROR instalable ══════════
+// ══════════ PWA (v2.2) — MIRROR instalable · v24: aviso de nueva versión ══════════
+// El sw.js NO cambia entre deploys (la verdad vive en PLATFORM_VERSION del index).
+// Por eso el aviso compara la versión CARGADA contra la del index FRESCO de la red.
+window._verCheckTS = 0;
+window.chequearVersionNueva = async function(){
+  try{
+    if(window.MODO_COMPARTIDO) return;                 // al visitante de un link no lo molestamos
+    if(Date.now() - window._verCheckTS < 60000) return; // throttle: como mucho 1 chequeo por minuto
+    window._verCheckTS = Date.now();
+    const r = await fetch('index.html', {cache:'no-store'});
+    if(!r || !r.ok) return;
+    const txt = await r.text();
+    const m = txt.match(/PLATFORM_VERSION\s*=\s*'([^']+)'/);
+    if(m && m[1] && m[1] !== PLATFORM_VERSION){
+      const v=document.getElementById('pwa-update-ver'); if(v) v.textContent = m[1];
+      const b=document.getElementById('pwa-update'); if(b) b.classList.add('show');
+    }
+  }catch(_){}
+};
+window.pwaActualizar = function(){ try{ location.reload(); }catch(_){ location.href = location.pathname; } };
+window.pwaDescartarUpdate = function(){ var b=document.getElementById('pwa-update'); if(b) b.classList.remove('show'); };
+
 if('serviceWorker' in navigator && (location.protocol==='https:'||location.hostname==='localhost')){
-  window.addEventListener('load',()=>{ navigator.serviceWorker.register('sw.js').catch(()=>{}); });
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('sw.js').then(function(reg){
+      // Por si algún día el sw.js sí cambia: cuando entre uno nuevo, chequeamos versión.
+      if(reg){ reg.addEventListener('updatefound',function(){ var nw=reg.installing; if(nw){ nw.addEventListener('statechange',function(){ if(nw.state==='installed' && navigator.serviceWorker.controller){ window.chequearVersionNueva(); } }); } }); }
+    }).catch(()=>{});
+    setTimeout(function(){ window.chequearVersionNueva(); }, 8000); // primer chequeo tras el arranque
+  });
+  document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='visible'){ window.chequearVersionNueva(); } });
 }
 
 /* ╔══════════════════════════════════════════════════════════════════╗
