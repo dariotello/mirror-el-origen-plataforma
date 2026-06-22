@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <!-- ════════════════════════════════════════════════════════════
-     MIRROR «El Origen» — PLATAFORMA · v24 · 2026-06-22 — BANNER «nueva versión disponible»: como el sw.js no cambia entre deploys, el aviso compara PLATFORM_VERSION cargada vs la del index fresco de la red (chequeo a los 8s y al volver a la pestaña, throttle 1/min, se saltea en modo compartido). Botón «Actualizar» recarga; el sw.js queda intacto. Sobre v23 (Palanca D): el visitante de un link compartido (#m=...) ve un teaser breve del monolito (~2.6s). El dueño genera un link (footer → «🔗 compartir») que serializa SOLO la carta de presentación pública (nombre, modos, color, rol, estilo, en qué trabaja) en el hash de la URL — NUNCA proxy, Firebase, PIN, claves ni ubicación. Quien lo abre ve una vista de solo lectura con la fachada y un botón «Creá tu propio MIRROR». El payload va en el hash (#m=...), que no viaja al servidor. Sobre v21 (plantillas por oficio): PALANCA C: plantillas por oficio en el constructor (docente, emprendedor, músico, escritor, salud, oficina, estudiante) que pre-llenan rol+estilo+algo del perfil, editables. Sobre Palanca A: botón «Deploy to Cloudflare» en la
+     MIRROR «El Origen» — PLATAFORMA · v27 · 2026-06-22 — PALANCA B: GENERACIÓN DE IMÁGENES (texto→imagen) con Pollinations. Aditiva y aislada: NO toca los motores ni el proxy. El usuario trae su clave PUBLISHABLE (pk_) de Pollinations (gratis, segura para el navegador por diseño); se guarda en su equipo (localStorage), nunca en el proxy. Botón 🎨 en el input: arma el prompt, llama gen.pollinations.ai/image (modelo flux) con la pk_ en el header, recibe la imagen como blob y la muestra con botón descargar. Sin clave, abre un modal para pegarla (no falla en silencio). Sobre v26: PALANCA E (visión). El dueño genera un link (footer → «🔗 compartir») que serializa SOLO la carta de presentación pública (nombre, modos, color, rol, estilo, en qué trabaja) en el hash de la URL — NUNCA proxy, Firebase, PIN, claves ni ubicación. Quien lo abre ve una vista de solo lectura con la fachada y un botón «Creá tu propio MIRROR». El payload va en el hash (#m=...), que no viaja al servidor. Sobre v21 (plantillas por oficio): PALANCA C: plantillas por oficio en el constructor (docente, emprendedor, músico, escritor, salud, oficina, estudiante) que pre-llenan rol+estilo+algo del perfil, editables. Sobre Palanca A: botón «Deploy to Cloudflare» en la
      guía (Paso 2) → el proxy del usuario de ~30 min a 2 clics, apuntando al repo público mirror-proxy.
      Sobre reactividad v19 + dinamismo v18. REQUIERE que el repo dariotello/mirror-proxy exista y sea
      público antes de deployar (si no, el botón da 404).
@@ -393,6 +393,18 @@ body.tars .mono-title em{color:var(--tars);}
 .pwa-u-x:hover{ color:#cfcfff; }
 @media (max-width:600px){ #pwa-update{ left:12px; right:12px; bottom:14px; transform:translateY(160%); max-width:none; } #pwa-update.show{ transform:translateY(0); } }
 @media (prefers-reduced-motion: reduce){ #pwa-update{ transition:opacity .3s; } }
+
+/* ════ v26 — PALANCA E: visión (preview de imagen adjunta + miniatura en la burbuja) ════ */
+.imgpreview{ display:none; align-items:center; gap:10px; padding:8px 10px; margin:0 0 8px; background:rgba(120,120,255,0.06); border:1px solid rgba(120,120,255,0.22); border-radius:10px; }
+.imgpreview img{ width:46px; height:46px; object-fit:cover; border-radius:7px; flex-shrink:0; }
+.imgpreview span{ font-size:11px; color:#9a9ac0; line-height:1.4; flex:1; }
+.imgpreview button{ background:none; border:none; color:#8a8aa8; font-size:15px; cursor:pointer; padding:2px 6px; flex-shrink:0; transition:color .2s; }
+.imgpreview button:hover{ color:#cfcfff; }
+.msg-img{ display:block; max-width:240px; max-height:260px; width:auto; height:auto; border-radius:10px; margin:0 0 8px; border:1px solid rgba(120,120,255,0.28); }
+/* v27 — Palanca B: imagen GENERADA por el MIRROR */
+.gen-img{ display:block; max-width:380px; width:100%; height:auto; border-radius:12px; margin:4px 0 8px; border:1px solid rgba(120,120,255,0.3); box-shadow:0 6px 26px rgba(80,80,200,0.25); }
+.gen-dl{ font-family:'Space Mono',monospace; font-size:11px; color:#cfcfff; background:rgba(112,112,255,0.14); border:1px solid rgba(112,112,255,0.4); border-radius:7px; padding:6px 12px; cursor:pointer; text-decoration:none; display:inline-block; transition:all .2s; }
+.gen-dl:hover{ background:rgba(112,112,255,0.24); }
 </style>
 </head>
 <body>
@@ -1168,18 +1180,19 @@ function recortar_(s, max) {
       </div>
       <div class="conn-card-desc">Integración con WhatsApp para comunicación contextualizada.</div>
     </div>
-    <div class="conn-card" style="opacity:0.4;">
+    <div class="conn-card" id="card-vision" style="opacity:0.4;">
       <div class="conn-card-header">
-        <div class="conn-status-dot off"></div>
-        <span class="conn-card-name">Ver video e imágenes</span>
-        <span class="conn-card-badge badge-off">próximamente</span>
+        <div class="conn-status-dot off" id="vision-dot"></div>
+        <span class="conn-card-name">Ver imágenes</span>
+        <span class="conn-card-badge badge-off" id="vision-badge">próximamente</span>
       </div>
-      <div class="conn-card-desc">Hoy tu MIRROR transcribe lo que se <b>dice</b> en un audio o video (memoria de audio). Entender lo que se <b>ve</b> —imágenes, escenas— necesita un modelo de visión: está en construcción.</div>
+      <div class="conn-card-desc" id="vision-desc">Hoy tu MIRROR transcribe lo que se <b>dice</b> en un audio o video (memoria de audio). Entender lo que se <b>ve</b> —imágenes, escenas— necesita un modelo de visión: está en construcción.</div>
     </div>
   </div>
 
   <div class="iarea">
     <div class="fpreview" id="fpreview"></div>
+    <div class="imgpreview" id="imgpreview"></div>
     <div class="rag-panel" id="ragpanel">
       <div class="rag-header">
         <span>DOCUMENTOS EN MEMORIA</span>
@@ -1190,9 +1203,12 @@ function recortar_(s, max) {
     <div class="iwrap">
       <label class="flabel" for="finput" title="Subir PDF / DOCX / TXT / audio / video">⊕</label>
       <input type="file" id="finput" accept=".pdf,.docx,.txt,.md,.mp3,.wav,.m4a,.ogg,.webm,.mp4,.mpeg,.mpga,.flac" style="display:none" onchange="handleFile(this)">
+      <label class="flabel" for="imginput" id="imgbtn" title="Adjuntar una imagen para que tu MIRROR la vea" style="display:none">📷</label>
+      <input type="file" id="imginput" accept="image/*" style="display:none" onchange="handleImagen(this)">
       <textarea id="inp" placeholder="Escribí acá..." rows="1" onkeydown="hkey(event)" oninput="aresize(this)"></textarea>
       <button class="micbtn" id="micbtn" onclick="toggleMic()" title="Dictar por voz (es-AR)">🎙</button>
       <button class="wbtn" id="wbtn" onclick="sendWeb()" title="Buscar en la web">🌐</button>
+      <button class="wbtn" id="imggen-btn" onclick="generarImagen()" title="Crear una imagen a partir de tu texto (Pollinations)">🎨</button>
       <button class="sbtn" id="sbtn" onclick="send()">↑</button>
     </div>
     <div class="fnote">
@@ -1258,6 +1274,24 @@ function recortar_(s, max) {
   <button class="pwa-u-x" onclick="pwaDescartarUpdate()" title="Ahora no">✕</button>
 </div>
 
+<!-- ════ v27 · PALANCA B — clave de Pollinations (imágenes) ════ -->
+<div id="polli-ov" style="position:fixed;inset:0;z-index:100000;display:none;overflow-y:auto;background:radial-gradient(ellipse 80% 60% at 50% 0%, #11112a 0%, #05050c 70%);color:#d8d8f0;font-family:'Space Mono',monospace;">
+  <div class="share-box">
+    <div class="share-h1">Crear imágenes 🎨</div>
+    <div class="share-p">Tu MIRROR puede generar imágenes desde texto con <b>Pollinations</b> (servicio aparte, gratis). Para usarlo, traé tu propia clave — igual que la de tu motor.</div>
+    <div class="share-yes">✓ Es gratis: registrate en <b>enter.pollinations.ai</b> → creá una <b>clave publishable</b> (empieza con <b>pk_</b>). Esa clave es segura para usar acá.</div>
+    <div class="share-no">✗ No uses la clave secreta (sk_): esa es para servidores, nunca para el navegador. Pegá la <b>pk_</b>.</div>
+    <div class="share-linkrow">
+      <input id="polli-key-input" placeholder="pk_..." style="flex:1;min-width:200px;font-family:'Space Mono',monospace;font-size:12px;color:#cfcfff;background:rgba(10,10,28,0.8);border:1px solid rgba(120,120,255,0.3);border-radius:8px;padding:11px 12px;">
+      <button class="share-btn" onclick="guardarPolliKey()">Guardar</button>
+    </div>
+    <div class="share-msg" id="polli-msg"></div>
+    <div class="share-linkrow">
+      <button class="share-btn" onclick="cerrarPolliKey()">✕ Cerrar</button>
+    </div>
+  </div>
+</div>
+
 <script>
 /* ════════════════════════════════════════════════════════════════════════
    CONFIGURACIÓN DE TU MIRROR
@@ -1269,14 +1303,15 @@ function recortar_(s, max) {
 // ── CATÁLOGO DE MOTORES DE IA ─────────────────────────────────────────────
 // Todos hablan el formato OpenAI (chat completions), así que el motor interno
 // es uno solo. El proxy rutea a cada proveedor con la clave que el usuario guardó.
-const PLATFORM_VERSION = 'v24';  // ← ÚNICA fuente de verdad: actualizar SOLO acá en cada deploy (regla de Darío)
+const PLATFORM_VERSION = 'v27';  // ← ÚNICA fuente de verdad: actualizar SOLO acá en cada deploy (regla de Darío)
 window.addEventListener('load', function(){ try{ document.querySelectorAll('[data-ver]').forEach(function(e){ e.textContent = PLATFORM_VERSION; }); }catch(_){} });
 const MOTORES = {
   groq: {
     nombre: 'Groq', tipo: 'gratuito', ruta: 'groq',
     desc: 'Rápido y gratuito. El motor recomendado para empezar.',
     comoClave: 'Entrá a groq.com → creá cuenta → API Keys → Create API Key (empieza con gsk_...).',
-    modelos: ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant']
+    modelos: ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant'],
+    modeloVision: 'meta-llama/llama-4-scout-17b-16e-instruct'
   },
   cerebras: {
     nombre: 'Cerebras', tipo: 'gratuito', ruta: 'cerebras',
@@ -1358,6 +1393,10 @@ const CEREBRAS_KEY = 'proxy';
 let GROQ_URL = PROXY_URL + '/' + (MOTORES[CONFIG.motorPrincipal] ? MOTORES[CONFIG.motorPrincipal].ruta : 'groq');
 let TAVILY_URL = PROXY_URL + '/tavily';
 let TRANSCRIBE_URL = PROXY_URL + '/transcribe';
+// v27 — PALANCA B (imágenes): clave PUBLISHABLE (pk_) de Pollinations, del lado del usuario.
+// Pollinations diseñó la pk_ para ser segura en el navegador, así que NO va por el proxy.
+let POLLI_KEY = '';
+try { POLLI_KEY = localStorage.getItem('mirror_pollinations_key') || ''; } catch(e) {}
 let CEREBRAS_URL = PROXY_URL + '/' + (MOTORES[CONFIG.motorRespaldo] ? MOTORES[CONFIG.motorRespaldo].ruta : 'cerebras');
 let MODELO_GROQ = CONFIG.modeloPrincipal;
 let MODELO_CEREBRAS = CONFIG.modeloRespaldo;
@@ -1408,6 +1447,25 @@ function aplicarCapacidades() {
   const t = TEMAS_COLOR[CONFIG.colorTema] || TEMAS_COLOR.violeta;
   document.documentElement.style.setProperty('--accent', t.accent);
   document.documentElement.style.setProperty('--accent-glow', t.glow);
+  // v26 — Visión: el botón 📷 aparece solo si el motor activo lee imágenes (de fábrica, Groq).
+  const hayVision = !!modeloVisionActivo();
+  mostrar('imgbtn', hayVision);
+  // Honestidad: la tarjeta de "Ver imágenes" refleja el estado real según el motor.
+  const card=document.getElementById('card-vision'), dot=document.getElementById('vision-dot'),
+        badge=document.getElementById('vision-badge'), desc=document.getElementById('vision-desc');
+  if (card && badge && desc && dot){
+    if (hayVision){
+      card.style.opacity='';
+      dot.className='conn-status-dot on';
+      badge.className='conn-card-badge'; badge.textContent='activo';
+      desc.innerHTML='Tu MIRROR ya puede <b>ver</b> imágenes. Tocá 📷 abajo, elegí una foto y preguntale lo que quieras (qué es, qué dice, qué pasa en la escena).';
+    } else {
+      card.style.opacity='0.4';
+      dot.className='conn-status-dot off';
+      badge.className='conn-card-badge badge-off'; badge.textContent='según tu motor';
+      desc.innerHTML='Para <b>ver</b> imágenes hace falta un motor con visión. El recomendado es <b>Groq</b> (gratis), que la trae de fábrica. Con otro motor sin visión, esta función no aparece.';
+    }
+  }
 }
 
 function construirPerfilNucleo() {
@@ -1478,6 +1536,31 @@ function buildMirrorSystem() {
   // El NÚCLEO (del constructor) siempre viaja; el perfil ampliado de Firebase lo enriquece.
   const perfil = construirPerfilNucleo() + (perfilData ? '\n\nPERFIL AMPLIADO (Firebase):\n' + JSON.stringify(perfilData) : '');
   return personalizarPrompt(SYSTEM_MIRROR_BASE) + '\n\n' + perfil;
+}
+
+// ════ v25 — LENTE PROFESIONAL: el modo analítico hereda el oficio del usuario ════
+// MIRROR (conversacional) ya pensaba como la persona. Ahora TARS/EXAMINADOR/web/informe
+// adoptan también su mirada profesional (docente, emprendedor, músico…) como un MATIZ
+// del análisis, derivado del "Rol / ocupación" del PERFIL NÚCLEO (que llenan las
+// plantillas por oficio de la Palanca C, y que el usuario puede editar).
+const LENTE_PRO = `
+
+=== LENTE PROFESIONAL ===
+Tu usuario tiene un rol u oficio (figura en el PERFIL NÚCLEO, campo "Rol / ocupación"). Adoptá su mirada profesional como una LENTE que enriquece tu análisis: encará cada tema como lo haría alguien de su oficio —con su lenguaje, sus prioridades y las preguntas que esa profesión suele hacerse—. Por ejemplo, una mirada docente piensa en cómo se enseña, se aprende y se evalúa algo; una emprendedora, en costo, mercado y viabilidad; una de la salud, en evidencia, riesgo y cuidado. Esta lente MATIZA tu rigor de analista experto, NO lo reemplaza: cuando haga falta precisión técnica, seguís siendo riguroso, honesto y directo. Si el perfil no define un rol, analizá de forma neutral.
+===`;
+function buildAnaliticoSystem(baseTpl){
+  // personalizarPrompt = nombres de los modos; + PERFIL NÚCLEO (rol/oficio) + la lente profesional.
+  return personalizarPrompt(baseTpl) + '\n\n' + construirPerfilNucleo() + LENTE_PRO;
+}
+
+// ════ v26 — PALANCA E: VISIÓN. Aditiva y condicional: el motor activo lee imágenes
+// SOLO si define un modelo de visión. De fábrica eso es Groq (Llama 4 Scout). Si el
+// motor activo no tiene visión, el botón 📷 ni aparece (honesto: no se ofrece lo que no anda).
+let imagenAdjunta = null; // dataURL de la imagen lista para el PRÓXIMO turno (no se guarda en history)
+function modeloVisionActivo(){
+  if (CONFIG && CONFIG.modeloVision) return CONFIG.modeloVision; // override editable (avanzado)
+  const m = (typeof MOTORES!=='undefined' && CONFIG && MOTORES[CONFIG.motorPrincipal]) ? MOTORES[CONFIG.motorPrincipal] : null;
+  return (m && m.modeloVision) ? m.modeloVision : null;
 }
 
 const SYSTEM_TARS = `Sos TARS, el modo analítico de MIRROR. Sos un analista experto, riguroso y honesto, especializado en el dominio que defina tu usuario (ver el bloque "=== DOMINIO EXPERTO ===" si está presente). REGLAS ABSOLUTAS:
@@ -2381,7 +2464,7 @@ function setMode(m) {
   if (typeof trigPulse === 'function') trigPulse(); // v19: el header reacciona al cambiar de modo
 }
 
-function addMsg(role, text, style) {
+function addMsg(role, text, style, imgUrl) {
   // v0.7: registro paralelo limpio para el informe descargable.
   if (typeof informeLog !== 'undefined') {
     informeLog.push({ role, text: String(text), style: style||'', ts: new Date().toISOString() });
@@ -2403,7 +2486,8 @@ function addMsg(role, text, style) {
   // v1.3: las respuestas del asistente pueden traer markdown crudo (negritas, tablas, ####).
   // Las pasamos por formatearParaChat para que se lean bien. Los mensajes del usuario van tal cual.
   const cuerpo = isUser ? text : formatearParaChat(text);
-  div.innerHTML = '<div class="av '+(isUser?'':'mav')+'">'+(isUser?'VOS':'◈')+'</div><div class="'+bclass+'" style="'+bstyle+'">'+prefix+cuerpo+'</div>';
+  const imgHtml = (isUser && imgUrl) ? '<img class="msg-img" src="'+imgUrl+'" alt="imagen enviada">' : ''; // v26: imagen que el usuario envió
+  div.innerHTML = '<div class="av '+(isUser?'':'mav')+'">'+(isUser?'VOS':'◈')+'</div><div class="'+bclass+'" style="'+bstyle+'">'+prefix+imgHtml+(cuerpo||'')+'</div>';
   chat.appendChild(div);
   chat.scrollTop = chat.scrollHeight;
 }
@@ -2810,7 +2894,7 @@ async function sendWeb() {
       else { const data = await res.json(); results = data.results||[]; }
     } catch(e) { webCaido = true; }
 
-    let prompt, sysWeb = personalizarPrompt((mode==='tars'||mode==='jurado')?SYSTEM_TARS:buildMirrorSystem()); // v2.3: en jurado la web también responde como TARS
+    let prompt, sysWeb = ((mode==='tars'||mode==='jurado') ? buildAnaliticoSystem(SYSTEM_TARS) : buildMirrorSystem()); // v2.3: en jurado la web también responde como TARS · v25: con lente profesional
     if (results.length){
       const webCtx = results.map((r,i)=>(i+1)+'. '+r.title+'\n'+(r.content||'').substring(0,400)).join('\n\n');
       prompt = 'Búsqueda web: "'+query+'"\n\nResultados:\n'+webCtx+'\n\nResumí y analizá estos resultados de forma útil.';
@@ -2980,10 +3064,142 @@ function esRedaccionEnNombre(text){
       || /(redact|escrib)\w*\s+(la\s+)?(respuesta|contestacion)/.test(p);
 }
 
+// ════ v26 — PALANCA E: captura, compresión y envío de imágenes ════
+function handleImagen(input){
+  const file = input.files && input.files[0];
+  input.value = ''; // permite re-elegir la misma foto
+  if (!file) return;
+  if (!/^image\//.test(file.type)){ addMsg(mode, '⚠ Eso no parece una imagen.', mode); return; }
+  const reader = new FileReader();
+  reader.onload = (e)=>{
+    const img = new Image();
+    img.onload = ()=>{
+      // Redimensionar a 1280px lado mayor y comprimir: liviano para enviar y para los tokens.
+      const MAX = 1280;
+      let w = img.width, h = img.height;
+      if (w > MAX || h > MAX){ if (w >= h){ h = Math.round(h*MAX/w); w = MAX; } else { w = Math.round(w*MAX/h); h = MAX; } }
+      try {
+        const c = document.createElement('canvas'); c.width = w; c.height = h;
+        c.getContext('2d').drawImage(img, 0, 0, w, h);
+        imagenAdjunta = c.toDataURL('image/jpeg', 0.82);
+      } catch(err){ imagenAdjunta = e.target.result; } // fallback: original
+      mostrarPreviewImagen(imagenAdjunta);
+    };
+    img.onerror = ()=>{ addMsg(mode, '⚠ No pude leer esa imagen. Probá con otra.', mode); };
+    img.src = e.target.result;
+  };
+  reader.onerror = ()=>{ addMsg(mode, '⚠ No pude abrir el archivo.', mode); };
+  reader.readAsDataURL(file);
+}
+function mostrarPreviewImagen(url){
+  const p = document.getElementById('imgpreview'); if(!p) return;
+  p.innerHTML = '<img src="'+url+'" alt="imagen adjunta"><span>Imagen lista. Escribí qué querés saber (o mandala así) y tu MIRROR la va a ver.</span><button onclick="quitarImagenAdjunta()" title="Quitar la imagen">✕</button>';
+  p.style.display = 'flex';
+}
+function quitarImagenAdjunta(){
+  imagenAdjunta = null;
+  const p = document.getElementById('imgpreview'); if(p){ p.style.display='none'; p.innerHTML=''; }
+}
+async function enviarConImagen(text){
+  const modeloV = modeloVisionActivo();
+  if (!modeloV){ quitarImagenAdjunta(); return; } // el botón no debería estar visible sin visión
+  const img = imagenAdjunta;
+  const prompt = text || 'Mirá esta imagen y describímela con detalle. Si hay texto en ella, transcribilo tal cual.';
+  const inp = document.getElementById('inp'); inp.value = ''; inp.style.height = 'auto';
+  if (typeof trigPulse === 'function') trigPulse();
+  if (window.speechSynthesis) speechSynthesis.cancel();
+  if (typeof micStop === 'function') micStop();
+  setButtonsBusy(true);
+  addMsg('user', text || '', false, img);   // burbuja con la imagen que mandó
+  quitarImagenAdjunta();
+  // En history guardamos solo texto (la imagen NO, para no inflar la memoria con megas).
+  history.push({ role:'user', content: (text || '(envié una imagen para que la veas)') });
+  const estilo = mode==='jurado' ? 'jurado' : (mode==='tars' ? 'tars' : mode);
+  showTyping(estilo);
+  const systemPrompt = (mode==='tars'||mode==='jurado') ? buildAnaliticoSystem(SYSTEM_TARS) : buildMirrorSystem();
+  const messages = [{ role:'user', content:[ {type:'text', text:prompt}, {type:'image_url', image_url:{ url:img }} ] }];
+  let reply = null, errorMsg = null;
+  try {
+    // Llamada DIRECTA al modelo de visión del motor activo (sin fallback a Cerebras, que no ve imágenes).
+    reply = await llamarMotor(GROQ_URL, GROQ_KEY, modeloV, messages, systemPrompt, 900, 0.5);
+  } catch(e){ errorMsg = (e && e.message) ? e.message : 'el motor de visión no respondió'; }
+  removeTyping();
+  if (reply){
+    addMsg(mode, reply, estilo);
+    history.push({ role:'assistant', content:reply });
+    try { hablar(reply); } catch(e){}
+  } else {
+    addMsg(mode, '⚠ No pude leer la imagen ('+(errorMsg||'sin respuesta')+'). Probá con una más liviana o con mejor luz.', estilo);
+  }
+  setButtonsBusy(false);
+}
+
+// ════ v27 — PALANCA B: GENERACIÓN DE IMÁGENES (Pollinations, clave pk_ del usuario) ════
+function abrirPolliKey(){ const i=document.getElementById('polli-key-input'); if(i) i.value=POLLI_KEY||''; const m=document.getElementById('polli-msg'); if(m) m.textContent=''; const g=document.getElementById('polli-ov'); if(g){ g.style.display='block'; g.scrollTop=0; } }
+function cerrarPolliKey(){ const g=document.getElementById('polli-ov'); if(g) g.style.display='none'; }
+function guardarPolliKey(){
+  const i=document.getElementById('polli-key-input'), m=document.getElementById('polli-msg');
+  const v=(i && i.value || '').trim();
+  if(!v){ if(m) m.textContent='Pegá tu clave pk_ primero.'; return; }
+  if(!/^pk_/.test(v)){ if(m){ m.style.color='#e7b3b3'; m.textContent='Ojo: la clave del navegador empieza con pk_. La sk_ no va acá.'; } return; }
+  POLLI_KEY=v;
+  try{ localStorage.setItem('mirror_pollinations_key', v); }catch(e){}
+  if(m){ m.style.color='#4ade80'; m.textContent='✅ Clave guardada. Ya podés crear imágenes con 🎨.'; }
+  setTimeout(cerrarPolliKey, 900);
+}
+async function generarImagen(){
+  if (busy) return;
+  const inp = document.getElementById('inp');
+  const prompt = inp.value.trim();
+  if (!prompt){ addMsg('mirror','Escribí qué imagen querés crear y tocá 🎨 (ej.: "un monolito negro flotando sobre un mar de nubes, estilo cinematográfico").', mode); return; }
+  if (!POLLI_KEY){ abrirPolliKey(); return; } // sin clave: pedimos la pk_ (no fallamos en silencio)
+  inp.value=''; inp.style.height='auto';
+  if (window.speechSynthesis) speechSynthesis.cancel();
+  if (typeof micStop==='function') micStop();
+  setButtonsBusy(true);
+  addMsg('user','🎨 '+prompt, false);
+  showTyping(mode==='tars'?'tars':mode);
+  try {
+    const url = 'https://gen.pollinations.ai/image/' + encodeURIComponent(prompt) + '?model=flux&nologo=true';
+    const res = await fetch(url, { headers: { 'Authorization': 'Bearer ' + POLLI_KEY } });
+    if (!res.ok){
+      let msg = 'No se pudo crear la imagen (HTTP '+res.status+').';
+      if (res.status===401 || res.status===403) msg = 'La clave de Pollinations no es válida o no tiene permiso. Revisá tu pk_.';
+      else if (res.status===402) msg = 'Tu cuenta de Pollinations se quedó sin créditos (Pollen). Recargá o esperá el grant diario de tu tier gratis.';
+      else if (res.status===429) msg = 'Pollinations está saturado o llegaste al límite de tu tier. Probá en un rato.';
+      removeTyping(); addMsg('mirror','⚠ '+msg, mode);
+      setButtonsBusy(false); return;
+    }
+    const blob = await res.blob();
+    const objUrl = URL.createObjectURL(blob);
+    removeTyping();
+    addImagenGenerada(objUrl, prompt);
+  } catch(e){
+    removeTyping();
+    addMsg('mirror','⚠ No pude contactar a Pollinations para crear la imagen ('+(e&&e.message?e.message:'error de red')+').', mode);
+  }
+  setButtonsBusy(false);
+}
+function addImagenGenerada(objUrl, prompt){
+  const chat = document.getElementById('chat');
+  const div = document.createElement('div');
+  div.className = 'msg';
+  const safe = String(prompt).replace(/[<>&"]/g, c=>({ '<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;' }[c]));
+  const fname = 'mirror-' + Date.now() + '.jpg';
+  div.innerHTML = '<div class="av mav">◈</div><div class="bubble">'
+    + '<img class="gen-img" src="'+objUrl+'" alt="'+safe+'">'
+    + '<a class="gen-dl" href="'+objUrl+'" download="'+fname+'">⬇ descargar</a>'
+    + '</div>';
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+  if (typeof informeLog !== 'undefined') informeLog.push({ role:'mirror', text:'[imagen generada: '+prompt+']', style:'', ts:new Date().toISOString() });
+}
+
 async function send() {
   if (busy) return;
   const inp = document.getElementById('inp');
   const text = inp.value.trim();
+  if (imagenAdjunta) { return enviarConImagen(text); } // v26: rama de visión, aislada del flujo normal
   if (!text) return;
   if (typeof trigPulse === 'function') trigPulse(); // v19: el header reacciona al enviar
   inp.value = ''; inp.style.height = 'auto';
@@ -3076,7 +3292,10 @@ async function send() {
   const isTarsDB = mode === 'tars' && tesisConnected;
   showTyping(mode==='jurado' ? 'jurado' : (isTarsDB ? 'db' : mode));
 
-  const systemPrompt = personalizarPrompt(mode==='jurado' ? SYSTEM_TARS_JURADO : (isTarsDB ? SYSTEM_TARS_DB : (mode==='tars' ? SYSTEM_TARS : buildMirrorSystem())));
+  const systemPrompt = (mode==='jurado') ? buildAnaliticoSystem(SYSTEM_TARS_JURADO)
+    : isTarsDB ? buildAnaliticoSystem(SYSTEM_TARS_DB)
+    : (mode==='tars') ? buildAnaliticoSystem(SYSTEM_TARS)
+    : buildMirrorSystem(); // v25: el modo analítico hereda el oficio del usuario (lente profesional)
   const msgStyle = mode==='jurado' ? 'jurado' : (isTarsDB ? 'db' : mode);
 
   // Mensajes a Groq: historial previo liviano + el mensaje actual CON contexto pesado.
@@ -3253,7 +3472,7 @@ REGLAS ESTRICTAS:
   // v1.1: 3000 tokens para que el informe COMPLETO (incl. Conclusiones) no se trunque.
   // v3.0 — P3: el informe también reintenta ante saturación, avisando en el modal.
   const avisoInforme = (txt)=>{ if(statusEl) statusEl.textContent = txt || '⏳ TARS está redactando el informe...'; };
-  let texto = await callGroqResiliente([{role:'user', content:userPrompt}], personalizarPrompt(sys), 3000, 0.4, avisoInforme);
+  let texto = await callGroqResiliente([{role:'user', content:userPrompt}], buildAnaliticoSystem(sys), 3000, 0.4, avisoInforme); // v25: el informe también se redacta con la lente del oficio
   if (!texto) return texto;
 
   // Red de seguridad: si el informe volvió SIN Conclusiones (o cortado), pedimos solo el cierre
