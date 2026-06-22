@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <!-- ════════════════════════════════════════════════════════════
-     MIRROR «El Origen» — PLATAFORMA · v27 · 2026-06-22 — PALANCA B: GENERACIÓN DE IMÁGENES (texto→imagen) con Pollinations. Aditiva y aislada: NO toca los motores ni el proxy. El usuario trae su clave PUBLISHABLE (pk_) de Pollinations (gratis, segura para el navegador por diseño); se guarda en su equipo (localStorage), nunca en el proxy. Botón 🎨 en el input: arma el prompt, llama gen.pollinations.ai/image (modelo flux) con la pk_ en el header, recibe la imagen como blob y la muestra con botón descargar. Sin clave, abre un modal para pegarla (no falla en silencio). Sobre v26: PALANCA E (visión). El dueño genera un link (footer → «🔗 compartir») que serializa SOLO la carta de presentación pública (nombre, modos, color, rol, estilo, en qué trabaja) en el hash de la URL — NUNCA proxy, Firebase, PIN, claves ni ubicación. Quien lo abre ve una vista de solo lectura con la fachada y un botón «Creá tu propio MIRROR». El payload va en el hash (#m=...), que no viaja al servidor. Sobre v21 (plantillas por oficio): PALANCA C: plantillas por oficio en el constructor (docente, emprendedor, músico, escritor, salud, oficina, estudiante) que pre-llenan rol+estilo+algo del perfil, editables. Sobre Palanca A: botón «Deploy to Cloudflare» en la
+     MIRROR «El Origen» — PLATAFORMA · v28 · 2026-06-22 — CORRECCIONES de pruebas en vivo: (1) modelo de visión actualizado a qwen/qwen3.6-27b porque Groq deprecó llama-4-scout el 17/6/2026; (2) parseo de respuesta del motor protegido: si el proxy devuelve algo no-JSON ya no explota con error críptico, sino con un mensaje claro («revisá tu proxy y tu clave en CONEX»); (3) mensaje de error de visión limpio; (4) footer en flex con separación vertical (antes las filas de enlaces se enciman al haber sumado «compartir»); (5) nombre por defecto del modo analítico TARS→ANALISTA (TARS era marca del proyecto personal; la plataforma white-label usa un nombre genérico, editable). Sobre v27: Palanca B (imágenes). El dueño genera un link (footer → «🔗 compartir») que serializa SOLO la carta de presentación pública (nombre, modos, color, rol, estilo, en qué trabaja) en el hash de la URL — NUNCA proxy, Firebase, PIN, claves ni ubicación. Quien lo abre ve una vista de solo lectura con la fachada y un botón «Creá tu propio MIRROR». El payload va en el hash (#m=...), que no viaja al servidor. Sobre v21 (plantillas por oficio): PALANCA C: plantillas por oficio en el constructor (docente, emprendedor, músico, escritor, salud, oficina, estudiante) que pre-llenan rol+estilo+algo del perfil, editables. Sobre Palanca A: botón «Deploy to Cloudflare» en la
      guía (Paso 2) → el proxy del usuario de ~30 min a 2 clics, apuntando al repo público mirror-proxy.
      Sobre reactividad v19 + dinamismo v18. REQUIERE que el repo dariotello/mirror-proxy exista y sea
      público antes de deployar (si no, el botón da 404).
@@ -167,7 +167,7 @@ body.tars .dots span { background: var(--tars); }
 .sbtn { background: transparent; border: 1px solid var(--border-bright); color: var(--accent); width: 30px; height: 30px; border-radius: 2px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 15px; transition: all 0.2s; flex-shrink: 0; }
 .sbtn:hover { background: var(--accent-glow); }
 .sbtn:disabled, .wbtn:disabled { opacity: 0.3; cursor: not-allowed; }
-.fnote { text-align: center; font-size: 10px; color: var(--text-dim); margin-top: 0.4rem; letter-spacing: 0.1em; }
+.fnote { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 5px 9px; text-align: center; font-size: 10px; color: var(--text-dim); margin-top: 0.5rem; letter-spacing: 0.1em; line-height: 1.5; }
 .fnote span { cursor: pointer; text-decoration: underline; opacity: 0.6; }
 .fnote .fcredit, .fnote .fsep, .fnote .ftip { cursor: default; text-decoration: none; }
 .fnote span:hover { opacity: 1; }
@@ -1303,7 +1303,7 @@ function recortar_(s, max) {
 // ── CATÁLOGO DE MOTORES DE IA ─────────────────────────────────────────────
 // Todos hablan el formato OpenAI (chat completions), así que el motor interno
 // es uno solo. El proxy rutea a cada proveedor con la clave que el usuario guardó.
-const PLATFORM_VERSION = 'v27';  // ← ÚNICA fuente de verdad: actualizar SOLO acá en cada deploy (regla de Darío)
+const PLATFORM_VERSION = 'v28';  // ← ÚNICA fuente de verdad: actualizar SOLO acá en cada deploy (regla de Darío)
 window.addEventListener('load', function(){ try{ document.querySelectorAll('[data-ver]').forEach(function(e){ e.textContent = PLATFORM_VERSION; }); }catch(_){} });
 const MOTORES = {
   groq: {
@@ -1311,7 +1311,7 @@ const MOTORES = {
     desc: 'Rápido y gratuito. El motor recomendado para empezar.',
     comoClave: 'Entrá a groq.com → creá cuenta → API Keys → Create API Key (empieza con gsk_...).',
     modelos: ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant'],
-    modeloVision: 'meta-llama/llama-4-scout-17b-16e-instruct'
+    modeloVision: 'qwen/qwen3.6-27b'
   },
   cerebras: {
     nombre: 'Cerebras', tipo: 'gratuito', ruta: 'cerebras',
@@ -1355,7 +1355,7 @@ const MOTORES = {
 const CONFIG_DEFAULT = {
   configurado: false,
   appName: 'MIRROR',
-  modos: { mirror: 'MIRROR', tars: 'TARS', jurado: 'EXAMINADOR', conn: 'CONEX' },
+  modos: { mirror: 'MIRROR', tars: 'ANALISTA', jurado: 'EXAMINADOR', conn: 'CONEX' },
   motorPrincipal: 'groq',
   modeloPrincipal: 'llama-3.3-70b-versatile',
   motorRespaldo: 'cerebras',
@@ -1495,7 +1495,7 @@ function NM(k){ const m=NMODOS(); return (m && m[k]) || CONFIG_DEFAULT.modos[k];
 function personalizarPrompt(tpl){
   const m = NMODOS();
   return String(tpl)
-    .replace(/\bTARS\b/g, m.tars || 'TARS')
+    .replace(/\bTARS\b/g, m.tars || 'ANALISTA')
     .replace(/\bEXAMINADOR\b/g, m.jurado || 'EXAMINADOR')
     .replace(/\bCONEX\b/g, m.conn || 'CONEX')
     .replace(/\bMIRROR\b/g, m.mirror || 'MIRROR');
@@ -2430,7 +2430,7 @@ function setMode(m) {
   document.getElementById('btn-jurado').className = 'mtbtn';
   document.getElementById('btn-conn').className = 'mtbtn';
 
-  const NM = (CONFIG && CONFIG.modos) ? CONFIG.modos : {mirror:'MIRROR',tars:'TARS',jurado:'EXAMINADOR',conn:'CONEX'};
+  const NM = (CONFIG && CONFIG.modos) ? CONFIG.modos : {mirror:'MIRROR',tars:'ANALISTA',jurado:'EXAMINADOR',conn:'CONEX'};
   if (m === 'conn') {
     chat.style.display = 'none';
     connPanel.classList.add('visible');
@@ -2476,7 +2476,7 @@ function addMsg(role, text, style, imgUrl) {
   div.className = 'msg' + (isUser ? ' user' : '');
   let bclass = 'bubble', bstyle = '', prefix = '';
   if (!isUser) {
-    const NMb = (CONFIG && CONFIG.modos) ? CONFIG.modos : {tars:'TARS',jurado:'EXAMINADOR'};
+    const NMb = (CONFIG && CONFIG.modos) ? CONFIG.modos : {tars:'ANALISTA',jurado:'EXAMINADOR'};
     if (style === 'tars') { bclass += ' tbubble'; prefix = '<span class="tlabel">'+NMb.tars+' — MODO ANALÍTICO</span>'; }
     else if (style === 'jurado') { bclass += ' tbubble'; prefix = '<span class="tlabel" style="color:#ffb86b">⚖ '+NMb.jurado+'</span>'; }
     else if (style === 'web') { bclass += ' wbubble'; prefix = '<span class="wlabel">🌐 BÚSQUEDA WEB</span>'; }
@@ -2945,6 +2945,7 @@ function mensajeError(tipo){
   if (tipo === 'too_big') return '⚠️ La consulta es demasiado grande (muchos datos + PDFs juntos). Probá una pregunta más específica o sobre menos documentos a la vez.';
   if (tipo === 'vacio') return '⚠️ El motor respondió vacío (suele pasar con consultas muy pesadas). Probá una pregunta más acotada o reintentá en un momento.';
   if (tipo === 'red') return '⚠️ Falló la conexión. Revisá tu internet y reintentá.';
+  if (tipo === 'config') return '⚠️ No pude conectar con tu motor de IA. Revisá en CONEX que tu proxy y tu clave estén bien configurados (y que tu proxy esté publicado).';
   return '⚠️ No pude procesar la consulta. Reintentá en un momento.';
 }
 
@@ -2977,7 +2978,15 @@ async function llamarMotor(url, key, modelo, messages, systemPrompt, maxTokens, 
     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
     body: JSON.stringify(body)
   });
-  const data = await res.json();
+  // v28: parseo protegido. Si el proxy devuelve algo que NO es JSON (vacío, error de
+  // Cloudflare, body cortado), antes explotaba con «Unexpected end of JSON input» o se
+  // confundía con «respondió vacío». Un motor OpenAI-compatible SIEMPRE devuelve JSON;
+  // un body vacío o no-JSON = problema de conexión/proxy. Damos un mensaje claro.
+  let data;
+  const _raw = (await res.text()).trim();
+  const _errConfig = () => { const e = new Error('No pude conectar con tu motor de IA. Revisá en CONEX que tu proxy y tu clave estén bien configurados (y que tu proxy esté publicado).'); e.tipo = 'config'; e.status = res.status; return e; };
+  if (!_raw) throw _errConfig();
+  try { data = JSON.parse(_raw); } catch(_) { throw _errConfig(); }
   if (data.error) {
     const msg = (data.error.message || JSON.stringify(data.error));
     let tipo = 'otro';
@@ -3129,7 +3138,8 @@ async function enviarConImagen(text){
     history.push({ role:'assistant', content:reply });
     try { hablar(reply); } catch(e){}
   } else {
-    addMsg(mode, '⚠ No pude leer la imagen ('+(errorMsg||'sin respuesta')+'). Probá con una más liviana o con mejor luz.', estilo);
+    const m = errorMsg ? ('⚠ '+errorMsg) : '⚠ No pude leer la imagen. Reintentá en un momento o probá con una más liviana.';
+    addMsg(mode, m, estilo);
   }
   setButtonsBusy(false);
 }
@@ -4860,7 +4870,7 @@ function duckMusic(){
   window.consFinish = function(){
     const v = id => (document.getElementById(id).value||'').trim();
     CONFIG.appName = v('c-appName') || 'MIRROR';
-    CONFIG.modos = { mirror:v('c-m-mirror')||'MIRROR', tars:v('c-m-tars')||'TARS', jurado:v('c-m-jurado')||'EXAMINADOR', conn:v('c-m-conn')||'CONEX' };
+    CONFIG.modos = { mirror:v('c-m-mirror')||'MIRROR', tars:v('c-m-tars')||'ANALISTA', jurado:v('c-m-jurado')||'EXAMINADOR', conn:v('c-m-conn')||'CONEX' };
     CONFIG.motorPrincipal = motorSel;
     CONFIG.modeloPrincipal = document.getElementById('c-modelo').value;
     if (motorSel==='groq'){ CONFIG.motorRespaldo='cerebras'; CONFIG.modeloRespaldo='gpt-oss-120b'; }
