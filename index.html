@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <!-- ════════════════════════════════════════════════════════════
-     MIRROR «El Origen» — PLATAFORMA · v21 · 2026-06-21 — PALANCA C: plantillas por oficio en el constructor (docente, emprendedor, músico, escritor, salud, oficina, estudiante) que pre-llenan rol+estilo+algo del perfil, editables. Sobre Palanca A: botón «Deploy to Cloudflare» en la
+     MIRROR «El Origen» — PLATAFORMA · v22 · 2026-06-22 — PALANCA D: compartir tu MIRROR por un link de SOLO LECTURA. El dueño genera un link (footer → «🔗 compartir») que serializa SOLO la carta de presentación pública (nombre, modos, color, rol, estilo, en qué trabaja) en el hash de la URL — NUNCA proxy, Firebase, PIN, claves ni ubicación. Quien lo abre ve una vista de solo lectura con la fachada y un botón «Creá tu propio MIRROR». El payload va en el hash (#m=...), que no viaja al servidor. Sobre v21 (plantillas por oficio): PALANCA C: plantillas por oficio en el constructor (docente, emprendedor, músico, escritor, salud, oficina, estudiante) que pre-llenan rol+estilo+algo del perfil, editables. Sobre Palanca A: botón «Deploy to Cloudflare» en la
      guía (Paso 2) → el proxy del usuario de ~30 min a 2 clics, apuntando al repo público mirror-proxy.
      Sobre reactividad v19 + dinamismo v18. REQUIERE que el repo dariotello/mirror-proxy exista y sea
      público antes de deployar (si no, el botón da 404).
@@ -339,7 +339,7 @@ body.tars .mono-title em{color:var(--tars);}
 @media (prefers-reduced-motion: reduce) {
   .sbtn:not(:disabled), .iarea .iwrap:focus-within, .av.mav,
   .mtbtn.active-mirror, .mtbtn.active-tars, .mtbtn.active-conn, .mtbtn.active-jurado,
-  .conn-card.connected, .bubble::before { animation: none !important; }
+  .conn-card.connected, .bubble::before, .sv-monolith { animation: none !important; }
 }
 
 /* v21 — chips de oficio (selector de plantilla en el constructor) */
@@ -350,6 +350,36 @@ body.tars .mono-title em{color:var(--tars);}
 .oficio-chip:hover{ border-color:rgba(120,120,255,0.5); background:rgba(120,120,255,0.12); transform:translateY(-1px); }
 .oficio-chip:active{ transform:scale(.94); }
 .oficio-chip.on{ background:rgba(112,112,255,0.18); border-color:#7070ff; color:#cfcfff; }
+
+/* ════ v22 — PALANCA D: compartir tu MIRROR por link de SOLO LECTURA ════ */
+/* Vista que ve quien abre un link compartido: la "carta de presentación" del MIRROR, sin chat ni claves. */
+#share-view{ display:none; position:fixed; inset:0; z-index:120000; flex-direction:column; align-items:center; justify-content:flex-start; background:radial-gradient(ellipse 70% 55% at 50% 16%, #11112e 0%, #05050c 72%); color:#d8d8f0; font-family:'Space Mono',monospace; padding:48px 22px 56px; overflow-y:auto; --sv-accent:#7070ff; --sv-glow:rgba(100,100,255,0.18); }
+.sv-monolith{ width:24px; height:116px; border-radius:3px; background:linear-gradient(180deg,#0c0c1c 0%, #050509 100%); box-shadow:0 0 40px var(--sv-glow), inset 0 0 14px rgba(180,180,255,0.06); margin:8px 0 26px; animation:svFloat 6s ease-in-out infinite; }
+@keyframes svFloat{ 0%,100%{ transform:translateY(0); box-shadow:0 0 34px var(--sv-glow); } 50%{ transform:translateY(-7px); box-shadow:0 0 62px var(--sv-glow); } }
+.sv-name{ font-family:'Cormorant Garamond',serif; font-size:clamp(32px,7vw,54px); font-weight:300; letter-spacing:0.16em; color:#f0f0ff; text-align:center; line-height:1.05; }
+.sv-sub{ font-size:9.5px; letter-spacing:0.34em; text-transform:uppercase; color:var(--sv-accent); margin-top:8px; text-align:center; }
+.sv-owner{ text-align:center; font-style:italic; color:#9a9ac0; font-size:13px; margin-top:12px; }
+.sv-card{ max-width:520px; width:100%; margin:30px auto 0; border:1px solid rgba(120,120,255,0.18); border-radius:14px; background:rgba(120,120,255,0.045); padding:24px 22px 8px; }
+.sv-row{ margin-bottom:18px; }
+.sv-k{ font-size:9px; letter-spacing:0.26em; text-transform:uppercase; color:var(--sv-accent); margin-bottom:6px; }
+.sv-val{ font-size:14px; line-height:1.62; color:#d8d8f0; white-space:pre-wrap; }
+.sv-note{ max-width:520px; font-size:10.5px; line-height:1.65; color:#6c6c8c; text-align:center; margin:24px auto 28px; }
+.sv-cta{ font-family:'Space Mono',monospace; font-size:13px; letter-spacing:0.08em; color:#fff; background:var(--sv-accent); border:none; border-radius:11px; padding:15px 32px; cursor:pointer; box-shadow:0 6px 26px var(--sv-glow); transition:transform .15s ease, box-shadow .3s ease; }
+.sv-cta:hover{ transform:translateY(-2px); box-shadow:0 11px 36px var(--sv-glow); }
+.sv-cta:active{ transform:scale(.97); }
+/* Modal de compartir (lo ve el dueño para generar el link) */
+.share-box{ max-width:560px; margin:0 auto; padding:50px 26px 70px; }
+.share-h1{ font-family:'Cormorant Garamond',serif; font-size:30px; font-weight:300; color:#f0f0ff; margin-bottom:6px; }
+.share-p{ font-size:12.5px; line-height:1.7; color:#b8b8d4; margin-bottom:14px; }
+.share-yes{ font-size:11.5px; line-height:1.7; color:#9ad7b0; background:rgba(52,211,153,0.06); border:1px solid rgba(52,211,153,0.2); border-radius:9px; padding:11px 14px; margin-bottom:10px; }
+.share-no{ font-size:11.5px; line-height:1.7; color:#e7b3b3; background:rgba(255,93,93,0.05); border:1px solid rgba(255,93,93,0.18); border-radius:9px; padding:11px 14px; margin-bottom:18px; }
+.share-linkrow{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px; }
+#share-link{ flex:1; min-width:200px; font-family:'Space Mono',monospace; font-size:11px; color:#cfcfff; background:rgba(10,10,28,0.8); border:1px solid rgba(120,120,255,0.3); border-radius:8px; padding:11px 12px; }
+.share-btn{ font-family:'Space Mono',monospace; font-size:12px; letter-spacing:0.06em; color:#dcdcff; background:rgba(112,112,255,0.16); border:1px solid rgba(112,112,255,0.5); border-radius:8px; padding:11px 16px; cursor:pointer; transition:all .2s; display:inline-flex; align-items:center; gap:6px; }
+.share-btn:hover{ background:rgba(112,112,255,0.26); transform:translateY(-1px); }
+.share-btn:active{ transform:scale(.96); }
+.share-msg{ font-size:11px; color:#4ade80; min-height:16px; margin:4px 0 16px; }
+@media (max-width:600px){ .sv-card,.sv-note{ max-width:100%; } .share-box{ padding:40px 18px 60px; } }
 </style>
 </head>
 <body>
@@ -1162,11 +1192,48 @@ function recortar_(s, max) {
       <span class="fsep">·</span>
       <span onclick="abrirModalInforme()">📄 generar informe</span>
       <span class="fsep">·</span>
+      <span onclick="abrirCompartir()" title="Compartí tu MIRROR por un link de solo lectura (sin claves ni memoria)">🔗 compartir</span>
+      <span class="fsep">·</span>
       <span id="ttsbtn" onclick="toggleTTS()" title="Leer las respuestas en voz alta">🔇 voz</span><span id="vozsel" onclick="abrirSelectorVoz()" title="Elegir la voz de lectura">▾</span>
       <span class="fsound" id="sndBtn" onclick="toggleSound()" title="Música ambiental El Origen">🔇 sonido</span>
       <span class="fpres" onclick="openPres()" title="Pantalla completa para la defensa">◬ presentación</span>
       <span class="ftip">🌐 web · ⊕ doc</span>
       <span class="fver" data-ver title="versión de la plataforma — verificá que sea la última deployada" style="opacity:0.5;letter-spacing:0.12em;font-size:10px;margin-left:auto;"></span>
+    </div>
+  </div>
+</div>
+
+<!-- ════ v22 · PALANCA D — VISTA DE SOLO LECTURA (lo que ve quien abre un link compartido) ════ -->
+<div id="share-view">
+  <div class="sv-monolith"></div>
+  <div class="sv-name" id="sv-name">MIRROR</div>
+  <div class="sv-sub">una carta de presentación · El Origen</div>
+  <div class="sv-owner" id="sv-owner" style="display:none"></div>
+  <div class="sv-card">
+    <div class="sv-row" id="sv-row-rol" style="display:none"><div class="sv-k">Quién soy</div><div class="sv-val" id="sv-rol"></div></div>
+    <div class="sv-row" id="sv-row-estilo" style="display:none"><div class="sv-k">Cómo hablo</div><div class="sv-val" id="sv-estilo"></div></div>
+    <div class="sv-row" id="sv-row-algo" style="display:none"><div class="sv-k">En lo que ando</div><div class="sv-val" id="sv-algo"></div></div>
+  </div>
+  <div class="sv-note">Estás viendo una <b>vista de solo lectura</b>: la carta de presentación de un MIRROR.<br>No se puede chatear con él — sus claves, su memoria y sus direcciones son privadas de su dueño.</div>
+  <button class="sv-cta" onclick="window.location.href = window.location.pathname + window.location.search">✦ Creá tu propio MIRROR</button>
+</div>
+
+<!-- ════ MODAL COMPARTIR (lo ve el dueño para generar el link) ════ -->
+<div id="share-ov" style="position:fixed;inset:0;z-index:100000;display:none;overflow-y:auto;background:radial-gradient(ellipse 80% 60% at 50% 0%, #11112a 0%, #05050c 70%);color:#d8d8f0;font-family:'Space Mono',monospace;padding:0;">
+  <div class="share-box">
+    <div class="share-h1">Compartí tu <span id="share-appname">MIRROR</span></div>
+    <div class="share-p">Generá un link para que cualquiera conozca tu MIRROR: su nombre, su forma de hablar y en qué te ayuda. Quien lo abra ve una <b>presentación de solo lectura</b> — y un botón para crear el suyo.</div>
+    <div class="share-yes">✓ Se comparte: el nombre, los modos, el color, tu rol, tu estilo y en qué andás.</div>
+    <div class="share-no">✗ NO se comparte (queda solo en tu equipo): tu clave de IA, tu proxy, tu Firebase, tu PIN, tu memoria ni tu ubicación.</div>
+    <div class="share-linkrow">
+      <input id="share-link" readonly onclick="this.select()" value="">
+      <button class="share-btn" onclick="copiarLinkCompartir()">📋 Copiar</button>
+      <button class="share-btn" id="share-native" style="display:none" onclick="compartirNativo()">↗ Compartir…</button>
+    </div>
+    <div class="share-msg" id="share-msg"></div>
+    <div class="share-linkrow">
+      <button class="share-btn" onclick="previsualizarCompartir()">👁 Previsualizar lo que verán</button>
+      <button class="share-btn" onclick="cerrarCompartir()">✕ Cerrar</button>
     </div>
   </div>
 </div>
@@ -1182,7 +1249,7 @@ function recortar_(s, max) {
 // ── CATÁLOGO DE MOTORES DE IA ─────────────────────────────────────────────
 // Todos hablan el formato OpenAI (chat completions), así que el motor interno
 // es uno solo. El proxy rutea a cada proveedor con la clave que el usuario guardó.
-const PLATFORM_VERSION = 'v21';  // ← ÚNICA fuente de verdad: actualizar SOLO acá en cada deploy (regla de Darío)
+const PLATFORM_VERSION = 'v22';  // ← ÚNICA fuente de verdad: actualizar SOLO acá en cada deploy (regla de Darío)
 window.addEventListener('load', function(){ try{ document.querySelectorAll('[data-ver]').forEach(function(e){ e.textContent = PLATFORM_VERSION; }); }catch(_){} });
 const MOTORES = {
   groq: {
@@ -4147,6 +4214,11 @@ function finishBoot(){
   document.getElementById('boot').classList.add('gone');
   document.getElementById('app').classList.add('ready');
   setVol(CHAT_VOL);
+  // v22 · Palanca D: si abrieron un link compartido, mostramos la carta de solo-lectura y nada más.
+  if (window.MODO_COMPARTIDO){
+    if (typeof window.mostrarVistaCompartida==='function') window.mostrarVistaCompartida(window.MODO_COMPARTIDO);
+    return;
+  }
   // Terminada la cinemática de "El Origen", nace el constructor (si hace falta).
   // v7: si falta configurar, se lanza YA (sin demora) — antes esperaba 400ms y se veía el MIRROR construido por un instante.
   if (typeof lanzarConstructorTrasBoot === 'function') {
@@ -4586,6 +4658,71 @@ function duckMusic(){
     document.querySelectorAll('.oficio-chip').forEach(c=>c.classList.remove('on'));
     if(btn) btn.classList.add('on');
   };
+  // ════ v22 · PALANCA D — COMPARTIR POR LINK DE SOLO LECTURA ════
+  // Base64-URL UTF-8-safe (entra en un hash, no viaja al servidor).
+  function _b64urlEnc(s){ return btoa(unescape(encodeURIComponent(s))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
+  function _b64urlDec(s){ s=s.replace(/-/g,'+').replace(/_/g,'/'); while(s.length%4) s+='='; return decodeURIComponent(escape(atob(s))); }
+  // WHITELIST EXPLÍCITA: SOLO la carta de presentación pública. NUNCA proxy, firebase, PIN, claves ni ubicación.
+  function _payloadCompartir(){
+    const p = CONFIG.perfil || {};
+    const M = CONFIG.modos || CONFIG_DEFAULT.modos;
+    return { v:1, n: CONFIG.appName || 'MIRROR',
+      m:{ mi:M.mirror, ta:M.tars, ju:M.jurado, co:M.conn },
+      c: CONFIG.colorTema || 'violeta',
+      p:{ no:(p.nombre||''), ro:(p.rol||''), es:(p.estilo||''), al:(p.proyectos||'') } };
+  }
+  function _linkCompartir(){
+    return location.origin + location.pathname + '#m=' + _b64urlEnc(JSON.stringify(_payloadCompartir()));
+  }
+  window.leerPayloadCompartido = function(){
+    try {
+      const m = (location.hash||'').match(/^#m=(.+)$/);
+      if(!m) return null;
+      const o = JSON.parse(_b64urlDec(m[1]));
+      if(!o || o.v!==1 || typeof o.n!=='string') return null;
+      return o;
+    } catch(e){ return null; }
+  };
+  window.mostrarVistaCompartida = function(pay){
+    try {
+      const v = document.getElementById('share-view'); if(!v) return;
+      const t = (typeof TEMAS_COLOR!=='undefined' && TEMAS_COLOR[pay.c]) ? TEMAS_COLOR[pay.c] : {accent:'#7070ff',glow:'rgba(100,100,255,0.18)'};
+      v.style.setProperty('--sv-accent', t.accent);
+      v.style.setProperty('--sv-glow', t.glow);
+      document.getElementById('sv-name').textContent = pay.n || 'MIRROR';
+      const p = pay.p || {};
+      const fila=(rowId,valId,txt)=>{ const r=document.getElementById(rowId),e=document.getElementById(valId); if(e) e.textContent=txt||''; if(r) r.style.display = (txt&&txt.trim())?'':'none'; };
+      const owner=document.getElementById('sv-owner');
+      if(owner){ if(p.no && p.no.trim()){ owner.textContent='el MIRROR de '+p.no; owner.style.display=''; } else owner.style.display='none'; }
+      fila('sv-row-rol','sv-rol', p.ro);
+      fila('sv-row-estilo','sv-estilo', p.es);
+      fila('sv-row-algo','sv-algo', p.al);
+      v.style.display='flex';
+    } catch(e){}
+  };
+  window.abrirCompartir = function(){
+    if(!CONFIG.configurado){ alert('Primero armá tu MIRROR en el constructor. Después vas a poder compartirlo.'); return; }
+    const inp=document.getElementById('share-link'); if(inp) inp.value=_linkCompartir();
+    const an=document.getElementById('share-appname'); if(an) an.textContent=CONFIG.appName||'MIRROR';
+    const nat=document.getElementById('share-native'); if(nat) nat.style.display = (navigator.share)?'inline-flex':'none';
+    const msg=document.getElementById('share-msg'); if(msg) msg.textContent='';
+    const g=document.getElementById('share-ov'); if(g){ g.style.display='block'; g.scrollTop=0; }
+  };
+  window.cerrarCompartir = function(){ const g=document.getElementById('share-ov'); if(g) g.style.display='none'; };
+  window.copiarLinkCompartir = function(){
+    const inp=document.getElementById('share-link'), msg=document.getElementById('share-msg'); if(!inp) return;
+    const ok=()=>{ if(msg) msg.textContent='✅ Link copiado. Pegalo donde quieras.'; };
+    const txt=inp.value;
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(txt).then(ok).catch(function(){ try{ inp.select(); document.execCommand('copy'); ok(); }catch(e){} });
+    } else { try{ inp.select(); document.execCommand('copy'); ok(); }catch(e){} }
+  };
+  window.compartirNativo = function(){
+    const inp=document.getElementById('share-link'); if(!inp) return;
+    if(navigator.share){ navigator.share({ title:(CONFIG.appName||'MIRROR'), text:'Te presento mi MIRROR:', url:inp.value }).catch(function(){}); }
+  };
+  window.previsualizarCompartir = function(){ if(typeof window.mostrarVistaCompartida==='function') window.mostrarVistaCompartida(_payloadCompartir()); };
+
   window.abrirGuia = function(){ var g=document.getElementById('guia-ov'); if(g){ g.style.display='block'; g.scrollTop=0; } };
   window.cerrarGuia = function(){ var g=document.getElementById('guia-ov'); if(g) g.style.display='none'; };
   window.abrirLegal = function(){ var g=document.getElementById('legal-ov'); if(g){ g.style.display='block'; g.scrollTop=0; } };
@@ -4655,7 +4792,10 @@ function duckMusic(){
   };
 
   // Arranque: el constructor nace DESPUÉS de la cinemática (finishBoot lo dispara).
-  window.MIRROR_necesitaConfig = !CONFIG.configurado;
+  // v22: si la URL trae un MIRROR compartido (#m=...), entramos en modo solo-lectura (no constructor).
+  var _shared = (typeof window.leerPayloadCompartido==='function') ? window.leerPayloadCompartido() : null;
+  if (_shared){ window.MODO_COMPARTIDO = _shared; }
+  window.MIRROR_necesitaConfig = !CONFIG.configurado && !window.MODO_COMPARTIDO;
   window.lanzarConstructorTrasBoot = function(){
     if (!CONFIG.configurado){ pintarConstructor(); document.getElementById('cons-ov').classList.add('show'); consGo(0); }
   };
