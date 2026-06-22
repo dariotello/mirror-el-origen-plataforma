@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <!-- ════════════════════════════════════════════════════════════
-     MIRROR «El Origen» — PLATAFORMA · v22 · 2026-06-22 — PALANCA D: compartir tu MIRROR por un link de SOLO LECTURA. El dueño genera un link (footer → «🔗 compartir») que serializa SOLO la carta de presentación pública (nombre, modos, color, rol, estilo, en qué trabaja) en el hash de la URL — NUNCA proxy, Firebase, PIN, claves ni ubicación. Quien lo abre ve una vista de solo lectura con la fachada y un botón «Creá tu propio MIRROR». El payload va en el hash (#m=...), que no viaja al servidor. Sobre v21 (plantillas por oficio): PALANCA C: plantillas por oficio en el constructor (docente, emprendedor, músico, escritor, salud, oficina, estudiante) que pre-llenan rol+estilo+algo del perfil, editables. Sobre Palanca A: botón «Deploy to Cloudflare» en la
+     MIRROR «El Origen» — PLATAFORMA · v23 · 2026-06-22 — Sobre v22 (Palanca D): el visitante que abre un link compartido (#m=...) ve un teaser breve del monolito (~2.6s) en vez de la cinemática completa, para que la carta de solo-lectura aparezca rápido al abrir desde el celu (el flujo normal mantiene los 10s). PALANCA D: compartir tu MIRROR por un link de SOLO LECTURA. El dueño genera un link (footer → «🔗 compartir») que serializa SOLO la carta de presentación pública (nombre, modos, color, rol, estilo, en qué trabaja) en el hash de la URL — NUNCA proxy, Firebase, PIN, claves ni ubicación. Quien lo abre ve una vista de solo lectura con la fachada y un botón «Creá tu propio MIRROR». El payload va en el hash (#m=...), que no viaja al servidor. Sobre v21 (plantillas por oficio): PALANCA C: plantillas por oficio en el constructor (docente, emprendedor, músico, escritor, salud, oficina, estudiante) que pre-llenan rol+estilo+algo del perfil, editables. Sobre Palanca A: botón «Deploy to Cloudflare» en la
      guía (Paso 2) → el proxy del usuario de ~30 min a 2 clics, apuntando al repo público mirror-proxy.
      Sobre reactividad v19 + dinamismo v18. REQUIERE que el repo dariotello/mirror-proxy exista y sea
      público antes de deployar (si no, el botón da 404).
@@ -1249,7 +1249,7 @@ function recortar_(s, max) {
 // ── CATÁLOGO DE MOTORES DE IA ─────────────────────────────────────────────
 // Todos hablan el formato OpenAI (chat completions), así que el motor interno
 // es uno solo. El proxy rutea a cada proveedor con la clave que el usuario guardó.
-const PLATFORM_VERSION = 'v22';  // ← ÚNICA fuente de verdad: actualizar SOLO acá en cada deploy (regla de Darío)
+const PLATFORM_VERSION = 'v23';  // ← ÚNICA fuente de verdad: actualizar SOLO acá en cada deploy (regla de Darío)
 window.addEventListener('load', function(){ try{ document.querySelectorAll('[data-ver]').forEach(function(e){ e.textContent = PLATFORM_VERSION; }); }catch(_){} });
 const MOTORES = {
   groq: {
@@ -4230,8 +4230,11 @@ function bootCine(){
   startAudioIfNeeded();
   setTimeout(()=>{document.getElementById('bootTitle').classList.add('show');},600);
   setTimeout(()=>{document.getElementById('bootSign').classList.add('show');},1200);
-  setTimeout(finishBoot,10000);
-  setTimeout(finishBoot,12000); // failsafe absoluto: la app SIEMPRE aparece
+  // v23: quien abre un link compartido ve un teaser breve del monolito (no la cinemática entera),
+  // así la carta de solo-lectura aparece rápido (clave para abrir desde el celu). El flujo normal no cambia.
+  var _boot = window.MODO_COMPARTIDO ? 2600 : 10000;
+  setTimeout(finishBoot,_boot);
+  setTimeout(finishBoot,_boot+2000); // failsafe absoluto: la app SIEMPRE aparece
 }
 window.addEventListener('load',()=>setTimeout(bootCine,200));
 
