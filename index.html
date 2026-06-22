@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <!-- ════════════════════════════════════════════════════════════
-     MIRROR «El Origen» — PLATAFORMA · v20 · 2026-06-21 — PALANCA A: botón «Deploy to Cloudflare» en la
+     MIRROR «El Origen» — PLATAFORMA · v21 · 2026-06-21 — PALANCA C: plantillas por oficio en el constructor (docente, emprendedor, músico, escritor, salud, oficina, estudiante) que pre-llenan rol+estilo+algo del perfil, editables. Sobre Palanca A: botón «Deploy to Cloudflare» en la
      guía (Paso 2) → el proxy del usuario de ~30 min a 2 clics, apuntando al repo público mirror-proxy.
      Sobre reactividad v19 + dinamismo v18. REQUIERE que el repo dariotello/mirror-proxy exista y sea
      público antes de deployar (si no, el botón da 404).
@@ -341,6 +341,15 @@ body.tars .mono-title em{color:var(--tars);}
   .mtbtn.active-mirror, .mtbtn.active-tars, .mtbtn.active-conn, .mtbtn.active-jurado,
   .conn-card.connected, .bubble::before { animation: none !important; }
 }
+
+/* v21 — chips de oficio (selector de plantilla en el constructor) */
+.oficio-wrap{ margin:0 0 14px; }
+.oficio-lbl{ font-size:11.5px; color:#9a9ac0; line-height:1.5; margin-bottom:8px; }
+.oficio-chips{ display:flex; flex-wrap:wrap; gap:7px; }
+.oficio-chip{ font-family:'Space Mono',monospace; font-size:11px; color:#c4c4dc; background:rgba(120,120,255,0.06); border:1px solid rgba(120,120,255,0.22); border-radius:20px; padding:6px 12px; cursor:pointer; transition:all .2s; }
+.oficio-chip:hover{ border-color:rgba(120,120,255,0.5); background:rgba(120,120,255,0.12); transform:translateY(-1px); }
+.oficio-chip:active{ transform:scale(.94); }
+.oficio-chip.on{ background:rgba(112,112,255,0.18); border-color:#7070ff; color:#cfcfff; }
 </style>
 </head>
 <body>
@@ -1173,7 +1182,7 @@ function recortar_(s, max) {
 // ── CATÁLOGO DE MOTORES DE IA ─────────────────────────────────────────────
 // Todos hablan el formato OpenAI (chat completions), así que el motor interno
 // es uno solo. El proxy rutea a cada proveedor con la clave que el usuario guardó.
-const PLATFORM_VERSION = 'v20';  // ← ÚNICA fuente de verdad: actualizar SOLO acá en cada deploy (regla de Darío)
+const PLATFORM_VERSION = 'v21';  // ← ÚNICA fuente de verdad: actualizar SOLO acá en cada deploy (regla de Darío)
 window.addEventListener('load', function(){ try{ document.querySelectorAll('[data-ver]').forEach(function(e){ e.textContent = PLATFORM_VERSION; }); }catch(_){} });
 const MOTORES = {
   groq: {
@@ -4362,6 +4371,18 @@ function duckMusic(){
      <div class="cons-step" data-step="5">
        <div class="cons-h">¿Quién <em>sos</em>?</div>
        <div class="cons-p">Esto es lo que hace que tu MIRROR hable como vos y no como un robot. Cuanto más cuentes, mejor te conoce. Completá lo que quieras ahora; lo podés ampliar siempre.</div>
+       <div class="oficio-wrap">
+         <div class="oficio-lbl">¿A qué te dedicás? Tocá un punto de partida (opcional — después editás todo a tu gusto):</div>
+         <div class="oficio-chips">
+           <button type="button" class="oficio-chip" onclick="aplicarOficio('docente',this)">📚 Docente</button>
+           <button type="button" class="oficio-chip" onclick="aplicarOficio('emprendedor',this)">💼 Emprendedor/a</button>
+           <button type="button" class="oficio-chip" onclick="aplicarOficio('musico',this)">🎵 Músico/a</button>
+           <button type="button" class="oficio-chip" onclick="aplicarOficio('creativo',this)">✍️ Escritor/a</button>
+           <button type="button" class="oficio-chip" onclick="aplicarOficio('salud',this)">🩺 Salud</button>
+           <button type="button" class="oficio-chip" onclick="aplicarOficio('oficina',this)">🗂️ Oficina</button>
+           <button type="button" class="oficio-chip" onclick="aplicarOficio('estudiante',this)">🎓 Estudiante</button>
+         </div>
+       </div>
        <label class="cons-label">Tu nombre</label>
        <input class="cons-inp" id="c-nombre" placeholder="Nombre y apellido">
        <div class="cons-row">
@@ -4547,6 +4568,24 @@ function duckMusic(){
     consGo(CONFIG.configurado ? 1 : 0);
   };
 
+  // ── v21 — PLANTILLAS POR OFICIO: punto de partida del perfil según el rubro (editable) ──
+  const PLANTILLAS_OFICIO = {
+    docente:     { rol:'Docente', estilo:'Cercano y claro. Explico con ejemplos cotidianos, tengo paciencia pero pongo límites. Lenguaje sencillo, sin tecnicismos de más.', algo:'Mis clases, la preparación de material, el seguimiento de mis estudiantes y las cuestiones de la escuela.' },
+    emprendedor: { rol:'Emprendedor/a — llevo mi propio negocio', estilo:'Directo y resolutivo. Voy al grano, orientado a la acción. Cordial con clientes, firme en lo importante.', algo:'Mi negocio, la atención a clientes, las ventas, los proveedores y hacer crecer el proyecto.' },
+    musico:      { rol:'Músico/a', estilo:'Expresivo y sensible, relajado. Hablo con calidez, me sale natural lo creativo. Informal pero cuidando lo que digo.', algo:'Mi música, los ensayos y shows, las composiciones y la difusión de lo que hago.' },
+    creativo:    { rol:'Escritor/a · Creativo/a', estilo:'Cuido las palabras, busco la imagen justa. Tono reflexivo, a veces con humor, siempre con voz propia.', algo:'Mis textos y proyectos creativos, las ideas en las que ando, los plazos y la difusión.' },
+    salud:       { rol:'Profesional de la salud', estilo:'Cálido pero preciso. Transmito calma y confianza, claro sin asustar. Nunca improviso un dato médico.', algo:'Mi consulta, el seguimiento de pacientes, los turnos y la coordinación con colegas.' },
+    oficina:     { rol:'Profesional / trabajo de oficina', estilo:'Cordial y profesional, claro y ordenado. Formal cuando hace falta, cercano en el día a día. Concreto en los mails.', algo:'Mi trabajo, los proyectos y plazos, la coordinación con el equipo y los clientes.' },
+    estudiante:  { rol:'Estudiante', estilo:'Informal y curioso, con ganas. Hablo relajado, pregunto cuando no sé. Directo y sin vueltas.', algo:'Mis materias y exámenes, los trabajos prácticos, los grupos de estudio y la organización del tiempo.' }
+  };
+  window.aplicarOficio = function(clave, btn){
+    const o = PLANTILLAS_OFICIO[clave]; if(!o) return;
+    const rol=document.getElementById('c-rol'); if(rol) rol.value=o.rol;
+    const est=document.getElementById('c-estilo'); if(est) est.value=o.estilo;
+    const alg=document.getElementById('c-proyectos'); if(alg && !alg.value.trim()) alg.value=o.algo; // "algo más" solo si está vacío
+    document.querySelectorAll('.oficio-chip').forEach(c=>c.classList.remove('on'));
+    if(btn) btn.classList.add('on');
+  };
   window.abrirGuia = function(){ var g=document.getElementById('guia-ov'); if(g){ g.style.display='block'; g.scrollTop=0; } };
   window.cerrarGuia = function(){ var g=document.getElementById('guia-ov'); if(g) g.style.display='none'; };
   window.abrirLegal = function(){ var g=document.getElementById('legal-ov'); if(g){ g.style.display='block'; g.scrollTop=0; } };
