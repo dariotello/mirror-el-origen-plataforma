@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <!-- ════════════════════════════════════════════════════════════
-     MIRROR «El Origen» — PLATAFORMA · v28 · 2026-06-22 — CORRECCIONES de pruebas en vivo: (1) modelo de visión actualizado a qwen/qwen3.6-27b porque Groq deprecó llama-4-scout el 17/6/2026; (2) parseo de respuesta del motor protegido: si el proxy devuelve algo no-JSON ya no explota con error críptico, sino con un mensaje claro («revisá tu proxy y tu clave en CONEX»); (3) mensaje de error de visión limpio; (4) footer en flex con separación vertical (antes las filas de enlaces se enciman al haber sumado «compartir»); (5) nombre por defecto del modo analítico TARS→ANALISTA (TARS era marca del proyecto personal; la plataforma white-label usa un nombre genérico, editable). Sobre v27: Palanca B (imágenes). El dueño genera un link (footer → «🔗 compartir») que serializa SOLO la carta de presentación pública (nombre, modos, color, rol, estilo, en qué trabaja) en el hash de la URL — NUNCA proxy, Firebase, PIN, claves ni ubicación. Quien lo abre ve una vista de solo lectura con la fachada y un botón «Creá tu propio MIRROR». El payload va en el hash (#m=...), que no viaja al servidor. Sobre v21 (plantillas por oficio): PALANCA C: plantillas por oficio en el constructor (docente, emprendedor, músico, escritor, salud, oficina, estudiante) que pre-llenan rol+estilo+algo del perfil, editables. Sobre Palanca A: botón «Deploy to Cloudflare» en la
+     MIRROR «El Origen» — PLATAFORMA · v29 · 2026-06-22 — FIX VISIÓN (detectado en prueba en vivo): el modelo de visión qwen es «pensante» y con 900 tokens se quedaba sin espacio para cerrar su bloque <think>, así que el razonamiento crudo (en inglés) se colaba en pantalla. (A) El limpiador ahora también borra un <think> ABIERTO sin cierre y se queda con la respuesta posterior si la hay; (B) la llamada de visión usa 2500 tokens (no 900) para que el modelo piense Y responda. Sobre v28: correcciones de pruebas en vivo (modelo de visión vigente, parseo protegido, footer, TARS→ANALISTA). El dueño genera un link (footer → «🔗 compartir») que serializa SOLO la carta de presentación pública (nombre, modos, color, rol, estilo, en qué trabaja) en el hash de la URL — NUNCA proxy, Firebase, PIN, claves ni ubicación. Quien lo abre ve una vista de solo lectura con la fachada y un botón «Creá tu propio MIRROR». El payload va en el hash (#m=...), que no viaja al servidor. Sobre v21 (plantillas por oficio): PALANCA C: plantillas por oficio en el constructor (docente, emprendedor, músico, escritor, salud, oficina, estudiante) que pre-llenan rol+estilo+algo del perfil, editables. Sobre Palanca A: botón «Deploy to Cloudflare» en la
      guía (Paso 2) → el proxy del usuario de ~30 min a 2 clics, apuntando al repo público mirror-proxy.
      Sobre reactividad v19 + dinamismo v18. REQUIERE que el repo dariotello/mirror-proxy exista y sea
      público antes de deployar (si no, el botón da 404).
@@ -1303,7 +1303,7 @@ function recortar_(s, max) {
 // ── CATÁLOGO DE MOTORES DE IA ─────────────────────────────────────────────
 // Todos hablan el formato OpenAI (chat completions), así que el motor interno
 // es uno solo. El proxy rutea a cada proveedor con la clave que el usuario guardó.
-const PLATFORM_VERSION = 'v28';  // ← ÚNICA fuente de verdad: actualizar SOLO acá en cada deploy (regla de Darío)
+const PLATFORM_VERSION = 'v29';  // ← ÚNICA fuente de verdad: actualizar SOLO acá en cada deploy (regla de Darío)
 window.addEventListener('load', function(){ try{ document.querySelectorAll('[data-ver]').forEach(function(e){ e.textContent = PLATFORM_VERSION; }); }catch(_){} });
 const MOTORES = {
   groq: {
@@ -3012,6 +3012,14 @@ async function llamarMotor(url, key, modelo, messages, systemPrompt, maxTokens, 
   // respuesta real (visto en producción: MIRROR contestó "No further output"). Los
   // limpiamos; si la respuesta ERA solo eso, queda vacía y la capa multi-motor reintenta.
   contenido = contenido.replace(/<think>[\s\S]*?<\/think>/gi,'').trim();
+  // v29 — algunos modelos «pensantes» (qwen3, gpt-oss) abren <think> y, si se quedan sin
+  // tokens, no lo cierran: el razonamiento crudo se colaba en pantalla. Si quedó un <think>
+  // ABIERTO, nos quedamos con lo que haya DESPUÉS de un </think> suelto; si no hay cierre,
+  // descartamos desde <think> hasta el final (queda vacío → la capa multi-motor reintenta).
+  if (/<think>/i.test(contenido)) {
+    const partes = contenido.split(/<\/think>/i);
+    contenido = (partes.length > 1 ? partes[partes.length-1] : contenido.replace(/<think>[\s\S]*$/i,'')).trim();
+  }
   contenido = contenido.replace(/^\(?\s*no further output\s*\.?\)?$/gim,'').trim();
   contenido = contenido.replace(/\s*\(?\bno further output\b\.?\)?\s*$/i,'').trim();
   // v3.5: normalización Unicode de la salida de AMBOS motores (Groq y respaldo Cerebras),
@@ -3130,7 +3138,9 @@ async function enviarConImagen(text){
   let reply = null, errorMsg = null;
   try {
     // Llamada DIRECTA al modelo de visión del motor activo (sin fallback a Cerebras, que no ve imágenes).
-    reply = await llamarMotor(GROQ_URL, GROQ_KEY, modeloV, messages, systemPrompt, 900, 0.5);
+    // v29: 2500 tokens (no 900). El modelo de visión qwen es «pensante»: con poco margen se
+    // queda sin espacio para cerrar el razonamiento y dar la respuesta. Con aire, piensa y responde.
+    reply = await llamarMotor(GROQ_URL, GROQ_KEY, modeloV, messages, systemPrompt, 2500, 0.5);
   } catch(e){ errorMsg = (e && e.message) ? e.message : 'el motor de visión no respondió'; }
   removeTyping();
   if (reply){
