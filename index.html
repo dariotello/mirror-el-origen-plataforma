@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <!-- ════════════════════════════════════════════════════════════
-     MIRROR «El Origen» — PLATAFORMA · v29 · 2026-06-22 — FIX VISIÓN (detectado en prueba en vivo): el modelo de visión qwen es «pensante» y con 900 tokens se quedaba sin espacio para cerrar su bloque <think>, así que el razonamiento crudo (en inglés) se colaba en pantalla. (A) El limpiador ahora también borra un <think> ABIERTO sin cierre y se queda con la respuesta posterior si la hay; (B) la llamada de visión usa 2500 tokens (no 900) para que el modelo piense Y responda. Sobre v28: correcciones de pruebas en vivo (modelo de visión vigente, parseo protegido, footer, TARS→ANALISTA). El dueño genera un link (footer → «🔗 compartir») que serializa SOLO la carta de presentación pública (nombre, modos, color, rol, estilo, en qué trabaja) en el hash de la URL — NUNCA proxy, Firebase, PIN, claves ni ubicación. Quien lo abre ve una vista de solo lectura con la fachada y un botón «Creá tu propio MIRROR». El payload va en el hash (#m=...), que no viaja al servidor. Sobre v21 (plantillas por oficio): PALANCA C: plantillas por oficio en el constructor (docente, emprendedor, músico, escritor, salud, oficina, estudiante) que pre-llenan rol+estilo+algo del perfil, editables. Sobre Palanca A: botón «Deploy to Cloudflare» en la
+     MIRROR «El Origen» — PLATAFORMA · v34 · 2026-06-24 — PLATAFORMA GENÉRICA: se quitaron los rastros del MIRROR personal de Darío (tesis / Teoría del Actor-Red): la compuerta de bibliografía ya no trae autores/siglas específicos (TAR/ANT/Latour/Dussel…) sino términos académicos genéricos; el prompt de cierre de informe no menciona «TAR»; el archivo exportado se llama registros_*.json; la constante TESIS_PROYECTO pasó a DOMINIO_EXPERTO_TPL (plantilla genérica) y se genericizaron los comentarios. Se MANTIENE la autoría/marca (idea de Darío Tello, NOTICE, Apache 2.0). Los IDs técnicos internos (tesisData, connectTesis) quedan como claves no visibles. Sobre v33 · WHITE-LABEL: el nombre del modo analítico (config, default ANALISTA) ahora aparece en el status de redacción de informe y en el botón de voz; ya no se escapa el literal «TARS» en textos visibles —status de informe, botón de voz, alert «sin datos», pie del PDF exportado y prompt de cierre (envuelto en personalizarPrompt)— todos muestran el nombre configurable (default ANALISTA). Las claves técnicas 'tars' quedan intactas. Sobre v32 · FIRMA SONORA «El Origen» (capa deslumbrante D4): un breve arpegio cálido Am–F–C–G, 100% original (Web Audio, sin samples ni recreación de obras con copyright), con cola de reverb larga (reusa el convolver de la suite). Suena UNA sola vez, al nacer el MIRROR (no en la vista compartida). On/off: respeta el toggle 🔊 «sonido» del footer (siempre visible); si el sonido está apagado, no suena. Sobre v31 · ORBE VIVO SUTIL (capa deslumbrante D2): el logo MIRROR del header insinúa vida sin alejarse del orbe original. En reposo respira apenas (±0.05 alrededor de 1.0); mientras piensa late muy suave (el brillo y el giro de siempre); al recibir, un leve destello. Ajustado a pedido de Darío: cambio mínimo. El color ya sigue al modo (violeta=entidad / cian=analítico). Es 100% visual (solo el valor del aura en el loop de dibujo): no toca la lógica, el chat ni los datos. Sobre v30 · MODELOS QUE NO CADUCAN: si el proveedor da de baja un modelo (le pasó a la visión: deprecado en 5 días), la plataforma cae automáticamente al siguiente modelo VIGENTE del MISMO motor (catálogo MOTORES), lo recuerda en CONFIG y te avisa; si no hay reemplazo en el catálogo, mensaje accionable que apunta a CONEX (nunca cuelga el chat). El chequeo es REACTIVO (ante el primer fallo real del modelo), 100% del lado del cliente, sin tocar el proxy. NOTA: el chequeo PROACTIVO /v1/models al conectar requiere agregar una ruta nueva al proxy (no incluido en este build). Sobre v29 (FIX VISIÓN, detectado en prueba en vivo): el modelo de visión qwen es «pensante» y con 900 tokens se quedaba sin espacio para cerrar su bloque <think>, así que el razonamiento crudo (en inglés) se colaba en pantalla. (A) El limpiador ahora también borra un <think> ABIERTO sin cierre y se queda con la respuesta posterior si la hay; (B) la llamada de visión usa 2500 tokens (no 900) para que el modelo piense Y responda. Sobre v28: correcciones de pruebas en vivo (modelo de visión vigente, parseo protegido, footer, TARS→ANALISTA). El dueño genera un link (footer → «🔗 compartir») que serializa SOLO la carta de presentación pública (nombre, modos, color, rol, estilo, en qué trabaja) en el hash de la URL — NUNCA proxy, Firebase, PIN, claves ni ubicación. Quien lo abre ve una vista de solo lectura con la fachada y un botón «Creá tu propio MIRROR». El payload va en el hash (#m=...), que no viaja al servidor. Sobre v21 (plantillas por oficio): PALANCA C: plantillas por oficio en el constructor (docente, emprendedor, músico, escritor, salud, oficina, estudiante) que pre-llenan rol+estilo+algo del perfil, editables. Sobre Palanca A: botón «Deploy to Cloudflare» en la
      guía (Paso 2) → el proxy del usuario de ~30 min a 2 clics, apuntando al repo público mirror-proxy.
      Sobre reactividad v19 + dinamismo v18. REQUIERE que el repo dariotello/mirror-proxy exista y sea
      público antes de deployar (si no, el botón da 404).
@@ -451,7 +451,7 @@ var a=document.getElementById('app');if(a)a.classList.add('ready');}catch(e){}},
 <div class="modal-overlay" id="modal-informe">
   <div class="modal">
     <h3>📄 Generar informe</h3>
-    <p>TARS redacta un informe académico riguroso (introducción, marco teórico, resultados, discusión y conclusiones) a partir de los datos reales de tu base + la bibliografía cargada. Incluye gráficos. No es un chat.</p>
+    <p>El modo analítico redacta un informe académico riguroso (introducción, marco teórico, resultados, discusión y conclusiones) a partir de los datos reales de tu base + la bibliografía cargada. Incluye gráficos. No es un chat.</p>
     <p style="font-size:11px;opacity:0.6;margin-top:-4px;">Tarda unos segundos: TARS lo escribe en el momento.</p>
     <div class="modal-fname" id="informe-resumen"></div>
     <div class="modal-btns">
@@ -1113,7 +1113,7 @@ function recortar_(s, max) {
 
     <div class="conn-section-title" style="margin-top:0.5rem;">Fuentes de datos autorizadas</div>
 
-    <!-- CARD: Base de datos tesis -->
+    <!-- CARD: Base de datos externa -->
     <div class="conn-card" id="conn-card-tesis">
       <div class="conn-card-header">
         <div class="conn-status-dot off" id="conn-dot-tesis"></div>
@@ -1224,7 +1224,7 @@ function recortar_(s, max) {
       <span onclick="abrirCompartir()" title="Compartí tu MIRROR por un link de solo lectura (sin claves ni memoria)">🔗 compartir</span>
       <span class="fsep">·</span>
       <span id="ttsbtn" onclick="toggleTTS()" title="Leer las respuestas en voz alta">🔇 voz</span><span id="vozsel" onclick="abrirSelectorVoz()" title="Elegir la voz de lectura">▾</span>
-      <span class="fsound" id="sndBtn" onclick="toggleSound()" title="Música ambiental El Origen">🔇 sonido</span>
+      <span class="fsound" id="sndBtn" onclick="toggleSound()" title="Música ambiental y firma sonora «El Origen» · on/off">🔇 sonido</span>
       <span class="fpres" onclick="openPres()" title="Pantalla completa para la defensa">◬ presentación</span>
       <span class="ftip">🌐 web · ⊕ doc</span>
       <span class="fver" data-ver title="versión de la plataforma — verificá que sea la última deployada" style="opacity:0.5;letter-spacing:0.12em;font-size:10px;margin-left:auto;"></span>
@@ -1303,7 +1303,7 @@ function recortar_(s, max) {
 // ── CATÁLOGO DE MOTORES DE IA ─────────────────────────────────────────────
 // Todos hablan el formato OpenAI (chat completions), así que el motor interno
 // es uno solo. El proxy rutea a cada proveedor con la clave que el usuario guardó.
-const PLATFORM_VERSION = 'v29';  // ← ÚNICA fuente de verdad: actualizar SOLO acá en cada deploy (regla de Darío)
+const PLATFORM_VERSION = 'v34';  // ← ÚNICA fuente de verdad: actualizar SOLO acá en cada deploy (regla de Darío)
 window.addEventListener('load', function(){ try{ document.querySelectorAll('[data-ver]').forEach(function(e){ e.textContent = PLATFORM_VERSION; }); }catch(_){} });
 const MOTORES = {
   groq: {
@@ -1619,7 +1619,7 @@ HONESTIDAD SOBRE EL SISTEMA:
 18. NO inventes motivos de fallas técnicas que no presenciaste: solo ves esta conversación.`;
 
 // ══════════ MODO JURADO (v2.1) — simulacro de defensa + copiloto ══════════
-// Aditivo: no toca MIRROR ni TARS normal. El proyecto de tesis va embebido
+// Aditivo: no toca MIRROR ni TARS normal. El dominio experto (plantilla editable) va embebido
 // (cero dependencia del RAG para la fuente principal del interrogatorio).
 const SYSTEM_TARS_JURADO = `Sos el modo EXAMINADOR de MIRROR: un experto que interroga y entrena a tu usuario en aquello que él quiera preparar (una defensa, un examen, una entrevista de trabajo, una certificación, presentar un proyecto). Adoptás el rol del evaluador exigente y justo del ámbito que corresponda, según el bloque "=== DOMINIO EXPERTO ===" del contexto. Tu función es entrenar a tu usuario para esa instancia real.
 
@@ -1648,9 +1648,9 @@ HONESTIDAD SOBRE EL SISTEMA:
 
 FORMATO: prosa clara, sin tablas markdown, sin encabezados de almohadillas; negrita con moderación. Cerrá siempre la idea: nunca termines a mitad de una oración.`;
 
-// Texto íntegro del proyecto de tesis (extraído del PDF oficial presentado a UNQ).
-// Se inyecta en CADA turno del modo jurado para que el interrogatorio quede anclado al documento real.
-const TESIS_PROYECTO = `=== DOMINIO EXPERTO ===
+// Plantilla editable del DOMINIO EXPERTO (genérica): el usuario describe sobre qué tema
+// quiere que lo interrogue el modo Examinador. Se inyecta en cada turno para anclar el interrogatorio a ese dominio.
+const DOMINIO_EXPERTO_TPL = `=== DOMINIO EXPERTO ===
 👉 COMPLETÁ ESTO si vas a usar el modo EXAMINADOR (⚖) o querés que TARS sea experto en un tema tuyo.
    Describí acá sobre qué querés que el modo Examinador te interrogue y entrene.
    Borrá los ejemplos y poné lo tuyo. Cuanto más detalle, mejor te prepara.
@@ -1708,9 +1708,9 @@ const PREGUNTA_POR_APP = /\b(mirror|tars|jurado|examinador|conex|esta app|la app
 //   Ciclo de uso resultante (simulacro): 🎙 → hablás → ↑ enviar (mic se apaga solo) →
 //   TARS responde y lee → 🎙 de nuevo para contestar. Push-to-talk limpio.
 let recog=null, micOn=false, micBase='';
-// v3.0 — P6: GLOSARIO DE LA TESIS para el dictado. El reconocedor es-AR destroza los
-// apellidos y siglas del marco teórico ("Selwyn" → "elwin/erwin/wendyn"). Esta tabla
-// corrige las variantes conocidas en el texto final. Ampliable: agregar pares acá.
+// v3.0 — P6: GLOSARIO DE DICTADO (opcional). El reconocedor es-AR a veces escribe mal
+// nombres propios, siglas o tecnicismos. Esta tabla los corrige en el texto final;
+// por defecto va vacía. Ampliable: agregar pares acá.
 const GLOSARIO_DICTADO=[
   // 👉 OPCIONAL: el dictado por voz a veces escribe mal nombres propios, siglas o
   //    tecnicismos tuyos. Agregá acá tus correcciones como pares [patrón, texto correcto].
@@ -1847,7 +1847,7 @@ function hablar(texto){
     .replace(/^\s*[-•◦▪*]+\s+/gm,'')                   // viñetas al inicio del renglón → fuera
     .replace(/(\d)\s*[-–—]\s*(\d)/g,'$1 a $2')        // rangos "1-5" → "1 a 5"
     .replace(/\s*[—–]+\s*/g,', ')                       // rayas largas → pausa breve
-    .replace(/([A-Za-zÁÉÍÓÚÑáéíóúñ])-(?=[A-Za-zÁÉÍÓÚÑáéíóúñ])/g,'$1 ') // "actor-red" → "actor red"
+    .replace(/([A-Za-zÁÉÍÓÚÑáéíóúñ])-(?=[A-Za-zÁÉÍÓÚÑáéíóúñ])/g,'$1 ') // "co-creación" → "co creación"
     .replace(/\s-+\s/g,', ')                            // guión suelto entre espacios → pausa
     .replace(/-{2,}/g,' ')                                // "----" decorativos → fuera
     .replace(/[ \t]+/g,' ').trim().slice(0,5000);       // colapsa espacios PERO respeta renglones
@@ -1903,7 +1903,7 @@ function abrirSelectorVoz(){
         +'<span class="voz-acciones">'
         +'<button onclick="probarVoz(\''+n+'\',\'mirror\')" title="Probar con el matiz de MIRROR">▶</button>'
         +'<button class="'+(esM?'vsel':'')+'" onclick="usarVoz(\''+n+'\',\'mirror\')">'+(esM?'✓ MIRROR':'MIRROR')+'</button>'
-        +'<button class="'+(esT?'vsel':'')+'" onclick="usarVoz(\''+n+'\',\'tars\')">'+(esT?'✓ TARS':'TARS')+'</button>'
+        +'<button class="'+(esT?'vsel':'')+'" onclick="usarVoz(\''+n+'\',\'tars\')">'+(esT?('✓ '+((CONFIG&&CONFIG.modos&&CONFIG.modos.tars)||'ANALISTA')):((CONFIG&&CONFIG.modos&&CONFIG.modos.tars)||'ANALISTA'))+'</button>'
         +'</span></div>';
     }).join('');
   }
@@ -1937,7 +1937,7 @@ function exportarJSONSuite(){
   }
   const blob=new Blob([JSON.stringify(tesisData,null,1)],{type:'application/json'});
   const a=document.createElement('a');
-  a.download='tesis_registros_'+fechaArchivo()+'.json';
+  a.download='registros_'+fechaArchivo()+'.json';
   a.href=URL.createObjectURL(blob);
   a.click();
   setTimeout(()=>URL.revokeObjectURL(a.href),4000);
@@ -2103,7 +2103,7 @@ async function configBajarDeFirebase(fbUrl) {
   } catch(e) { return null; }
 }
 
-// --- Firebase Tesis ---
+// --- Firebase base de datos externa ---
 async function fetchTesisData() {
   const res = await fetch(FB_EXTERNA+'/respuestas.json');
   if (!res.ok) throw new Error('La base respondió con estado '+res.status+'. Reintentá en unos segundos.');
@@ -2342,7 +2342,7 @@ function generarGraficoBarras(titulo, items, opts){
 }
 
 // v3.1: nombre de archivo → título legible para la bibliografía del informe.
-// "BRUNO_LATOUR_Reensamblar_lo_social_Una_i" → "BRUNO LATOUR Reensamblar lo social Una i"
+// "AUTOR_Titulo_del_documento_v2" → "AUTOR Titulo del documento v2"
 // "Dialnet-LaEscuelaEnLaPandemia-8456332" → "Dialnet - La Escuela En La Pandemia"
 // SOLO para mostrar en el informe: el RAG sigue usando el nombre exacto del archivo.
 function limpiarNombreDoc(n){
@@ -2615,12 +2615,12 @@ function detectarAutorEnPregunta(pregunta, chunks){
 // v1.4: ¿esta pregunta amerita traer la bibliografía? (refuerza el punto 1 + ahorra Groq)
 // En TARS normal NO inyectamos fragmentos ni gastamos la llamada de traducción en CADA mensaje:
 // solo cuando la pregunta es teórica/analítica o nombra un autor cargado. Cuando la base de
-// tesis está conectada (modo análisis datos+bibliografía) la bibliografía SIEMPRE fluye.
+// la base externa está conectada (modo análisis datos+bibliografía) la bibliografía SIEMPRE fluye.
 function necesitaBibliografia(text){
   if (!ragChunks.length && !ragDocs.some(d=>d.type==='session')) return false; // no hay PDFs cargados
   if (detectarAutorEnPregunta(text, ragChunks)) return true; // nombra un autor presente
   const p = normalizeText(text);
-  const teoria = /(teoria|teorico|actor red|\btar\b|\bant\b|latour|callon|akrich|selwyn|dussel|\blaw\b|bijker|winner|oneil|actante|traduccion|mediador|intermediario|punto de paso|marco teorico|concepto|conceptual|perspectiva|enfoque|paradigma|sociotecnic|bibliografia|biblio|autor|autores|fuente|cita|segun|que dice|interpret|analiz|aplicar|a la luz|desde la teoria|fundament|tension|asociaci|red de)/;
+  const teoria = /(teoria|teorico|marco teorico|concepto|conceptual|perspectiva|enfoque|paradigma|metodolog|hipotesis|categoria|dimension|variable|bibliografia|biblio|autor|autores|fuente|cita|segun|que dice|interpret|analiz|aplicar|a la luz|desde la teoria|fundament|tension)/;
   return teoria.test(p);
 }
 
@@ -2946,6 +2946,7 @@ function mensajeError(tipo){
   if (tipo === 'vacio') return '⚠️ El motor respondió vacío (suele pasar con consultas muy pesadas). Probá una pregunta más acotada o reintentá en un momento.';
   if (tipo === 'red') return '⚠️ Falló la conexión. Revisá tu internet y reintentá.';
   if (tipo === 'config') return '⚠️ No pude conectar con tu motor de IA. Revisá en CONEX que tu proxy y tu clave estén bien configurados (y que tu proxy esté publicado).';
+  if (tipo === 'modelo_caduco' || tipo === 'modelo_caduco_sin_reemplazo') return '⚠️ Tu modelo configurado ya no está disponible en tu motor. Elegí otro en CONEX (para visión, en ajustes avanzados).';
   return '⚠️ No pude procesar la consulta. Reintentá en un momento.';
 }
 
@@ -2989,10 +2990,15 @@ async function llamarMotor(url, key, modelo, messages, systemPrompt, maxTokens, 
   try { data = JSON.parse(_raw); } catch(_) { throw _errConfig(); }
   if (data.error) {
     const msg = (data.error.message || JSON.stringify(data.error));
+    const cod = ((data.error.code || data.error.type || '') + '').toLowerCase();
     let tipo = 'otro';
-    if (res.status === 429 || /rate limit|too many|quota|capacity|limit reached/i.test(msg)) tipo = 'rate_limit';
+    // v30 — «modelos que no caducan»: un modelo dado de baja / inexistente se detecta acá
+    // para poder caer al siguiente VIGENTE del mismo motor (ver llamarMotorVigente).
+    if (/model[_-]?(decommission|not[_-]?found|not[_-]?exist|deprecat)/.test(cod) ||
+        (/\bmodel\b/i.test(msg) && /(decommission|deprecat|no longer (available|supported)|has been (removed|retired|discontinued|shut ?down)|does not exist|not found|invalid model)/i.test(msg))) tipo = 'modelo_caduco';
+    else if (res.status === 429 || /rate limit|too many|quota|capacity|limit reached/i.test(msg)) tipo = 'rate_limit';
     else if (res.status === 413 || /too large|maximum context|tokens per|reduce|context length/i.test(msg)) tipo = 'too_big';
-    const err = new Error(msg); err.tipo = tipo; err.status = res.status; throw err;
+    const err = new Error(msg); err.tipo = tipo; err.status = res.status; err.modelo = modelo; throw err;
   }
   // Respuesta de error HTTP sin objeto data.error legible (p.ej. 500/502/503 del proveedor):
   // la tratamos como fallo para que la capa multi-motor caiga a Cerebras en vez de devolver null.
@@ -3034,11 +3040,61 @@ async function llamarMotor(url, key, modelo, messages, systemPrompt, maxTokens, 
 
 // v0.9: capa multi-motor. Prueba Groq; si falla por lo que sea, cae a Cerebras.
 // Mantiene el nombre callGroq para no tocar el resto del código.
+// ════ v30 — «MODELOS QUE NO CADUCAN» ════════════════════════════════════════
+// Un modelo puede ser dado de baja por el proveedor de un día para el otro (le pasó a la
+// visión: Llama-4-Scout deprecado en 5 días). Antes eso = error críptico y chat roto. Ahora:
+// si una llamada falla porque el modelo ya no existe, caemos SOLO al siguiente modelo VIGENTE
+// del MISMO motor (catálogo MOTORES), reintentamos, lo recordamos en CONFIG y avisamos claro.
+// Si no hay alternativa, mensaje accionable hacia CONEX (nunca cuelga). REACTIVO y aislado:
+// solo se dispara ante el tipo de error 'modelo_caduco'; cualquier otro error sube intacto.
+function _motorKeyDeUrl(url){
+  const ruta = (url || '').split('/').filter(Boolean).pop();
+  for (const k in MOTORES){ if (MOTORES[k].ruta === ruta) return k; }
+  return null;
+}
+// slot: 'principal' | 'respaldo' usan el catálogo de chat; 'vision' usa modelosVision (si existe).
+function modelosAlternativos(url, modeloMuerto, slot){
+  const k = _motorKeyDeUrl(url);
+  if (!k || !MOTORES[k]) return [];
+  const lista = (slot === 'vision') ? (MOTORES[k].modelosVision || []) : (MOTORES[k].modelos || []);
+  return Array.isArray(lista) ? lista.filter(m => m && m !== modeloMuerto) : [];
+}
+function _avisarCambioModelo(de, a){
+  try { addMsg('mirror', '🔄 Tu modelo «' + de + '» ya no está disponible en tu motor. Pasé automáticamente a «' + a + '», que sí está vigente. Lo recordé; podés cambiarlo cuando quieras en CONEX.', 'mirror'); } catch(_){}
+}
+function _persistirModelo(slot, nuevo){
+  try {
+    if (slot === 'principal') CONFIG.modeloPrincipal = nuevo;
+    else if (slot === 'respaldo') CONFIG.modeloRespaldo = nuevo;
+    else if (slot === 'vision') CONFIG.modeloVision = nuevo;
+    guardarConfig(CONFIG); aplicarConfigVars();
+  } catch(_){}
+}
+// Llama a un motor y, si el modelo está caduco, reintenta con el siguiente VIGENTE del catálogo.
+async function llamarMotorVigente(url, key, modelo, messages, systemPrompt, maxTokens, temp, slot){
+  try {
+    return await llamarMotor(url, key, modelo, messages, systemPrompt, maxTokens, temp);
+  } catch(e){
+    if (e.tipo !== 'modelo_caduco') throw e;  // cualquier otro error: lo maneja la capa de arriba
+    const candidatos = modelosAlternativos(url, modelo, slot);
+    for (const alt of candidatos){
+      try {
+        const r = await llamarMotor(url, key, alt, messages, systemPrompt, maxTokens, temp);
+        _persistirModelo(slot, alt); _avisarCambioModelo(modelo, alt);
+        return r;
+      } catch(e2){ if (e2.tipo !== 'modelo_caduco') throw e2; /* el alt también murió: probamos el próximo */ }
+    }
+    const donde = (slot === 'vision') ? 'el modelo de visión en CONEX (ajustes avanzados)' : 'otro modelo en CONEX';
+    const err = new Error('Tu modelo «' + modelo + '» ya no está disponible y no encontré un reemplazo vigente automático. Elegí ' + donde + '.');
+    err.tipo = 'modelo_caduco_sin_reemplazo'; throw err;
+  }
+}
+
 async function callGroq(messages, systemPrompt, maxTokens, temp) {
   // Motor 1: Groq (rápido)
   try {
     motorActivo = 'groq';
-    return await llamarMotor(GROQ_URL, GROQ_KEY, MODELO_GROQ, messages, systemPrompt, maxTokens, temp);
+    return await llamarMotorVigente(GROQ_URL, GROQ_KEY, MODELO_GROQ, messages, systemPrompt, maxTokens, temp, 'principal');
   } catch(e) {
     // Si el problema es que la consulta es muy grande, reducir contexto no se arregla
     // cambiando de motor — propagamos para que el reintento liviano actúe.
@@ -3047,7 +3103,7 @@ async function callGroq(messages, systemPrompt, maxTokens, temp) {
     if (CEREBRAS_KEY) {
       console.warn('Groq falló ('+(e.tipo||'?')+') → probando Cerebras');
       try {
-        const r = await llamarMotor(CEREBRAS_URL, CEREBRAS_KEY, MODELO_CEREBRAS, messages, systemPrompt, maxTokens, temp);
+        const r = await llamarMotorVigente(CEREBRAS_URL, CEREBRAS_KEY, MODELO_CEREBRAS, messages, systemPrompt, maxTokens, temp, 'respaldo');
         motorActivo = 'cerebras';
         return r;
       } catch(e2){
@@ -3071,7 +3127,7 @@ async function clearMem() {
 }
 
 // --- Envío principal ---
-// v1.5: ¿MIRROR está redactando en nombre de Darío (contestar un mail/WhatsApp/mensaje)?
+// v1.5: ¿MIRROR está redactando en nombre de su usuario (contestar un mail/WhatsApp/mensaje)?
 // Esos borradores son tareas puntuales: NO se guardan en memoria, para que no contaminen
 // las respuestas futuras (era lo que hacía repetir respuestas inventadas).
 function esRedaccionEnNombre(text){
@@ -3140,7 +3196,7 @@ async function enviarConImagen(text){
     // Llamada DIRECTA al modelo de visión del motor activo (sin fallback a Cerebras, que no ve imágenes).
     // v29: 2500 tokens (no 900). El modelo de visión qwen es «pensante»: con poco margen se
     // queda sin espacio para cerrar el razonamiento y dar la respuesta. Con aire, piensa y responde.
-    reply = await llamarMotor(GROQ_URL, GROQ_KEY, modeloV, messages, systemPrompt, 2500, 0.5);
+    reply = await llamarMotorVigente(GROQ_URL, GROQ_KEY, modeloV, messages, systemPrompt, 2500, 0.5, 'vision');
   } catch(e){ errorMsg = (e && e.message) ? e.message : 'el motor de visión no respondió'; }
   removeTyping();
   if (reply){
@@ -3230,17 +3286,17 @@ async function send() {
   // Construir contexto SOLO para la llamada actual (no se guarda en history,
   // para no multiplicar tokens en cada turno y saturar Groq).
   // v1.2: la bibliografía (RAG) es material de ANÁLISIS y solo corresponde al modo TARS.
-  // En modo MIRROR no se inyecta: si no, MIRROR ve fragmentos de Latour/Dussel y se va al
-  // rol académico (deja de ser la entidad personal de Darío). MIRROR es la persona, no el analista.
+  // En modo MIRROR no se inyecta: si no, MIRROR ve fragmentos de la bibliografía y se va al
+  // rol académico (deja de ser la entidad personal del usuario). MIRROR es la persona, no el analista.
   // v1.4 (COMPUERTA): en TARS normal solo traemos bibliografía si la pregunta la amerita
-  // (teórica/analítica o nombra autor). Si la base de tesis está conectada, siempre fluye
+  // (teórica/analítica o nombra autor). Si la base de datos externa está conectada, siempre fluye
   // (es el modo análisis datos+bibliografía). Así TARS no cita de más Y ahorramos la
   // llamada de traducción ES->EN, que se hacía en CADA mensaje.
   // v3.9 (FIX TARS no veía archivos de sesión): los archivos que el usuario sube EN LA SESIÓN
   // se consultan SIEMPRE, no importa cómo redacte la pregunta. Antes, si la pregunta no contenía
   // una palabra "teórica" ni nombraba un autor cargado, la compuerta los dejaba afuera y TARS no
   // se enteraba de lo que decía el archivo recién subido. La biblioteca persistente grande SIGUE
-  // con compuerta (no se vuelcan fragmentos de Latour/Dussel en cada mensaje suelto).
+  // con compuerta (no se vuelcan fragmentos de la bibliografía en cada mensaje suelto).
   const haySesion = ragDocs.some(d => d.type==='session' && d.content);
   const buscarBiblioteca = tesisConnected || necesitaBibliografia(text); // ¿buscar en la biblioteca persistida?
   const usarBiblio = (mode === 'tars' || mode === 'jurado') && (buscarBiblioteca || haySesion);
@@ -3260,7 +3316,7 @@ async function send() {
   const preguntaPorDatos = /\b(datos?|registros?|base de datos|encuestas?|entrevistas?|escala|likert|frecuencia|porcentaje|estad[ií]stic|muestra|resultados?)\b/i.test(text);
   let avisoSinBase = '';
   if (mode === 'tars' && !tesisConnected && preguntaPorDatos) {
-    avisoSinBase = 'IMPORTANTE: la base de datos de la tesis NO está conectada en este momento. El usuario pregunta por datos/registros pero NO tenés acceso a ellos. NO uses la bibliografía como si fuera la base de datos. Respondé EXACTAMENTE: "La base de datos no está conectada todavía. Conectala con el botón CONEX (arriba a la derecha) y vuelvo a tener acceso a los registros para analizarlos." No inventes datos ni cites PDFs como si fueran los datos.\n\n';
+    avisoSinBase = 'IMPORTANTE: la base de datos externa NO está conectada en este momento. El usuario pregunta por datos/registros pero NO tenés acceso a ellos. NO uses la bibliografía como si fuera la base de datos. Respondé EXACTAMENTE: "La base de datos no está conectada todavía. Conectala con el botón CONEX (arriba a la derecha) y vuelvo a tener acceso a los registros para analizarlos." No inventes datos ni cites PDFs como si fueran los datos.\n\n';
   }
 
   // v1.0: si preguntan por la LISTA o CANTIDAD de documentos/archivos, le damos la lista REAL.
@@ -3294,8 +3350,8 @@ async function send() {
     // v2.3: si la pregunta es sobre la PROPIA APP (MIRROR/TARS/funcionamiento), va la
     // arquitectura real al contexto — autoconocimiento sin inventos, en cualquier modo.
     if (PREGUNTA_POR_APP.test(text)) partes += ARQUITECTURA_MIRROR + '\n\n';
-    // v2.1: en modo jurado el proyecto de tesis SIEMPRE va en el contexto (fuente del interrogatorio).
-    if (mode === 'jurado') partes += TESIS_PROYECTO + '\n\n';
+    // v2.1: en modo jurado el dominio experto SIEMPRE va en el contexto (fuente del interrogatorio).
+    if (mode === 'jurado') partes += DOMINIO_EXPERTO_TPL + '\n\n';
     if (tesisContext) partes += tesisContext + '\n\n';
     if (ragContext) partes += '=== BIBLIOGRAFÍA (marco teórico, NO son los datos) ===\n' + ragContext + '\n\n';
     if (listaDocsTxt) partes += listaDocsTxt;
@@ -3333,8 +3389,8 @@ async function send() {
       // Reintento con contexto REDUCIDO: resumen de datos + menos fragmentos de PDF.
       removeTyping(); showTyping(mode==='jurado' ? 'jurado' : (isTarsDB ? 'db' : mode));
       let tesisCompacto = (mode==='tars' && tesisConnected) ? getTesisContext('resumen') : '';
-      // v2.1: en jurado el proyecto es irrenunciable; ante contexto excedido se suelta la bibliografía, no la tesis.
-      if (mode==='jurado') tesisCompacto = TESIS_PROYECTO;
+      // v2.1: en jurado el dominio experto es irrenunciable; ante contexto excedido se suelta la bibliografía, no el dominio.
+      if (mode==='jurado') tesisCompacto = DOMINIO_EXPERTO_TPL;
       const ragReducido = recortarRag(ragContext, 2); // solo 2 fragmentos
       let ctxReducido = text;
       if (tesisCompacto && ragReducido) ctxReducido = tesisCompacto + '\n\nDOCUMENTOS:\n' + ragReducido + '\n\n---\nPREGUNTA: ' + text;
@@ -3446,7 +3502,7 @@ async function generarInformeAcademico(statusEl){
   // 2) Fragmentos relevantes de la bibliografía (PDFs cargados)
   let bibliografiaTxt = '';
   if (ragChunks.length){
-    // Tomamos fragmentos sobre los temas de la sesión + términos clave de TAR
+    // Tomamos fragmentos sobre los temas de la sesión + términos clave del análisis
     const consulta = temas || ragChunks.slice(0,3).map(c=>c.docName).join(' ');
     const top = bm25Search(normalizeText(consulta || 'resumen análisis'), ragChunks, 6);
     bibliografiaTxt = top.map(c=>'['+c.docName+'] '+c.text.substring(0,600)).join('\n\n');
@@ -3485,13 +3541,14 @@ REGLAS ESTRICTAS:
   let userPrompt = 'DATOS REALES (no inventar, usar estos):\n'+(datosTxt||'(sin datos cuantitativos conectados)')+'\n\n';
   if (bibliografiaTxt) userPrompt += 'BIBLIOGRAFÍA (fragmentos de los PDFs cargados):\n'+bibliografiaTxt+'\n\n';
   if (temas) userPrompt += 'EJES TEMÁTICOS construidos en la sesión de trabajo:\n'+temas+'\n\n';
-  if (webTxt) userPrompt += 'INFORMACIÓN WEB COMPLEMENTARIA sobre TAR:\n'+webTxt+'\n\n';
+  if (webTxt) userPrompt += 'INFORMACIÓN WEB COMPLEMENTARIA:\n'+webTxt+'\n\n';
   userPrompt += 'Redactá el informe académico completo siguiendo la estructura obligatoria.';
 
-  if (statusEl) statusEl.textContent = '✍️ TARS está redactando el informe académico...';
+  const _nmAnalitico = (CONFIG && CONFIG.modos && CONFIG.modos.tars) ? CONFIG.modos.tars : 'ANALISTA';
+  if (statusEl) statusEl.textContent = '✍️ ' + _nmAnalitico + ' está redactando el informe académico...';
   // v1.1: 3000 tokens para que el informe COMPLETO (incl. Conclusiones) no se trunque.
   // v3.0 — P3: el informe también reintenta ante saturación, avisando en el modal.
-  const avisoInforme = (txt)=>{ if(statusEl) statusEl.textContent = txt || '⏳ TARS está redactando el informe...'; };
+  const avisoInforme = (txt)=>{ if(statusEl) statusEl.textContent = txt || ('⏳ ' + _nmAnalitico + ' está redactando el informe...'); };
   let texto = await callGroqResiliente([{role:'user', content:userPrompt}], buildAnaliticoSystem(sys), 3000, 0.4, avisoInforme); // v25: el informe también se redacta con la lente del oficio
   if (!texto) return texto;
 
@@ -3500,7 +3557,7 @@ REGLAS ESTRICTAS:
   const tieneConclusiones = /##\s*conclusion/i.test(texto);
   if (!tieneConclusiones){
     if (statusEl) statusEl.textContent = '✍️ Completando las conclusiones...';
-    const sysCierre = 'Sos TARS, experto en TAR. Te paso un informe académico al que le FALTAN las conclusiones (o quedaron cortadas). Redactá SOLO la sección de conclusiones, empezando exactamente con la línea "## Conclusiones". Cerrá el análisis: qué muestran los datos a la luz de la TAR, qué queda pendiente. En español, sin relleno, sin inventar cifras. No repitas el resto del informe.';
+    const sysCierre = personalizarPrompt('Sos TARS, analista experto en el dominio de tu usuario. Te paso un informe al que le FALTAN las conclusiones (o quedaron cortadas). Redactá SOLO la sección de conclusiones, empezando exactamente con la línea "## Conclusiones". Cerrá el análisis: qué muestran los datos y los documentos, qué queda pendiente. En español, sin relleno, sin inventar cifras. No repitas el resto del informe.');
     try {
       const cierre = await callGroqResiliente([{role:'user', content:'INFORME (para que veas el contexto, NO lo repitas):\n'+texto.slice(-2000)+'\n\nRedactá solo "## Conclusiones".'}], sysCierre, 800, 0.4, avisoInforme);
       if (cierre && /##\s*conclusion/i.test(cierre)){
@@ -3736,7 +3793,7 @@ function abrirModalInforme(){
   const items = construirContenidoInforme();
   const stats = calcularEstadisticas();
   if (!items.length && !stats){
-    alert('Todavía no hay nada para el informe. Conectá la base de tesis o hacé al menos una consulta a TARS.');
+    alert('Todavía no hay nada para el informe. Conectá la base de datos externa o hacé al menos una consulta a '+((CONFIG&&CONFIG.modos&&CONFIG.modos.tars)||'ANALISTA')+'.');
     return;
   }
   const docNames = ragDocs.map(d=>d.name);
@@ -3750,7 +3807,7 @@ function abrirModalInforme(){
 function cerrarModalInforme(){ document.getElementById('modal-informe').classList.remove('visible'); }
 
 // v15: BIBLIOGRAFÍA del informe — VACÍA por defecto (marca blanca / universal).
-// Antes traía hardcodeada la bibliografía de la tesis de TAR/ANT, que se colaba en el
+// Antes traía hardcodeada bibliografía específica de un dominio, que se colaba en el
 // informe de CUALQUIER usuario (músico, escritor, etc.) rotulada "verificada por el autor".
 // Eso rompía marca blanca + no-mentir, así que se quitó (mismo criterio que AUTORES_BIB).
 // Con el array vacío, el informe lista AUTOMÁTICAMENTE los documentos REALES que cargó el
@@ -3899,7 +3956,7 @@ async function descargarPDF(){
     doc.text('Informe generado con MIRROR «El Origen»', margin, 33);
     y = 52;
     doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(GRIS[0],GRIS[1],GRIS[2]);
-    doc.text('Generado por TARS · '+meta.fecha, margin, y); nl(9);
+    doc.text('Generado por '+((CONFIG&&CONFIG.modos&&CONFIG.modos.tars)||'ANALISTA')+' · '+meta.fecha, margin, y); nl(9);
     doc.setTextColor(TINTA[0],TINTA[1],TINTA[2]);
 
     // ── Títulos con jerarquía ──
@@ -4056,7 +4113,7 @@ function descargarJSON(){
       version_app: 'v1.0',
       estadisticas_reales: calcularEstadisticas(),
       documentos_en_memoria: ragDocs.map(d=>({ nombre:d.name, tipo:d.type, fragmentos:d.nChunks||null })),
-      registros_app_tesis: meta.nReg,
+      registros_base: meta.nReg,
       total_consultas: intercambios.length,
       intercambios
     };
@@ -4267,6 +4324,31 @@ function toggleSound(){
 }
 // "pensar" empuja la energía a un clímax momentáneo
 function setDrone(level){const tb=level>0.04?0.85:0; if(tb!==thinkBoost){thinkBoost=tb; updateMix();}}
+// ════ v32 — FIRMA SONORA «El Origen» ════════════════════════════════════════
+// Sello sonoro propio de la plataforma: breve arpegio cálido Am–F–C–G con cola de reverb
+// larga (reusa el convolver de la suite). Suena UNA sola vez, al nacer el MIRROR. 100%
+// original (Web Audio, sin samples ni recreación de obras con copyright). On/off: respeta
+// el toggle 🔊 «sonido» del footer (siempre visible); si está apagado, no suena.
+let firmaSonada=false;
+function firmaOrigen(){
+  if(!audioCtx || !busDry || !convolver || !soundOn || firmaSonada) return;
+  firmaSonada=true;
+  const now=audioCtx.currentTime+0.15, paso=0.62;
+  const notas=[N.A3, N.F3, N.C4, N.G4];   // raíces cálidas de la progresión Am–F–C–G
+  notas.forEach((f,i)=>{
+    const when=now+i*paso;
+    [['sine',1.0],['triangle',0.35]].forEach(par=>{
+      const o=audioCtx.createOscillator(); o.type=par[0]; o.frequency.value=f;
+      const g=audioCtx.createGain();
+      g.gain.setValueAtTime(0.0001,when);
+      g.gain.exponentialRampToValueAtTime(0.13*par[1],when+0.05);
+      g.gain.exponentialRampToValueAtTime(0.0004,when+2.6);
+      o.connect(g); g.connect(busDry); g.connect(convolver);   // seco + reverb largo
+      o.start(when); o.stop(when+2.7);
+    });
+  });
+  try{ shine(N.E5, now+3*paso+0.1, 0.05); }catch(_){}   // brillo agudo final (clímax suave)
+}
 
 /* ===== VOLUMEN CONTEXTUAL: fuerte en la presentación, tenue en el chat ===== */
 const PRES_VOL=0.9, CHAT_VOL=0.20; // v3.3: en el chat la música acompaña, no compite (antes 0.34 tapaba la voz)
@@ -4479,8 +4561,17 @@ function loop(){
   t++;
   if(pulse>0)pulse=Math.max(0,pulse-0.03);
   if(mouseGlow>0)mouseGlow=Math.max(0,mouseGlow-0.015);
+  // v31 (D2) — ORBE VIVO (SUTIL, ajustado a pedido de Darío): el header insinúa vida
+  //   SIN alejarse del orbe original. reposo → respira apenas (±0.05 alrededor de 1.0);
+  //   pensando → late muy suave. El brillo y el giro (0.07) al pensar son los de siempre.
+  //   Color por modo lo da palettes[mode]. Solo visual: no toca lógica ni datos.
+  const _spinHdr = hdrThinking ? 0.07 : 0.02;
+  const _auraHdr = hdrThinking
+    ? (1.05 + 0.10*Math.pow(Math.sin(t*0.14),2))      // latido apenas perceptible al pensar
+    : (1.0 + 0.05*Math.sin(t*0.04) + 0.25*pulse);     // respiración mínima + leve destello al recibir
+  const _vivoHdr = hdrThinking || pulse>0.05;
   hdrCtx.setTransform(1,0,0,1,0,0);hdrCtx.clearRect(0,0,340,96);
-  drawLogoMirror(hdrCtx,340,96,hdrThinking||pulse>0.05,30,0.56,(hdrThinking||pulse>0.05)?0.07:0.02);
+  drawLogoMirror(hdrCtx,340,96,_vivoHdr,30,0.56,_spinHdr,_auraHdr);
   setDrone(hdrThinking?0.06:0.02);
   if(!document.getElementById('boot').classList.contains('gone')){
     bootCtx.clearRect(0,0,innerWidth,innerHeight);
@@ -4500,6 +4591,9 @@ function finishBoot(){
   if(bootDone)return; bootDone=true;
   document.getElementById('boot').classList.add('gone');
   document.getElementById('app').classList.add('ready');
+  // v32 — FIRMA SONORA: suena al nacer el MIRROR (no en vista compartida), con el master
+  // aún en volumen de presentación (clímax). Respeta el toggle 🔊. Luego setVol baja al chat.
+  if (!window.MODO_COMPARTIDO){ try{ firmaOrigen(); }catch(_){ } }
   setVol(CHAT_VOL);
   // v22 · Palanca D: si abrieron un link compartido, mostramos la carta de solo-lectura y nada más.
   if (window.MODO_COMPARTIDO){
