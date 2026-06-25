@@ -4389,7 +4389,7 @@ document.addEventListener('visibilitychange',()=>{
 });
 
 /* ===== LOGO COMPACTO: M I R R O R, la I es el monolito, las RR invertidas ===== */
-function drawLogoMirror(ctx,W,H,active,fontSize,cyFrac,spin,auraK){
+function drawLogoMirror(ctx,W,H,active,fontSize,cyFrac,spin,auraK,back360){
   const aK=(auraK==null?1:auraK);
   const p=palettes[mode];const glow=p.glow;
   const col='rgb('+p.core[0]+','+p.core[1]+','+p.core[2]+')';
@@ -4415,7 +4415,7 @@ function drawLogoMirror(ctx,W,H,active,fontSize,cyFrac,spin,auraK){
   parts.forEach(pt=>{
     if(pt.mono){
       const mh=fs*1.25, baseY=cy+mh/2;
-      drawSpinMonolith(ctx,x+monoW/2,baseY,mh,active?1:0.5,sp,aK);
+      drawSpinMonolith(ctx,x+monoW/2,baseY,mh,active?1:0.5,sp,aK,back360);
       x+=monoW+gap;
     }else{
       ctx.save();
@@ -4470,11 +4470,11 @@ function drawPresLogo(ctx,W,H){
   // el logo: gira 360° continuo (como el header); el mouse solo lo enciende, no lo acelera
   const fs=Math.min(W*0.16, 150);
   const spin=0.018;
-  drawLogoMirror(ctx,W,H,lit>0.08,fs,0.42,spin,0.66); // auraK 0.66 = un poco más de luz
+  drawLogoMirror(ctx,W,H,lit>0.08,fs,0.42,spin,0.66,true); // auraK 0.66 · back360=true → giro 360° visible en presentación
 }
 
 /* ===== MONOLITO GIRATORIO 360° (reutilizable: escena grande y logo header) ===== */
-function drawSpinMonolith(ctx,cx,baseY,height,lit,spinSpeed,auraK){
+function drawSpinMonolith(ctx,cx,baseY,height,lit,spinSpeed,auraK,back360){
   // monolito como caja delgada que gira sobre su eje vertical
   const p=palettes[mode];const glow=p.glow;
   const aK=(auraK==null?1:auraK);
@@ -4501,12 +4501,16 @@ function drawSpinMonolith(ctx,cx,baseY,height,lit,spinSpeed,auraK){
   const front=Math.cos(ang)>=0;
   // cara principal
   if(faceW>0.5){
-    ctx.fillStyle=front?'#050507':'#020203';
+    // back360 (solo presentación): la cara TRASERA va negra y SIN reflejo, así se distingue
+    // del frente y la vuelta COMPLETA (360°) se lee clara. El header NO pasa este flag → intacto.
+    ctx.fillStyle=front?'#050507':(back360?'#000000':'#020203');
     ctx.fillRect(cx-faceW,my,faceW*2,height);
-    // reflejo
-    let sh=ctx.createLinearGradient(cx-faceW,0,cx+faceW,0);
-    sh.addColorStop(0,rgba([255,255,255],0.05+0.06*lit));sh.addColorStop(0.35,rgba([255,255,255],0));
-    ctx.fillStyle=sh;ctx.fillRect(cx-faceW,my,faceW*2,height);
+    // reflejo: en 360 solo en la cara frontal
+    if(front || !back360){
+      let sh=ctx.createLinearGradient(cx-faceW,0,cx+faceW,0);
+      sh.addColorStop(0,rgba([255,255,255],0.05+0.06*lit));sh.addColorStop(0.35,rgba([255,255,255],0));
+      ctx.fillStyle=sh;ctx.fillRect(cx-faceW,my,faceW*2,height);
+    }
   }
   // canto lateral (aparece a los costados al girar)
   if(sideW>0.5){
@@ -4665,11 +4669,11 @@ function duckMusic(){
   css.textContent = `
   #cons-ov{position:fixed;inset:0;z-index:99999;display:none;overflow-y:auto;
     background:radial-gradient(ellipse at 50% -10%,#11112e 0%,#06061a 45%,#00000a 100%);
-    font-family:'Space Mono',monospace;color:#d8d8f0;animation:consWake 1.1s ease both;}
+    font-family:'Space Mono',monospace;color:#d8d8f0;}
   #cons-ov.show{display:block;}
   @keyframes consWake{from{opacity:0;filter:blur(14px);}to{opacity:1;filter:none;}}
   #cons-stars{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.5;}
-  .cons-wrap{position:relative;z-index:2;max-width:600px;margin:0 auto;padding:54px 24px 80px;min-height:100%;}
+  .cons-wrap{position:relative;z-index:2;max-width:600px;margin:0 auto;padding:54px 24px 80px;min-height:100%;animation:consWake 1.1s ease both;}
   .cons-mono{width:14px;height:62px;margin:0 auto 16px;border-radius:2px;
     background:linear-gradient(180deg,#1a1a2e,#000 50%,#1a1a2e);
     box-shadow:0 0 26px var(--cons-accent,#7070ff),0 0 60px rgba(112,112,255,.3);
