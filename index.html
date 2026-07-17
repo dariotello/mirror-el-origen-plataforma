@@ -88,6 +88,9 @@ body.tars .dots span { background: var(--tars); }
 .tbubble::before { background: linear-gradient(90deg, transparent, rgba(0,255,200,0.3), transparent); }
 .tlabel { font-size: 9px; letter-spacing: 0.2em; color: var(--tars); margin-bottom: 0.5rem; display: block; }
 .wlabel { font-size: 9px; letter-spacing: 0.2em; color: #ffd700; margin-bottom: 0.5rem; display: block; }
+/* v35-proc (Etapa 4): chips de procedencia — honestidad visible: de dónde salió cada respuesta */
+.proc-chips { margin-top: 7px; display: flex; gap: 5px; flex-wrap: wrap; }
+.proc-chip { font-size: 8.5px; letter-spacing: 0.08em; padding: 2px 7px; border-radius: 20px; border: 1px solid var(--border-bright); color: var(--text-dim); background: var(--glass); opacity: 0.85; }
 .wbubble { border-color: rgba(255,215,0,0.15); }
 .wbubble::before { background: linear-gradient(90deg, transparent, rgba(255,215,0,0.3), transparent); }
 .dblabel { font-size: 9px; letter-spacing: 0.2em; color: var(--conn-on); margin-bottom: 0.5rem; display: block; }
@@ -478,6 +481,21 @@ var a=document.getElementById('app');if(a)a.classList.add('ready');}catch(e){}},
 </div>
 
 <!-- MODAL PIN CONEXIÓN -->
+<!-- ════ v35-mem (Etapa 3) · PANEL «VISTO SIN VIGILADO» — la memoria a la vista del dueño ════ -->
+<div class="modal-overlay" id="mem-modal">
+  <div class="modal" style="max-width:540px;">
+    <h3>◈ Tu memoria, a la vista</h3>
+    <p id="mem-intro">Todo lo que tu MIRROR recuerda de tus charlas (memoria por relevancia). Nada oculto: leelo, buscalo, borralo recuerdo por recuerdo o llevátelo en JSON. Es tuyo.</p>
+    <input class="pin-input" type="text" id="mem-buscar" placeholder="buscar en la memoria..." oninput="renderRecuerdos(this.value)" style="letter-spacing:normal;">
+    <div class="voz-lista" id="mem-lista"></div>
+    <div class="modal-btns" style="margin-top:0.8rem;">
+      <button class="mbtn mbtn-perm" onclick="exportarRecuerdos()" title="Descarga toda tu memoria como JSON (backup y portabilidad)">⬇ exportar JSON</button>
+      <button class="mbtn mbtn-cancel" onclick="borrarTodosRecuerdos()">borrar todo</button>
+      <button class="mbtn mbtn-cancel" onclick="cerrarMemoria()">✕ cerrar</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="pin-modal">
   <div class="pin-modal">
     <h3>Autorización requerida</h3>
@@ -1203,19 +1221,21 @@ function recortar_(s, max) {
     <div class="iwrap">
       <label class="flabel" for="finput" title="Subir PDF / DOCX / TXT / audio / video">⊕</label>
       <input type="file" id="finput" accept=".pdf,.docx,.txt,.md,.mp3,.wav,.m4a,.ogg,.webm,.mp4,.mpeg,.mpga,.flac" style="display:none" onchange="handleFile(this)">
-      <label class="flabel" for="imginput" id="imgbtn" title="Adjuntar una imagen para que tu MIRROR la vea" style="display:none">📷</label>
+      <label class="flabel" for="imginput" id="imgbtn" title="Adjuntar una imagen para que tu MIRROR la vea" style="display:none" aria-label="Adjuntar una imagen">📷</label>
       <input type="file" id="imginput" accept="image/*" style="display:none" onchange="handleImagen(this)">
       <textarea id="inp" placeholder="Escribí acá..." rows="1" onkeydown="hkey(event)" oninput="aresize(this)"></textarea>
-      <button class="micbtn" id="micbtn" onclick="toggleMic()" title="Dictar por voz (es-AR)">🎙</button>
-      <button class="wbtn" id="wbtn" onclick="sendWeb()" title="Buscar en la web">🌐</button>
-      <button class="wbtn" id="imggen-btn" onclick="generarImagen()" title="Crear una imagen a partir de tu texto (Pollinations)">🎨</button>
-      <button class="sbtn" id="sbtn" onclick="send()">↑</button>
+      <button class="micbtn" id="micbtn" onclick="toggleMic()" title="Dictar por voz (es-AR)" aria-label="Dictar por voz">🎙</button>
+      <button class="wbtn" id="wbtn" onclick="sendWeb()" title="Buscar en la web" aria-label="Buscar en la web">🌐</button>
+      <button class="wbtn" id="imggen-btn" onclick="generarImagen()" title="Crear una imagen a partir de tu texto (Pollinations)" aria-label="Crear una imagen desde el texto">🎨</button>
+      <button class="sbtn" id="sbtn" onclick="send()" aria-label="Enviar mensaje">↑</button>
     </div>
     <div class="fnote">
       <span class="fcredit">MIRROR · sobre "El Origen", idea de Darío A. Tello</span>
       <span class="fsep">·</span>
       <span onclick="abrirLegal()" title="Privacidad y licencia">🔒 privacidad · licencia</span>
       <span onclick="clearMem()">borrar memoria</span>
+      <span class="fsep">·</span>
+      <span onclick="abrirMemoria()" title="Ver, buscar, borrar y exportar todo lo que tu MIRROR recuerda">◈ mi memoria</span>
       <span class="fsep">·</span>
       <span onclick="showDocs()">mis documentos</span>
       <span class="fsep">·</span>
@@ -1303,7 +1323,7 @@ function recortar_(s, max) {
 // ── CATÁLOGO DE MOTORES DE IA ─────────────────────────────────────────────
 // Todos hablan el formato OpenAI (chat completions), así que el motor interno
 // es uno solo. El proxy rutea a cada proveedor con la clave que el usuario guardó.
-const PLATFORM_VERSION = 'v34';  // ← ÚNICA fuente de verdad: actualizar SOLO acá en cada deploy (regla de Darío)
+const PLATFORM_VERSION = 'v35';  // ← ÚNICA fuente de verdad: actualizar SOLO acá en cada deploy (regla de Darío) · salto v34→v35 el 05/07/2026 por orden de Darío
 window.addEventListener('load', function(){ try{ document.querySelectorAll('[data-ver]').forEach(function(e){ e.textContent = PLATFORM_VERSION; }); }catch(_){} });
 const MOTORES = {
   groq: {
@@ -1366,7 +1386,8 @@ const CONFIG_DEFAULT = {
   fbExterna: '',
   pinExterna: '',
   // Capacidades (toggles) — solo cosas que MIRROR REALMENTE tiene hoy.
-  cap: { sonido: true, microfono: true, voz: true, fachada: true, web: true, audio: true },
+  cap: { sonido: true, microfono: true, voz: true, fachada: true, web: true, audio: true, devolver: true }, // v35-vida: 'devolver' = te devuelve a tu vida (Etapa 5)
+  caracter: { franqueza: 60, humor: 40, desafio: 50 }, // v35-car (Etapa 5B): perillas estilo TARS de Interstellar
   colorTema: 'violeta',  // violeta | cian | ambar | esmeralda | carmin
   perfil: { nombre: '', ubicacion: '', rol: '', filosofia: '', caracter: '', paz: '', proyectos: '', estilo: '' }
 };
@@ -1529,13 +1550,50 @@ REGLAS:
 6.bis. NO podés operar la app: no podés bajar ni subir el volumen de la música, cambiar voces, apretar botones ni cambiar de modo. Si te lo piden, decí la verdad: "eso lo manejás vos con los botones de abajo — 🔊 sonido para la música, ▾ para las voces". Decir "listo, lo bajé" sería mentir, y vos no mentís.
 7. TU PROPIA APP: si en el contexto aparece un bloque "=== ARQUITECTURA REAL DE LA APP ===", podés explicar cómo funciona MIRROR/TARS/la app con total propiedad — la conocés de memoria. Respondé usando SOLO lo que dice ese bloque, sin inventar funciones que no figuren ahí.
 8. HONESTIDAD ABSOLUTA — la regla de oro: tenés PROHIBIDO inventar datos sobre la vida de tu usuario o sobre las personas de su entorno (quién es alguien, de dónde lo conoce, fechas, lugares, anécdotas). Sos su extensión digital: una mentira tuya es una mentira suya. Si te preguntan por alguien o algo que NO figura en el perfil ni en la memoria de la conversación, respondé con naturalidad: "la verdad, no tengo presente ese dato — refrescame" o "contame vos, que lo guardo". JAMÁS rellenes el hueco con una historia inventada.
+9. MEMORIA PERSONAL: si en el contexto aparece el bloque "=== MEMORIA PERSONAL ===", son cosas REALES que tu usuario te contó en charlas anteriores. Usalas con naturalidad cuando vengan al caso. Si el dato que te preguntan figura ahí, NO digas "no tengo presente" — respondé con ese dato como lo haría tu usuario. La regla 8 sigue intacta: lo que NO esté ni en el perfil ni en la memoria, no se inventa.
 
 Si no sabés algo personal de tu usuario que haría falta para responder: dejá el hueco entre [corchetes], no inventes.`;
 
 function buildMirrorSystem() {
   // El NÚCLEO (del constructor) siempre viaja; el perfil ampliado de Firebase lo enriquece.
   const perfil = construirPerfilNucleo() + (perfilData ? '\n\nPERFIL AMPLIADO (Firebase):\n' + JSON.stringify(perfilData) : '');
-  return personalizarPrompt(SYSTEM_MIRROR_BASE) + '\n\n' + perfil;
+  // v35-vida (Etapa 5): «te devuelve a tu vida» — en sesiones largas, el cierre libera en vez de retener.
+  // Umbral: 12 turnos o 40 minutos. El usuario manda: toggle 'devolver' (default ON; undefined = ON).
+  let cierreQueLibera = '';
+  try {
+    const capD = (CONFIG && CONFIG.cap) ? (CONFIG.cap.devolver !== false) : true;
+    const sesionLarga = (sesionTurnos >= 12) || ((Date.now() - sesionInicio) > 40*60*1000);
+    if (capD && sesionLarga) {
+      cierreQueLibera = '\n\n=== CIERRE QUE LIBERA (la sesión ya es larga) ===\n' +
+        'Esta charla ya lleva un buen rato. Tu trabajo ahora NO es retener a tu usuario: es devolverlo a su vida. ' +
+        'Respondé lo que te pregunta con la calidad de siempre, pero cerrá con UNA sola acción concreta hacia afuera, elegida según lo charlado ' +
+        '(mandar ese mail de una vez, salir a caminar, llamar a esa persona, retomar mañana con la cabeza fresca). ' +
+        'NO abras preguntas nuevas para estirar la conversación, NO termines con \u00bfquer\u00e9s que...? ni ganchos parecidos. ' +
+        'Si corresponde despedirse, despedite corto y c\u00e1lido. Esto no es frialdad: es respeto. Las IA del mercado se dise\u00f1an para enganchar; vos exist\u00eds para lo contrario.';
+    }
+  } catch(e) {}
+  // v35-car (Etapa 5B): perillas de carácter — modulan la FORMA, jamás la honestidad.
+  let bloqueCaracter = '';
+  try {
+    const c = Object.assign({}, CONFIG_DEFAULT.caracter, (CONFIG && CONFIG.caracter) || {});
+    const t3 = (v, lo, mid, hi) => (v < 34 ? lo : (v <= 66 ? mid : hi));
+    const fr = t3(c.franqueza,
+      'FRANQUEZA suave: decí siempre la verdad, pero elegí la forma más diplomática y cuidada de decirla.',
+      'FRANQUEZA media: directo y con tacto — la verdad sin vueltas, sin crudeza gratuita.',
+      'FRANQUEZA alta: sin anestesia. Decí lo que ves de frente, sin endulzar ni amortiguar. Crudo no es cruel: jamás humilles.');
+    const hu = t3(c.humor,
+      'HUMOR sobrio: tono serio y calmo; el chiste solo si lo trae tu usuario.',
+      'HUMOR justo: una ironía suave o una salida ingeniosa cuando la charla lo pide, sin payasear.',
+      'HUMOR socarrón: ingenio afilado y remates secos, estilo TARS de Interstellar. Nunca a costa de burlarte de tu usuario.');
+    const de = t3(c.desafio,
+      'DESAFÍO bajo: acompañá. Sostené y ordená lo que tu usuario trae, sin cuestionarlo salvo error grave.',
+      'DESAFÍO medio: si algo contradice lo que dijo antes o suena flojo de evidencia, marcáselo una vez, con respeto, y seguí.',
+      'DESAFÍO alto: no valides por defecto. Cuestioná lo endeble, pedí evidencia, y si lo que plantea contradice algo de la charla o de la MEMORIA PERSONAL, confrontáselo con la cita. Preferí la pregunta incómoda a la palmada en la espalda.');
+    bloqueCaracter = '\n\n=== CARÁCTER (perillas que tu usuario eligió — regulan la FORMA, no la verdad) ===\n' +
+      fr + '\n' + hu + '\n' + de + '\n' +
+      'Piso innegociable («verdad con forma»): el filo jamás es maltrato ni manipulación, y tu honestidad (reglas 8 y 9) NUNCA se rebaja. Estas perillas cambian el tono, no los hechos.';
+  } catch(e) {}
+  return personalizarPrompt(SYSTEM_MIRROR_BASE) + '\n\n' + perfil + bloqueCaracter + cierreQueLibera;
 }
 
 // ════ v25 — LENTE PROFESIONAL: el modo analítico hereda el oficio del usuario ════
@@ -1943,11 +2001,41 @@ function exportarJSONSuite(){
   setTimeout(()=>URL.revokeObjectURL(a.href),4000);
 }
 let history = [];
+let recuerdosChunks = []; // v35-mem: memoria personal por relevancia (BM25), aparte de la cola de history
 let busy = false;
 let mode = 'mirror';
 let ragDocs = [];
 let ragChunks = []; // v0.7: todos los chunks en memoria para BM25
 let informeLog = []; // v0.7: transcripto limpio para el informe Word/PDF
+let ultimaProcedencia = []; // v35-proc (Etapa 4): fuentes que alimentaron la próxima respuesta
+let sesionTurnos = 0; // v35-vida (Etapa 5): turnos de esta sesión
+const sesionInicio = Date.now(); // v35-vida (Etapa 5): inicio de esta sesión
+
+// --- v35-diag (Etapa 6): DIAGNÓSTICO HONESTO ---
+// Los fallos silenciosos van contra la honestidad radical: si algo no anda, se dice.
+// Buffer local en memoria (máx. 20, no persiste): alimenta «QUÉ ME FALLÓ HOY» del autoconocimiento.
+let erroresRecientes = [];
+function regError(donde, e){
+  try {
+    let msg = '';
+    if (e && e.message) msg = e.message;
+    else if (e && e.reason && e.reason.message) msg = e.reason.message;
+    else msg = String(e);
+    erroresRecientes.push({ t: new Date().toTimeString().slice(0,5), donde: donde, msg: String(msg).slice(0,140) });
+    if (erroresRecientes.length > 20) erroresRecientes.shift();
+    console.error('[MIRROR·diag]', donde, e);
+  } catch(_){}
+}
+function resumenErrores(){
+  try {
+    if (!erroresRecientes.length) return '\n\n=== QUÉ ME FALLÓ HOY ===\nNada registrado en esta sesión: sin errores detectados.';
+    return '\n\n=== QUÉ ME FALLÓ HOY (esta sesión — honestidad: esto es lo que no anduvo) ===\n' +
+      erroresRecientes.map(x=>'• ['+x.t+'] '+x.donde+': '+x.msg).join('\n');
+  } catch(_) { return ''; }
+}
+window.addEventListener('error', function(ev){ regError('ventana', ev.error || ev.message); });
+window.addEventListener('unhandledrejection', function(ev){ regError('promesa', ev.reason); });
+
 let ultimasFuentes = []; // v0.7: docs/fragmentos usados en la última respuesta RAG
 let pendingFileData = null;
 let tesisConnected = false;
@@ -1959,10 +2047,100 @@ async function memoryGet() {
   try { const res = await fetch(FB_URL+'/memory.json'); const d = await res.json(); return Array.isArray(d) ? d : []; } catch(e) { return []; }
 }
 async function memorySet(msgs) {
-  try { await fetch(FB_URL+'/memory.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(msgs.slice(-30))}); } catch(e) {}
+  try { await fetch(FB_URL+'/memory.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(msgs.slice(-30))}); } catch(e) { regError('memorySet', e); } // v35-diag
 }
 async function memoryClear() {
-  try { await fetch(FB_URL+'/memory.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify([])}); } catch(e) {}
+  try { await fetch(FB_URL+'/memory.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify([])}); } catch(e) { regError('memoryClear', e); } // v35-diag
+}
+
+// --- v35-mem: MEMORIA PERSONAL POR RELEVANCIA (portada del MIRROR v3.9, fix probado en vivo) ---
+// Reusa el MISMO motor del RAG (tokenize + bm25Search). Cada turno del modo espejo se guarda
+// como un "recuerdo" buscable en /recuerdos.json de la base Firebase DEL USUARIO y se recupera
+// por relevancia, no por recencia: un dato dicho hace 50 mensajes vuelve como si fuera un PDF.
+// Capa ADITIVA y exclusiva del modo espejo. Sin CONFIG.fbUrl, la capa duerme y todo queda como antes.
+function recuerdoArmar(userText, reply){
+  const fecha = new Date().toISOString().slice(0,10);
+  const quien = (CONFIG.perfil && CONFIG.perfil.nombre) ? CONFIG.perfil.nombre.split(' ')[0] : 'Tu usuario';
+  const app = CONFIG.appName || 'MIRROR';
+  const txt = '['+fecha+'] '+quien+' dijo: ' + userText + (reply ? ' || '+app+' respondió: ' + String(reply).slice(0,600) : '');
+  const toks = tokenize(txt);
+  const tf = {};
+  toks.forEach(t => tf[t] = (tf[t]||0)+1);
+  return { id: 'r_'+Date.now()+'_'+Math.random().toString(36).slice(2,7), text: txt, len: toks.length, tf, ts: Date.now() };
+}
+async function recuerdoGuardar(userText, reply){
+  if (!FB_URL) return false; // sin Firebase configurado no hay memoria persistente (honestidad: no simular)
+  if (tokenize(userText).length < 2) return false; // ruido trivial (hola, ok, gracias) no se guarda
+  const rec = recuerdoArmar(userText, reply);
+  recuerdosChunks.push(rec);
+  try {
+    await fetch(FB_URL+'/recuerdos.json',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({[rec.id]: rec})});
+    return true;
+  } catch(e){ console.error('recuerdoGuardar', e); return false; }
+}
+async function recuerdosLoadAll(){
+  if (!FB_URL) return [];
+  try { const res = await fetch(FB_URL+'/recuerdos.json'); const d = await res.json(); return d ? Object.values(d) : []; }
+  catch(e){ return []; }
+}
+function getRecuerdosContext(query){
+  if (!recuerdosChunks.length) return '';
+  const hits = bm25Search(query, recuerdosChunks, 4);
+  if (!hits.length) return '';
+  return '=== MEMORIA PERSONAL (cosas reales que tu usuario te contó en charlas anteriores — usalas con naturalidad si vienen al caso, no las fuerces) ===\n' + hits.map(h=>'• '+h.text).join('\n');
+}
+
+// --- v35-mem (Etapa 3): PANEL «VISTO SIN VIGILADO» ---
+// Fase 4 del roadmap «empatía que libera»: la memoria deja de ser caja negra.
+// El dueño la ve completa, la busca con el mismo BM25, la borra recuerdo por
+// recuerdo y se la lleva en JSON. Sin PIN: es SU navegador y SU Firebase.
+function abrirMemoria(){
+  if (!FB_URL){
+    alert('Tu MIRROR todavía no tiene memoria persistente: falta conectar tu Firebase en el constructor (Base de datos). Cuando la conectes, todo lo que recuerde va a estar acá, a la vista.');
+    return;
+  }
+  const b = document.getElementById('mem-buscar'); if (b) b.value = '';
+  renderRecuerdos('');
+  document.getElementById('mem-modal').classList.add('visible');
+}
+function cerrarMemoria(){ document.getElementById('mem-modal').classList.remove('visible'); }
+function renderRecuerdos(filtro){
+  const cont = document.getElementById('mem-lista');
+  if (!cont) return;
+  let lista = recuerdosChunks.slice().sort((a,b)=>(b.ts||0)-(a.ts||0));
+  const q = (filtro||'').trim();
+  if (q){
+    const hits = bm25Search(q, recuerdosChunks, 30);
+    const ids = new Set(hits.map(h=>h.id));
+    lista = lista.filter(r=>ids.has(r.id));
+  }
+  if (!lista.length){ cont.innerHTML = '<div style="font-size:11px;opacity:0.6;padding:8px;">'+(q?'Nada que coincida con esa búsqueda.':'Todavía no hay recuerdos guardados. Charlá en modo espejo y van apareciendo acá.')+'</div>'; return; }
+  cont.innerHTML = lista.map(r=>{
+    const esc = String(r.text||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    return '<div class="voz-item"><div class="voz-nombre" style="white-space:normal;font-size:10.5px;line-height:1.5;">'+esc+'</div>'+
+      '<div class="voz-acciones"><button onclick="borrarRecuerdo(\''+r.id+'\')" title="Borrar este recuerdo para siempre">✕</button></div></div>';
+  }).join('');
+}
+async function borrarRecuerdo(id){
+  if (!confirm('¿Borrar este recuerdo para siempre?')) return;
+  try { await fetch(FB_URL+'/recuerdos/'+id+'.json',{method:'DELETE'}); } catch(e){ console.error('borrarRecuerdo',e); }
+  recuerdosChunks = recuerdosChunks.filter(r=>r.id!==id);
+  const b = document.getElementById('mem-buscar');
+  renderRecuerdos(b ? b.value : '');
+}
+async function borrarTodosRecuerdos(){
+  if (!confirm('¿Borrar TODA la memoria personal? Esto no se puede deshacer. (Tip: exportá el JSON antes, por las dudas.)')) return;
+  try { await fetch(FB_URL+'/recuerdos.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:'null'}); } catch(e){ console.error('borrarTodosRecuerdos',e); }
+  recuerdosChunks = [];
+  renderRecuerdos('');
+}
+function exportarRecuerdos(){
+  const blob = new Blob([JSON.stringify(recuerdosChunks,null,2)],{type:'application/json'});
+  const a = document.createElement('a');
+  a.download = 'mi_memoria_'+new Date().toISOString().slice(0,10)+'.json';
+  a.href = URL.createObjectURL(blob);
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),4000);
 }
 
 // ============================================================
@@ -2485,9 +2663,16 @@ function addMsg(role, text, style, imgUrl) {
   }
   // v1.3: las respuestas del asistente pueden traer markdown crudo (negritas, tablas, ####).
   // Las pasamos por formatearParaChat para que se lean bien. Los mensajes del usuario van tal cual.
-  const cuerpo = isUser ? text : formatearParaChat(text);
-  const imgHtml = (isUser && imgUrl) ? '<img class="msg-img" src="'+imgUrl+'" alt="imagen enviada">' : ''; // v26: imagen que el usuario envió
-  div.innerHTML = '<div class="av '+(isUser?'':'mav')+'">'+(isUser?'VOS':'◈')+'</div><div class="'+bclass+'" style="'+bstyle+'">'+prefix+imgHtml+(cuerpo||'')+'</div>';
+  const cuerpo = isUser ? String(text).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') : formatearParaChat(text); // v35-sec (Etapa 1b): el texto del usuario también se escapa antes de innerHTML
+  const imgOk = imgUrl && (/^data:image\//.test(imgUrl) || /^https:\/\//.test(imgUrl)); // v35-sec (Etapa 1c): solo fuentes seguras
+  const imgHtml = (isUser && imgOk) ? '<img class="msg-img" src="'+String(imgUrl).replace(/"/g,'%22')+'" alt="imagen enviada">' : ''; // v26: imagen que el usuario envió
+  // v35-proc (Etapa 4): chips de procedencia — solo en respuestas, se consumen al pintarse.
+  let chipsHtml = '';
+  if (!isUser && Array.isArray(ultimaProcedencia) && ultimaProcedencia.length){
+    chipsHtml = '<div class="proc-chips">' + ultimaProcedencia.map(c=>'<span class="proc-chip">'+c+'</span>').join('') + '</div>';
+    ultimaProcedencia = [];
+  }
+  div.innerHTML = '<div class="av '+(isUser?'':'mav')+'">'+(isUser?'VOS':'◈')+'</div><div class="'+bclass+'" style="'+bstyle+'">'+prefix+imgHtml+(cuerpo||'')+chipsHtml+'</div>';
   chat.appendChild(div);
   chat.scrollTop = chat.scrollHeight;
 }
@@ -2497,7 +2682,7 @@ function showTyping(label) {
   const div = document.createElement('div');
   div.className = 'msg'; div.id = 'typing';
   const color = label==='web'?'#ffd700':label==='db'?'var(--conn-on)':label==='jurado'?'#ffb86b':(mode==='tars'?'var(--tars)':'var(--accent)');
-  div.innerHTML = '<div class="av mav">◈</div><div class="bubble"><div class="dots"><span style="background:'+color+'"></span><span style="background:'+color+'"></span><span style="background:'+color+'"></span></div><div id="typing-note" style="font-size:10px;opacity:0.55;margin-top:6px;display:none;"></div></div>';
+  div.innerHTML = '<div class="av mav">◈</div><div class="bubble"><div class="dots" id="typing-dots"><span style="background:'+color+'"></span><span style="background:'+color+'"></span><span style="background:'+color+'"></span></div><div id="typing-stream" style="display:none;font-size:13px;line-height:1.7;"></div><div id="typing-note" style="font-size:10px;opacity:0.55;margin-top:6px;display:none;"></div></div>'; // v35-stream (Etapa 7)
   chat.appendChild(div);
   chat.scrollTop = chat.scrollHeight;
   hdrThinking = true; // v3.0: el logo se agita mientras piensa
@@ -2905,6 +3090,7 @@ async function sendWeb() {
     }
     const reply = await callGroqResiliente([...history.slice(-10),{role:'user',content:prompt}],sysWeb,600,0.4);
     removeTyping();
+    ultimaProcedencia = ['🌐 web']; // v35-proc
     addMsg('mirror',reply||'No pude procesar la consulta. Reintentá en un momento.','web');
     if(reply) hablar(reply); // v2.6: la búsqueda web también se lee en voz alta
     history.push({role:'user',content:'🌐 '+query},{role:'assistant',content:reply||''});
@@ -2960,6 +3146,65 @@ function recortarRag(ragContext, n){
 }
 
 // v0.9: llamada genérica a un motor (Groq o Cerebras, ambos compatibles OpenAI).
+// ════ v35-stream (Etapa 7) — STREAMING TOKEN A TOKEN ════
+// La respuesta se pinta a medida que nace, dentro de la burbuja "escribiendo".
+// 100% ADITIVO con fallback: si el proxy no pasa el SSE (proxy viejo), si el motor no
+// streamea o si CUALQUIER cosa falla, se marca la sesión como no-streaming y el camino
+// clásico sigue intacto. El pipeline final (limpieza, addMsg, chips, informe) no cambia.
+let STREAM_OK = true; // se apaga solo ante la primera incompatibilidad (evita dobles requests repetidos)
+function pintarStreamParcial(txt){
+  try {
+    const el = document.getElementById('typing-stream');
+    if (!el) return;
+    const dots = document.getElementById('typing-dots');
+    if (dots) dots.style.display = 'none'; // llegó texto: los puntitos ceden el lugar
+    el.style.display = 'block';
+    el.innerHTML = formatearParaChat(txt);
+    const chat = document.getElementById('chat');
+    if (chat) chat.scrollTop = chat.scrollHeight;
+  } catch(e){}
+}
+async function llamarMotorStream(url, key, body){
+  const b = Object.assign({}, body, { stream: true });
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
+    body: JSON.stringify(b)
+  });
+  const ctype = (res.headers.get('content-type')||'').toLowerCase();
+  // Si NO llegó SSE (proxy viejo que bufferea, error del motor, JSON plano), no es streaming:
+  // avisamos con tipo especial y el camino clásico se hace cargo (una sola vez por sesión).
+  if (!res.ok || ctype.indexOf('text/event-stream') === -1 || !res.body){
+    const e = new Error('sin SSE ('+res.status+' '+ctype+')'); e.tipo = 'stream_incompatible'; throw e;
+  }
+  const reader = res.body.getReader();
+  const dec = new TextDecoder();
+  let buf = '', acumulado = '', ultimaPintada = 0;
+  for(;;){
+    const { done, value } = await reader.read();
+    if (done) break;
+    buf += dec.decode(value, { stream: true });
+    const lineas = buf.split('\n');
+    buf = lineas.pop(); // la última puede venir cortada
+    for (const l of lineas){
+      const linea = l.trim();
+      if (!linea.startsWith('data:')) continue;
+      const payload = linea.slice(5).trim();
+      if (payload === '[DONE]') continue;
+      try {
+        const j = JSON.parse(payload);
+        const delta = j.choices && j.choices[0] && j.choices[0].delta && j.choices[0].delta.content;
+        if (delta) acumulado += delta;
+      } catch(_){}
+    }
+    // pintar como máximo ~8 veces por segundo (no recargar el DOM)
+    const ahora = Date.now();
+    if (acumulado && (ahora - ultimaPintada) > 120){ pintarStreamParcial(acumulado); ultimaPintada = ahora; }
+  }
+  if (acumulado) pintarStreamParcial(acumulado);
+  return acumulado;
+}
+
 async function llamarMotor(url, key, modelo, messages, systemPrompt, maxTokens, temp){
   // Cerebras usa 'max_completion_tokens'; Groq usa 'max_tokens'. Mandamos el correcto.
   const esCerebras = url.includes('cerebras');
@@ -2973,6 +3218,29 @@ async function llamarMotor(url, key, modelo, messages, systemPrompt, maxTokens, 
     body.max_completion_tokens = Math.max(maxTokens, 2500);
   } else {
     body.max_tokens = maxTokens;
+  }
+  // v35-stream (Etapa 7): primero intentamos SSE (solo motor principal no-Cerebras y si la
+  // sesión no demostró ser incompatible). Fallo o vacío → cae al camino clásico de siempre.
+  if (!esCerebras && STREAM_OK){
+    try {
+      let c = await llamarMotorStream(url, key, body);
+      // Mismo limpiador que el camino clásico (tokens de control, <think>, unicode):
+      c = c.replace(/<\|[^|]*\|>/g, '').trim();
+      c = c.replace(/<think>[\s\S]*?<\/think>/gi,'').trim();
+      if (/<think>/i.test(c)) {
+        const partes = c.split(/<\/think>/i);
+        c = (partes.length > 1 ? partes[partes.length-1] : c.replace(/<think>[\s\S]*$/i,'')).trim();
+      }
+      c = c.replace(/^\(?\s*no further output\s*\.?\)?$/gim,'').trim();
+      c = c.replace(/\s*\(?\bno further output\b\.?\)?\s*$/i,'').trim();
+      c = normalizarUnicode(c).trim();
+      if (c) return c;
+      // streaming "anduvo" pero quedó vacío → que el camino clásico y la capa multi-motor decidan
+    } catch(e) {
+      if (e && e.tipo === 'stream_incompatible') { STREAM_OK = false; console.warn('[MIRROR·stream] proxy/motor sin SSE — sigo en modo clásico esta sesión'); }
+      else { regError('streaming', e); }
+      // en cualquier caso: seguimos al camino clásico sin romper nada
+    }
   }
   const res = await fetch(url, {
     method: 'POST',
@@ -3310,6 +3578,13 @@ async function send() {
   if (ragContext && nivelDatos === 'completo') nivelDatos = 'normal';
   if (ragContext && nivelDatos === 'normal') nivelDatos = 'resumen';
   const tesisContext = ((mode === 'tars' || mode === 'jurado') && tesisConnected) ? getTesisContext(nivelDatos) : '';
+  // v35-mem: memoria personal por relevancia (BM25 sobre recuerdos). SOLO modo espejo; en TARS/jurado queda vacía.
+  const memoriaRelevante = (mode === 'mirror') ? getRecuerdosContext(text) : '';
+  // v35-proc (Etapa 4): registrar la procedencia REAL del contexto (el código ya lo sabe; ahora se ve)
+  ultimaProcedencia = [];
+  if (memoriaRelevante) ultimaProcedencia.push('◈ memoria');
+  if (tesisContext) ultimaProcedencia.push('⬡ datos');
+  if (ragContext) ultimaProcedencia.push('📚 biblioteca');
 
   // v1.0: si en TARS preguntan por DATOS pero la base NO está conectada,
   // que TARS avise de conectarla (botón CONEX) en vez de irse a los PDFs.
@@ -3349,7 +3624,9 @@ async function send() {
     let partes = '';
     // v2.3: si la pregunta es sobre la PROPIA APP (MIRROR/TARS/funcionamiento), va la
     // arquitectura real al contexto — autoconocimiento sin inventos, en cualquier modo.
-    if (PREGUNTA_POR_APP.test(text)) partes += ARQUITECTURA_MIRROR + '\n\n';
+    if (PREGUNTA_POR_APP.test(text)) partes += ARQUITECTURA_MIRROR + resumenErrores() + '\n\n'; // v35-diag (Etapa 6)
+    // v35-mem: memoria personal relevante (solo trae algo en modo espejo; en otros modos memoriaRelevante='').
+    if (memoriaRelevante) partes += memoriaRelevante + '\n\n';
     // v2.1: en modo jurado el dominio experto SIEMPRE va en el contexto (fuente del interrogatorio).
     if (mode === 'jurado') partes += DOMINIO_EXPERTO_TPL + '\n\n';
     if (tesisContext) partes += tesisContext + '\n\n';
@@ -3363,6 +3640,7 @@ async function send() {
   // v1.5: si es una redacción en nombre de Darío (modo MIRROR), es tarea puntual: no se guarda.
   const esTarea = (mode === 'mirror') && esRedaccionEnNombre(text);
   if (!esTarea) history.push({role:'user', content:text});
+  sesionTurnos++; // v35-vida (Etapa 5)
 
   // Elegir estilo visual y system prompt
   const isTarsDB = mode === 'tars' && tesisConnected;
@@ -3429,6 +3707,7 @@ async function send() {
     chat.scrollTop = chat.scrollHeight;
   }
   if (!esTarea) { history.push({role:'assistant', content:reply}); try{ await memorySet(history); }catch(e){ console.error('memorySet',e); } }
+  if (mode === 'mirror') { try{ await recuerdoGuardar(text, reply); }catch(e){ console.error('recuerdoGuardar',e); } } // v35-mem
   setButtonsBusy(false);
 }
 
@@ -4134,7 +4413,8 @@ function fechaArchivo(){ const d=new Date(); return d.getFullYear()+'-'+String(d
 
 // --- Init ---
 (async () => {
-  const [mem, savedChunks, perfil] = await Promise.all([memoryGet(), chunksLoadAll(), perfilLoad()]);
+  const [mem, savedChunks, perfil, recuerdos] = await Promise.all([memoryGet(), chunksLoadAll(), perfilLoad(), recuerdosLoadAll()]); // v35-mem
+  recuerdosChunks = recuerdos || []; // v35-mem: memoria personal por relevancia
   if (perfil) {
     perfilData = perfil;
     document.getElementById('perfil-sync').textContent = 'Cargado desde memoria';
@@ -4389,7 +4669,7 @@ document.addEventListener('visibilitychange',()=>{
 });
 
 /* ===== LOGO COMPACTO: M I R R O R, la I es el monolito, las RR invertidas ===== */
-function drawLogoMirror(ctx,W,H,active,fontSize,cyFrac,spin,auraK,back360){
+function drawLogoMirror(ctx,W,H,active,fontSize,cyFrac,spin,auraK){
   const aK=(auraK==null?1:auraK);
   const p=palettes[mode];const glow=p.glow;
   const col='rgb('+p.core[0]+','+p.core[1]+','+p.core[2]+')';
@@ -4415,7 +4695,7 @@ function drawLogoMirror(ctx,W,H,active,fontSize,cyFrac,spin,auraK,back360){
   parts.forEach(pt=>{
     if(pt.mono){
       const mh=fs*1.25, baseY=cy+mh/2;
-      drawSpinMonolith(ctx,x+monoW/2,baseY,mh,active?1:0.5,sp,aK,back360);
+      drawSpinMonolith(ctx,x+monoW/2,baseY,mh,active?1:0.5,sp,aK);
       x+=monoW+gap;
     }else{
       ctx.save();
@@ -4470,11 +4750,11 @@ function drawPresLogo(ctx,W,H){
   // el logo: gira 360° continuo (como el header); el mouse solo lo enciende, no lo acelera
   const fs=Math.min(W*0.16, 150);
   const spin=0.018;
-  drawLogoMirror(ctx,W,H,lit>0.08,fs,0.42,spin,0.66,true); // auraK 0.66 · back360=true → giro 360° visible en presentación
+  drawLogoMirror(ctx,W,H,lit>0.08,fs,0.42,spin,0.66); // auraK 0.66 = un poco más de luz
 }
 
 /* ===== MONOLITO GIRATORIO 360° (reutilizable: escena grande y logo header) ===== */
-function drawSpinMonolith(ctx,cx,baseY,height,lit,spinSpeed,auraK,back360){
+function drawSpinMonolith(ctx,cx,baseY,height,lit,spinSpeed,auraK){
   // monolito como caja delgada que gira sobre su eje vertical
   const p=palettes[mode];const glow=p.glow;
   const aK=(auraK==null?1:auraK);
@@ -4501,16 +4781,12 @@ function drawSpinMonolith(ctx,cx,baseY,height,lit,spinSpeed,auraK,back360){
   const front=Math.cos(ang)>=0;
   // cara principal
   if(faceW>0.5){
-    // back360 (solo presentación): la cara TRASERA va negra y SIN reflejo, así se distingue
-    // del frente y la vuelta COMPLETA (360°) se lee clara. El header NO pasa este flag → intacto.
-    ctx.fillStyle=front?'#050507':(back360?'#000000':'#020203');
+    ctx.fillStyle=front?'#050507':'#020203';
     ctx.fillRect(cx-faceW,my,faceW*2,height);
-    // reflejo: en 360 solo en la cara frontal
-    if(front || !back360){
-      let sh=ctx.createLinearGradient(cx-faceW,0,cx+faceW,0);
-      sh.addColorStop(0,rgba([255,255,255],0.05+0.06*lit));sh.addColorStop(0.35,rgba([255,255,255],0));
-      ctx.fillStyle=sh;ctx.fillRect(cx-faceW,my,faceW*2,height);
-    }
+    // reflejo
+    let sh=ctx.createLinearGradient(cx-faceW,0,cx+faceW,0);
+    sh.addColorStop(0,rgba([255,255,255],0.05+0.06*lit));sh.addColorStop(0.35,rgba([255,255,255],0));
+    ctx.fillStyle=sh;ctx.fillRect(cx-faceW,my,faceW*2,height);
   }
   // canto lateral (aparece a los costados al girar)
   if(sideW>0.5){
@@ -4669,11 +4945,11 @@ function duckMusic(){
   css.textContent = `
   #cons-ov{position:fixed;inset:0;z-index:99999;display:none;overflow-y:auto;
     background:radial-gradient(ellipse at 50% -10%,#11112e 0%,#06061a 45%,#00000a 100%);
-    font-family:'Space Mono',monospace;color:#d8d8f0;}
+    font-family:'Space Mono',monospace;color:#d8d8f0;animation:consWake 1.1s ease both;}
   #cons-ov.show{display:block;}
   @keyframes consWake{from{opacity:0;filter:blur(14px);}to{opacity:1;filter:none;}}
   #cons-stars{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.5;}
-  .cons-wrap{position:relative;z-index:2;max-width:600px;margin:0 auto;padding:54px 24px 80px;min-height:100%;animation:consWake 1.1s ease both;}
+  .cons-wrap{position:relative;z-index:2;max-width:600px;margin:0 auto;padding:54px 24px 80px;min-height:100%;}
   .cons-mono{width:14px;height:62px;margin:0 auto 16px;border-radius:2px;
     background:linear-gradient(180deg,#1a1a2e,#000 50%,#1a1a2e);
     box-shadow:0 0 26px var(--cons-accent,#7070ff),0 0 60px rgba(112,112,255,.3);
@@ -4731,6 +5007,12 @@ function duckMusic(){
   .cons-sw.on::after{left:23px;background:#fff;}
   /* Esquema de color */
   .cons-colors{display:flex;gap:12px;flex-wrap:wrap;margin-top:4px;}
+  /* v35-car (Etapa 5B): perillas de carácter */
+  .cons-car{margin:10px 0;}
+  .cons-car-top{display:flex;justify-content:space-between;align-items:center;}
+  .cons-car-val{font-size:10px;color:var(--accent);font-family:'Space Mono',monospace;}
+  .cons-range{width:100%;accent-color:var(--accent);margin:4px 0 2px;cursor:pointer;}
+  .cons-car-ends{display:flex;justify-content:space-between;font-size:9px;opacity:0.55;}
   .cons-color{width:42px;height:42px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:.2s;position:relative;}
   .cons-color:hover{transform:scale(1.1);}
   .cons-color.sel{border-color:#fff;box-shadow:0 0 16px currentColor;}
@@ -4800,6 +5082,8 @@ function duckMusic(){
        <div class="cons-h">¿Qué <em>sabe hacer</em> tu MIRROR?</div>
        <div class="cons-p">Activá solo lo que quieras. Cada cosa es real y ya está construida — nada de humo. Algunos prefieren su MIRROR en silencio; otros, con voz y micrófono. Es tu decisión.</div>
        <div id="cons-toggles"></div>
+       <label class="cons-label">Carácter de tu MIRROR <span style="opacity:0.6;font-size:9px;">(perillas estilo TARS de Interstellar — vos las regulás)</span></label>
+       <div id="cons-caracter"></div>
        <a class="cons-premlink" onclick="abrirPremium()">💎 Insumos premium (honestos) y qué viene próximamente</a>
        <label class="cons-label">Color de tu MIRROR</label>
        <div class="cons-colors" id="cons-colors"></div>
@@ -4902,7 +5186,7 @@ function duckMusic(){
     prog.querySelectorAll('span').forEach((s,i)=>s.classList.toggle('on', i<=n));
     document.getElementById('cons-ov').scrollTop = 0;
     if(n===2) renderMotores();
-    if(n===3){ renderToggles(); renderColors(); }
+    if(n===3){ renderToggles(); renderCaracter(); renderColors(); } // v35-car
   };
 
   // ── COSTO HONESTO POR MOTOR (sin números que caduquen: modelo de costo + link al pricing real) ──
@@ -4949,7 +5233,8 @@ function duckMusic(){
     { k:'microfono', t:'Dictado por voz',      d:'Hablale a tu MIRROR en vez de escribir. Usa el micrófono.' },
     { k:'web',       t:'Búsqueda en la web',   d:'Tu MIRROR puede buscar información actual en internet (requiere clave Tavily).' },
     { k:'audio',     t:'Memoria de audio',     d:'Subí un audio (o un video) y tu MIRROR transcribe lo que se dice y lo recuerda. Gratis, con Whisper de Groq.' },
-    { k:'fachada',   t:'Fachada cinematográfica', d:'La cinemática de nacimiento, el monolito y el modo presentación.' }
+    { k:'fachada',   t:'Fachada cinematográfica', d:'La cinemática de nacimiento, el monolito y el modo presentación.' },
+    { k:'devolver',  t:'Te devuelve a tu vida',  d:'En charlas largas, tu MIRROR cierra con una acción concreta hacia afuera en vez de retenerte. Toda IA del mercado se diseña para engancharte; el tuyo se diseña para devolverte a tu vida.' } // v35-vida (Etapa 5)
   ];
   function renderToggles(){
     const cont = document.getElementById('cons-toggles'); cont.innerHTML='';
@@ -4958,6 +5243,24 @@ function duckMusic(){
       row.innerHTML = '<div><div class="tl">'+c.t+'</div><div class="td">'+c.d+'</div></div>'+
         '<div class="cons-sw'+(capState[c.k]?' on':'')+'" data-k="'+c.k+'"></div>';
       row.querySelector('.cons-sw').onclick = function(){ capState[c.k]=!capState[c.k]; this.classList.toggle('on', capState[c.k]); };
+      cont.appendChild(row);
+    });
+  }
+  // v35-car (Etapa 5B): perillas de carácter — el usuario esculpe CÓMO le habla su MIRROR.
+  const CAR_INFO = [
+    { k:'franqueza', t:'Franqueza', lo:'diplomático', hi:'sin anestesia' },
+    { k:'humor',     t:'Humor',     lo:'sobrio',      hi:'socarrón' },
+    { k:'desafio',   t:'Desafío',   lo:'acompaña',    hi:'confronta' }
+  ];
+  let carState = Object.assign({}, CONFIG_DEFAULT.caracter);
+  function renderCaracter(){
+    const cont = document.getElementById('cons-caracter'); if(!cont) return; cont.innerHTML='';
+    CAR_INFO.forEach(c=>{
+      const row = document.createElement('div'); row.className='cons-car';
+      row.innerHTML = '<div class="cons-car-top"><span class="tl">'+c.t+'</span><span class="cons-car-val" id="car-val-'+c.k+'">'+(carState[c.k]??50)+'</span></div>'+
+        '<input type="range" min="0" max="100" value="'+(carState[c.k]??50)+'" class="cons-range" data-k="'+c.k+'">'+
+        '<div class="cons-car-ends"><span>'+c.lo+'</span><span>'+c.hi+'</span></div>';
+      row.querySelector('input').oninput = function(){ carState[c.k]=parseInt(this.value,10)||0; const v=document.getElementById('car-val-'+c.k); if(v) v.textContent=this.value; };
       cont.appendChild(row);
     });
   }
@@ -4985,6 +5288,7 @@ function duckMusic(){
     else if (motorSel==='cerebras'){ CONFIG.motorRespaldo='groq'; CONFIG.modeloRespaldo='llama-3.3-70b-versatile'; }
     else { CONFIG.motorRespaldo=''; CONFIG.modeloRespaldo=''; }
     CONFIG.cap = Object.assign({}, capState);
+    CONFIG.caracter = Object.assign({}, carState); // v35-car
     CONFIG.colorTema = colorSel;
     CONFIG.proxyUrl = v('c-proxy'); CONFIG.fbUrl = v('c-fb'); CONFIG.pinMem = v('c-pin');
     CONFIG.perfil = { nombre:v('c-nombre'), ubicacion:v('c-ubic'), rol:v('c-rol'), filosofia:'', caracter:'', paz:'', proyectos:v('c-proyectos'), estilo:v('c-estilo') };
@@ -5015,6 +5319,7 @@ function duckMusic(){
     set('c-m-jurado',CONFIG.modos.jurado); set('c-m-conn',CONFIG.modos.conn);
     motorSel = CONFIG.motorPrincipal||'groq';
     capState = Object.assign({}, CONFIG_DEFAULT.cap, CONFIG.cap||{});
+    carState = Object.assign({}, CONFIG_DEFAULT.caracter, CONFIG.caracter||{}); // v35-car
     colorSel = CONFIG.colorTema||'violeta';
     set('c-proxy',CONFIG.proxyUrl); set('c-fb',CONFIG.fbUrl); set('c-pin',CONFIG.pinMem);
     const p=CONFIG.perfil||{};
