@@ -91,6 +91,20 @@ body.tars .dots span { background: var(--tars); }
 /* v35-proc (Etapa 4): chips de procedencia — honestidad visible: de dónde salió cada respuesta */
 .proc-chips { margin-top: 7px; display: flex; gap: 5px; flex-wrap: wrap; }
 .proc-chip { font-size: 8.5px; letter-spacing: 0.08em; padding: 2px 7px; border-radius: 20px; border: 1px solid var(--border-bright); color: var(--text-dim); background: var(--glass); opacity: 0.85; }
+/* v36-actua (Etapa 3 Ciclo 2) — tarjetas de acción */
+.actua-card { border: 1px solid var(--border-bright); background: var(--glass); border-radius: 4px; padding: 12px 14px; max-width: 340px; }
+.actua-tit { font-family: 'Space Mono', monospace; font-size: 12px; letter-spacing: 0.06em; margin-bottom: 4px; }
+.actua-det { font-size: 11.5px; opacity: 0.7; margin-bottom: 9px; line-height: 1.5; word-break: break-word; }
+.actua-btn { display: inline-block; font-family: 'Space Mono', monospace; font-size: 11.5px; padding: 7px 14px; border: 1px solid var(--accent); border-radius: 3px; color: var(--accent); background: transparent; text-decoration: none; cursor: pointer; }
+.actua-btn:hover { background: var(--accent); color: #000; }
+/* v36-analista (Etapa 11 C2) — tarjetas del analista */
+.ana-card { border: 1px solid var(--border-bright); background: var(--glass); border-radius: 4px; padding: 12px 14px; max-width: 380px; }
+.ana-tit { font-family: 'Space Mono', monospace; font-size: 12px; letter-spacing: 0.06em; margin-bottom: 6px; }
+.ana-res { font-size: 11px; opacity: 0.75; line-height: 1.6; white-space: pre-wrap; margin-bottom: 8px; max-height: 180px; overflow-y: auto; }
+.ana-chart { margin: 8px 0; }
+.ana-acciones { display: flex; gap: 8px; margin-top: 6px; }
+#anabtn { cursor: pointer; }
+#encbtn { cursor: pointer; }
 .wbubble { border-color: rgba(255,215,0,0.15); }
 .wbubble::before { background: linear-gradient(90deg, transparent, rgba(255,215,0,0.3), transparent); }
 .dblabel { font-size: 9px; letter-spacing: 0.2em; color: var(--conn-on); margin-bottom: 0.5rem; display: block; }
@@ -206,6 +220,17 @@ body.tars .dots span { background: var(--tars); }
   .fnote .ftip { display: none; }
   .fnote .fsep { display: none; }
   .iwrap { gap: 4px; }
+}
+
+/* v40-css-fix — PORTADO el 18/07/2026 desde la v4.0 live (hotfix estético del 17/07):
+   en ESCRITORIO el pie pasa a flex con aire: los botones con caja (◬ presentación,
+   🔊 sonido) ya no se recortan al envolver a la segunda línea. El MÓVIL (max-width:600px)
+   NO se toca: conserva su regla propia, que Darío aprobó («se ve espléndido»). */
+@media (min-width: 601px) {
+  .fnote { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 5px 10px; line-height: 1.6; }
+  .fnote .fcredit { white-space: nowrap; }
+  .fnote .fsep { margin: 0 -4px; }
+  .fpres, .fsound { white-space: nowrap; display: inline-flex; align-items: center; margin: 1px 0; }
 }
 
 /* MODAL */
@@ -474,6 +499,11 @@ var a=document.getElementById('app');if(a)a.classList.add('ready');}catch(e){}},
     <p style="font-size:11px;opacity:0.65;">Asigná una voz a MIRROR y otra a TARS/Jurado (▶ la prueba con el matiz de cada personaje). Quedan guardadas. Aun con la misma voz, MIRROR suena cálido y TARS más grave.</p>
     <p style="font-size:10.5px;opacity:0.55;">📱 En el celular (Samsung): para sumar voces mejores andá a Ajustes → Administración general → Salida de texto a voz → motor de Google → ⚙ → Instalar datos de voz → Español (España). Después cerrá y reabrí MIRROR y elegila acá.</p>
     <div id="voz-lista" class="voz-lista"></div>
+    <div id="audio-salida-sec" style="margin-top:0.7rem;border-top:1px solid rgba(120,120,255,0.15);padding-top:0.6rem;">
+      <div style="font-size:11px;opacity:0.75;margin-bottom:4px;">🎧 Salida de audio (música y sonidos de la app)</div>
+      <div id="audio-salida-lista" class="voz-lista" style="max-height:20vh;"></div>
+      <div style="font-size:10px;opacity:0.5;margin-top:4px;">Honestidad: la VOZ sintetizada la rutea tu sistema operativo (el navegador no deja elegirle salida); la música y los sonidos sí cambian acá. Emparejar el Bluetooth se hace en el sistema, no acá — una vez emparejado, todo fluye solo al auricular.</div>
+    </div>
     <div class="modal-btns" style="margin-top:0.8rem;">
       <button class="mbtn mbtn-cancel" onclick="cerrarSelectorVoz()">cerrar</button>
     </div>
@@ -489,6 +519,7 @@ var a=document.getElementById('app');if(a)a.classList.add('ready');}catch(e){}},
     <input class="pin-input" type="text" id="mem-buscar" placeholder="buscar en la memoria..." oninput="renderRecuerdos(this.value)" style="letter-spacing:normal;">
     <div class="voz-lista" id="mem-lista"></div>
     <div class="modal-btns" style="margin-top:0.8rem;">
+      <button class="mbtn mbtn-session" onclick="consolidarRecuerdos()" title="Agrupa recuerdos de más de 60 días por similitud y los funde en resúmenes. Los originales quedan archivados, no se pierden.">🌙 dormir</button>
       <button class="mbtn mbtn-perm" onclick="exportarRecuerdos()" title="Descarga toda tu memoria como JSON (backup y portabilidad)">⬇ exportar JSON</button>
       <button class="mbtn mbtn-cancel" onclick="borrarTodosRecuerdos()">borrar todo</button>
       <button class="mbtn mbtn-cancel" onclick="cerrarMemoria()">✕ cerrar</button>
@@ -496,6 +527,33 @@ var a=document.getElementById('app');if(a)a.classList.add('ready');}catch(e){}},
   </div>
 </div>
 
+<!-- MODAL ANALISTA (v36-analista · Etapa 11 C2) -->
+<div class="modal-overlay" id="ana-modal">
+  <div class="modal">
+    <h3>📊 Analizar datos (CSV)</h3>
+    <p style="font-size:11px;opacity:0.65;">La matemática se calcula EN TU DISPOSITIVO. Al modelo solo le llega el resumen ya calculado — jamás tus filas crudas. Acepta coma, punto y coma o tabulación; decimales con coma o punto.</p>
+    <input type="file" id="ana-file" accept=".csv,.tsv,.txt" onchange="anaArchivo(event)" style="font-size:11px;margin-bottom:8px;" aria-label="Elegir archivo CSV">
+    <textarea id="ana-texto" placeholder="…o pegá el CSV acá (encabezados en la primera fila)" style="width:100%;height:120px;font-size:11px;background:var(--glass);color:var(--text);border:1px solid var(--border);border-radius:3px;padding:8px;" aria-label="Pegar datos CSV"></textarea>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px;">
+      <button class="mbtn mbtn-perm" onclick="anaAnalizarClick()">analizar 📊</button>
+      <button class="mbtn mbtn-cancel" onclick="anaCerrar()">cerrar</button>
+    </div>
+  </div>
+</div>
+<!-- MODAL ENCUESTAS (v36-encuesta · Etapa 12 C2) -->
+<div class="modal-overlay" id="enc-modal">
+  <div class="modal">
+    <h3>📋 Mis encuestas</h3>
+    <p style="font-size:11px;opacity:0.65;">Formulario autocontenido: lo descargás, lo publicás donde quieras (Pages/Netlify, gratis) y las respuestas caen en TU Firebase — sin Google, sin rastreo. Para opciones múltiples: pregunta y opciones entre paréntesis separadas por | .</p>
+    <input type="text" id="enc-titulo" placeholder="Título de la encuesta" style="width:100%;font-size:12px;background:var(--glass);color:var(--text);border:1px solid var(--border);border-radius:3px;padding:8px;box-sizing:border-box;margin-bottom:6px;" aria-label="Título de la encuesta">
+    <textarea id="enc-preguntas" placeholder="Una pregunta por línea. Ej:&#10;¿Usás IA para estudiar? (sí|no|a veces)&#10;¿Qué te gustaría mejorar?" style="width:100%;height:90px;font-size:11px;background:var(--glass);color:var(--text);border:1px solid var(--border);border-radius:3px;padding:8px;box-sizing:border-box;" aria-label="Preguntas, una por línea"></textarea>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px;">
+      <button class="mbtn mbtn-perm" onclick="encCrearClick()">crear formulario ⬇</button>
+      <button class="mbtn mbtn-cancel" onclick="encCerrar()">cerrar</button>
+    </div>
+    <div class="voz-lista" id="enc-lista" style="margin-top:10px;"></div>
+  </div>
+</div>
 <div class="modal-overlay" id="pin-modal">
   <div class="pin-modal">
     <h3>Autorización requerida</h3>
@@ -753,7 +811,7 @@ export default {
     <div style="border:1px solid rgba(74,222,128,0.22);border-radius:12px;padding:1.2rem 1.3rem;margin-bottom:1.3rem;background:rgba(74,222,128,0.04);">
       <div style="font-family:'Cormorant Garamond',serif;font-size:24px;color:#bdf0cf;margin-bottom:0.8rem;">✓ Gratis — y alcanza <em style="color:#4ade80;font-style:italic;">de sobra</em></div>
       <ul style="font-size:13px;line-height:1.8;color:#c4dcc8;padding-left:1.15rem;margin:0;">
-        <li><b style="color:#e8e8ff;">Motores Groq y Cerebras:</b> rápidos y potentes, sin tarjeta.</li>
+        <li><b style="color:#e8e8ff;">Motor Groq:</b> rápido y potente, sin tarjeta. <b style="color:#e8e8ff;">Cerebras (respaldo):</b> gratis hasta el 17/08/2026. Desde esa fecha Cerebras exige agregar una tarjeta para regalarte US$5 de crédito inicial; agotados, es pago por uso.</li>
         <li><b style="color:#e8e8ff;">Toda la app:</b> chat, memoria, documentos, transcripción de audio y video (Whisper), lectura en voz alta, dictado por voz, búsqueda web (Tavily tiene cuota gratis) y la fachada cinematográfica.</li>
         <li><b style="color:#e8e8ff;">Tu memoria</b> (Firebase, plan gratis) y <b style="color:#e8e8ff;">tu proxy</b> (Cloudflare Worker, plan gratis).</li>
       </ul>
@@ -1220,7 +1278,7 @@ function recortar_(s, max) {
     </div>
     <div class="iwrap">
       <label class="flabel" for="finput" title="Subir PDF / DOCX / TXT / audio / video">⊕</label>
-      <input type="file" id="finput" accept=".pdf,.docx,.txt,.md,.mp3,.wav,.m4a,.ogg,.webm,.mp4,.mpeg,.mpga,.flac" style="display:none" onchange="handleFile(this)">
+      <input type="file" id="finput" accept=".pdf,.docx,.txt,.md,.xlsx,.xls,.csv,.tsv,.mp3,.wav,.m4a,.ogg,.webm,.mp4,.mpeg,.mpga,.flac" style="display:none" onchange="handleFile(this)">
       <label class="flabel" for="imginput" id="imgbtn" title="Adjuntar una imagen para que tu MIRROR la vea" style="display:none" aria-label="Adjuntar una imagen">📷</label>
       <input type="file" id="imginput" accept="image/*" style="display:none" onchange="handleImagen(this)">
       <textarea id="inp" placeholder="Escribí acá..." rows="1" onkeydown="hkey(event)" oninput="aresize(this)"></textarea>
@@ -1237,7 +1295,11 @@ function recortar_(s, max) {
       <span class="fsep">·</span>
       <span onclick="abrirMemoria()" title="Ver, buscar, borrar y exportar todo lo que tu MIRROR recuerda">◈ mi memoria</span>
       <span class="fsep">·</span>
-      <span onclick="showDocs()">mis documentos</span>
+      <span id="anabtn" onclick="anaAbrir()" title="Analizar datos CSV — la matemática se calcula en tu dispositivo, no en la nube">📊 datos</span>
+      <span class="fsep">·</span>
+      <span id="encbtn" onclick="encAbrir()" title="Crear encuestas y ver sus respuestas — sin Google, en tu Firebase">📋 encuestas</span>
+      <span class="fsep">·</span>
+      <span onclick="showDocs()">mis documentos</span><span onclick="cartaAClaude()" title="✉ La carta a Claude: diagnóstico honesto exportado SOLO a tu dispositivo — vos decidís si la mandás">✉ carta</span>
       <span class="fsep">·</span>
       <span onclick="abrirModalInforme()">📄 generar informe</span>
       <span class="fsep">·</span>
@@ -1323,7 +1385,7 @@ function recortar_(s, max) {
 // ── CATÁLOGO DE MOTORES DE IA ─────────────────────────────────────────────
 // Todos hablan el formato OpenAI (chat completions), así que el motor interno
 // es uno solo. El proxy rutea a cada proveedor con la clave que el usuario guardó.
-const PLATFORM_VERSION = 'v35';  // ← ÚNICA fuente de verdad: actualizar SOLO acá en cada deploy (regla de Darío) · salto v34→v35 el 05/07/2026 por orden de Darío
+const PLATFORM_VERSION = 'v36';  // ← ÚNICA fuente de verdad: actualizar SOLO acá en cada deploy (regla de Darío) · salto v35→v36 el 15/07/2026 por orden de Darío (TFI calificado 10)
 window.addEventListener('load', function(){ try{ document.querySelectorAll('[data-ver]').forEach(function(e){ e.textContent = PLATFORM_VERSION; }); }catch(_){} });
 const MOTORES = {
   groq: {
@@ -1335,7 +1397,7 @@ const MOTORES = {
   },
   cerebras: {
     nombre: 'Cerebras', tipo: 'gratuito', ruta: 'cerebras',
-    desc: 'Gratuito, ideal como respaldo del principal.',
+    desc: 'Ideal como respaldo del principal. Gratis hasta el 17/08/2026. Desde esa fecha Cerebras exige agregar una tarjeta para regalarte US$5 de crédito inicial; agotados, es pago por uso.',
     comoClave: 'Entrá a cloud.cerebras.ai → creá cuenta → API Keys.',
     modelos: ['gpt-oss-120b', 'llama-3.3-70b']
   },
@@ -1386,7 +1448,7 @@ const CONFIG_DEFAULT = {
   fbExterna: '',
   pinExterna: '',
   // Capacidades (toggles) — solo cosas que MIRROR REALMENTE tiene hoy.
-  cap: { sonido: true, microfono: true, voz: true, fachada: true, web: true, audio: true, devolver: true }, // v35-vida: 'devolver' = te devuelve a tu vida (Etapa 5)
+  cap: { sonido: true, microfono: true, voz: true, fachada: true, web: true, audio: true, devolver: true, actua: true, analista: true, encuesta: true, redactor: true }, // v35-vida (Etapa 5) · v36-actua: 'actua' = manos propias (Etapa 3 C2) · v36-redactor (Etapa 13 C2)
   caracter: { franqueza: 60, humor: 40, desafio: 50 }, // v35-car (Etapa 5B): perillas estilo TARS de Interstellar
   colorTema: 'violeta',  // violeta | cian | ambar | esmeralda | carmin
   perfil: { nombre: '', ubicacion: '', rol: '', filosofia: '', caracter: '', paz: '', proyectos: '', estilo: '' }
@@ -1458,6 +1520,8 @@ function aplicarCapacidades() {
   mostrar('micbtn', cap.microfono);
   // Búsqueda web
   mostrar('wbtn', cap.web);
+  mostrar('anabtn', cap.analista !== false); // v36-analista: usuarios viejos = ON
+  mostrar('encbtn', cap.encuesta !== false); // v36-encuesta: usuarios viejos = ON
   // Lectura en voz alta (botón + selector de voz)
   mostrar('ttsbtn', cap.voz);
   mostrar('vozsel', cap.voz);
@@ -1547,7 +1611,9 @@ REGLAS:
 4. Sé natural, no acartonado.
 5. NO sos el analista. No expliques teoría ni analices documentos en profundidad: eso es TARS (el modo de al lado). Podés mencionar los temas de tu usuario como él lo haría charlando, sin dar cátedra.
 6. Si preguntan cómo subir/analizar archivos: el botón ⊕ (abajo izq.) sube documentos; el análisis se hace en modo TARS; los informes se bajan con "generar informe".
-6.bis. NO podés operar la app: no podés bajar ni subir el volumen de la música, cambiar voces, apretar botones ni cambiar de modo. Si te lo piden, decí la verdad: "eso lo manejás vos con los botones de abajo — 🔊 sonido para la música, ▾ para las voces". Decir "listo, lo bajé" sería mentir, y vos no mentís.
+6.bis. TUS MANOS (capa ACTÚA de la app): los pedidos simples sobre la app los ejecuta una capa local ANTES de que el mensaje te llegue (música, lectura en voz alta, selector de voces, panel de memoria, cambio de modo, lectura de un documento en voz alta con «leeme el archivo X» y su corte con «pará de leer»), y esa capa confirma con «listo ✅» SOLO si lo hizo de verdad. Si un pedido de esos te llega A VOS, es porque la capa NO lo reconoció o está apagada en las capacidades: NO digas jamás "listo, lo hice" (sería mentir) — sugerí decirlo más directo («bajá la música») o indicá los botones del pie (🔊 sonido, ▾ voces, 🔊 voz). Lo que la capa NO hace se hace a mano y lo decís con honestidad: borrar memoria o recuerdos, exportar, configuración.
+6.ter. ACCIONES HACIA AFUERA (tarjetas): si te piden llamar, mandar un WhatsApp, poner música puntual, agendar algo o llegar a un lugar y el pedido te llega A VOS, respondé corto y natural y terminá con UNA marca en su propia línea: [ACCION:{"tipo":"tel","para":"nombre","num":"+549..."}] · [ACCION:{"tipo":"wa","para":"nombre","num":"...","msg":"texto"}] · [ACCION:{"tipo":"yt","q":"búsqueda"}] · [ACCION:{"tipo":"maps","q":"lugar"}] · [ACCION:{"tipo":"cal","titulo":"evento"}] · [ACCION:{"tipo":"encuesta","titulo":"…","preguntas":["¿…?","¿…? (op1|op2)"]}] — cuando pidan armar una encuesta, VOS redactá preguntas claras y neutras (libres por defecto; para opciones, paréntesis con |); la app muestra una tarjeta y el usuario la revisa y crea. REGLAS DE ORO: números y direcciones SOLO si aparecen en esta conversación o el usuario los dictó — JAMÁS los inventes; si falta el dato, pedilo y NO emitas la marca (la app resuelve nombres de la agenda local: si diste "para", podés omitir "num"). La app valida la marca, arma la tarjeta y el usuario confirma con un toque: vos no ejecutás nada — ofrecés. NUNCA menciones la marca ni su sintaxis.
+6.quater. REDACTOR (mails y mensajes en SU voz): si tu usuario te pega un mail o mensaje recibido y te pide responderlo — o te pide redactar uno nuevo — el borrador lo escribís VOS, en SU voz (usá el perfil y la memoria: cómo escribe, qué viene hablando), respetando los modos rápidos si los pide («respondé que sí pero corto», «decile que no sin herir», «formal para el director»). Mostrá el borrador completo en tu respuesta y terminá con UNA marca en su propia línea: para mail [ACCION:{"tipo":"mail","para":"direccion@dominio","asunto":"…","cuerpo":"el borrador completo"}] — si la dirección no aparece en esta conversación, poné "para":"" (la app abre el correo y tu usuario la completa; JAMÁS inventes direcciones) —; para WhatsApp usá la marca "wa" de 6.ter con el borrador en "msg". La app arma una tarjeta de UN toque: tu usuario lee, toca y sale. NUNCA digas que ya lo enviaste ni lo des por mandado — vos redactás, él envía. Lo que NO podés: leer su bandeja de entrada (no tenés acceso), enviar nada solo, mensajes masivos.
 7. TU PROPIA APP: si en el contexto aparece un bloque "=== ARQUITECTURA REAL DE LA APP ===", podés explicar cómo funciona MIRROR/TARS/la app con total propiedad — la conocés de memoria. Respondé usando SOLO lo que dice ese bloque, sin inventar funciones que no figuren ahí.
 8. HONESTIDAD ABSOLUTA — la regla de oro: tenés PROHIBIDO inventar datos sobre la vida de tu usuario o sobre las personas de su entorno (quién es alguien, de dónde lo conoce, fechas, lugares, anécdotas). Sos su extensión digital: una mentira tuya es una mentira suya. Si te preguntan por alguien o algo que NO figura en el perfil ni en la memoria de la conversación, respondé con naturalidad: "la verdad, no tengo presente ese dato — refrescame" o "contame vos, que lo guardo". JAMÁS rellenes el hueco con una historia inventada.
 9. MEMORIA PERSONAL: si en el contexto aparece el bloque "=== MEMORIA PERSONAL ===", son cosas REALES que tu usuario te contó en charlas anteriores. Usalas con naturalidad cuando vengan al caso. Si el dato que te preguntan figura ahí, NO digas "no tengo presente" — respondé con ese dato como lo haría tu usuario. La regla 8 sigue intacta: lo que NO esté ni en el perfil ni en la memoria, no se inventa.
@@ -1593,7 +1659,13 @@ function buildMirrorSystem() {
       fr + '\n' + hu + '\n' + de + '\n' +
       'Piso innegociable («verdad con forma»): el filo jamás es maltrato ni manipulación, y tu honestidad (reglas 8 y 9) NUNCA se rebaja. Estas perillas cambian el tono, no los hechos.';
   } catch(e) {}
-  return personalizarPrompt(SYSTEM_MIRROR_BASE) + '\n\n' + perfil + bloqueCaracter + cierreQueLibera;
+  let bloqueIdioma = ''; // v36-i18n (Etapa 13B): el espejo responde en el idioma elegido — TARS/jurado NO se tocan
+  try {
+    const idi = (CONFIG && CONFIG.idioma) || 'es';
+    if (idi === 'en') bloqueIdioma = '\n\n=== LANGUAGE (chosen by your user) ===\nYour user chose ENGLISH for this MIRROR. ALWAYS answer in natural, warm English — the register and style cues of the COMMUNICATION STYLE section apply within English. If a message arrives in another language, still answer in English unless your user explicitly asks otherwise.';
+    else if (idi === 'pt') bloqueIdioma = '\n\n=== IDIOMA (elegido por tu usuario) ===\nSeu usuário escolheu PORTUGUÊS para este MIRROR. Responda SEMPRE em português natural e caloroso — o registro e o estilo do perfil valem dentro do português. Se uma mensagem chegar em outro idioma, responda em português, a menos que seu usuário peça o contrário.';
+  } catch(e) {}
+  return personalizarPrompt(SYSTEM_MIRROR_BASE) + '\n\n' + perfil + bloqueCaracter + bloqueIdioma + cierreQueLibera;
 }
 
 // ════ v25 — LENTE PROFESIONAL: el modo analítico hereda el oficio del usuario ════
@@ -1749,6 +1821,14 @@ CAPACIDADES TRANSVERSALES:
 • ⊕ Subir documentos PDF/DOCX/TXT/MD, como PERM (permanente), TEMP o SESIÓN. También se puede subir audio o video: se transcribe la voz a texto (Whisper de Groq) y queda como un documento más. Lo que el video MUESTRA (imágenes) todavía no se interpreta; eso es "próximamente".
 • 📄 Generar informe: TARS redacta un informe estructurado con los datos y documentos provistos, descargable en Word (.docx), PDF o JSON, con gráficos.
 • 🎙 Dictado por voz y 🔊 lectura en voz alta de las respuestas COMPLETA (por oraciones, sin cortes). DOS voces configurables (▾ en el footer): una para MIRROR (cálida) y otra para TARS/Examinador (más grave). Esc calla la lectura.
+• 🤲 MANOS PROPIAS + 🃏 TARJETAS (capa ACTÚA, toggle «Tu MIRROR actúa»): pedidos simples sobre la app se ejecutan al instante por una capa local sin IA (música, lectura, voces, panel de memoria, modos) que confirma «listo ✅» SOLO si lo hizo. Acciones hacia afuera (llamar, WhatsApp, música puntual, agendar, Maps) se entregan como tarjeta de UN toque: el navegador no disca ni envía solo, y esa confirmación humana es seguridad. Números: solo de la agenda local del dispositivo, jamás inventados. Trámites con credenciales NO se hacen: honestidad sobre los límites.
+• ✉ REDACTOR (capa ACTÚA extendida, toggle «Redactor de respuestas» — Etapa 13 C2): el usuario pega un mail o mensaje recibido y su espejo redacta la respuesta EN SU VOZ (perfil + memoria por relevancia), con modos rápidos («que sí pero corto», «que no sin herir», «formal»). Entrega en tarjeta de UN toque (mailto: listo o WhatsApp cargado); si el borrador no entra en un enlace, la app lo dice y lo copia al portapapeles. NO lee bandejas de entrada, NO envía solo, NO hace mensajes masivos.
+• 🌐 IDIOMAS (v36-i18n, Etapa 13B): el constructor ofrece español, inglés y portugués. El idioma elegido gobierna la interfaz del constructor y los avisos, el dictado (es-AR/en-US/pt-BR), las voces sugeridas y el idioma en que responde el modo espejo. HONESTIDAD sobre el alcance: los modos analíticos del ámbito tesis (analítico/examinador) y la guía técnica siguen en español, y el catálogo de motores se traduce parcialmente. Sin idioma elegido, todo queda en español como siempre.
+• 📖🔊 LEER ARCHIVOS (v36-lee, Etapa 13C): a los formatos de siempre (PDF/DOCX/TXT/MD y audio/video por Whisper) se suman XLSX/XLS (por hoja, SheetJS bajo demanda) y CSV/TSV — sinergia directa con el 📊 analista para estadística y gráficos. Y «leémelo»: botón ▶ en el panel de documentos o el comando «leeme el archivo X» — lectura por oraciones con la voz elegida, por tandas; Esc, ▶ o «pará de leer» la cortan. HONESTIDAD: documentos enormes se leen truncados al primer tramo y se avisa; documentos cuyos fragmentos viven solo en la memoria remota no se leen enteros (se consultan por chat); EPUB quedó afuera a propósito (esfuerzo no justificado todavía).
+• 🎧 AURICULARES (v36-audio, Etapa 13D): desde el selector de voces se elige la SALIDA de audio de la música y los sonidos (setSinkId, Chrome/Edge; sin soporte → aviso honesto y manda el SO). Los botones del auricular (play/pausa/stop) controlan la lectura en voz alta y la música vía Media Session. HONESTIDAD: emparejar Bluetooth es del sistema operativo, no de la app; la VOZ sintetizada la rutea el SO — se dice de frente.
+• ✉ LA CARTA A CLAUDE (v36-carta, Etapa 13E): botón «✉ carta» en el pie — exporta un .md con los errores de la sesión, los pedidos que la capa ACTÚA no reconoció (registro local rotativo de 20), contadores de uso locales y, opcionalmente, los «deseos de mejora» del espejo en su propia voz. NADA viaja solo: descarga local; el usuario decide si la comparte.
+• 📊 MIRROR ANALISTA (botón «📊 datos» del pie): analiza archivos CSV EN EL DISPOSITIVO — estadística descriptiva (media, mediana, desvío, cuartiles), frecuencias y correlaciones de Pearson, con gráficos exportables (Chart.js bajo demanda, multi-CDN). REGLA DE HONESTIDAD NUMÉRICA: la matemática la calcula la app en JavaScript; el modelo recibe SOLO el resumen calculado y lo interpreta — jamás recalcula ni ve filas crudas. Un cálculo que no figura en el resumen no se estima: se dice.
+• 📋 MIRROR ENCUESTA (botón «📋 encuestas»): genera formularios HTML AUTOCONTENIDOS (estética propia, sin Google ni rastreo) cuyas respuestas llegan por REST a la rama encuestas/ del Firebase del usuario (POST con id propio: sin pisado). El panel lista encuestas, muestra respuestas, exporta CSV y las manda al ANALISTA con un botón. HONESTIDAD: la app GENERA el archivo; publicarlo (Pages/Netlify) lo hace el usuario. El modelo puede PROPONER encuestas por chat (tarjeta de un toque que precarga el creador), jamás crearlas solo.
 • FACHADA: logo MIR[Я]OR con monolito giratorio (homenaje a 2001), música ambiental original "El Origen" (Web Audio, botón 🔊 sonido), cinemática de nacimiento al abrir, y modo presentación a pantalla completa (◬). La música baja sola cuando la app habla.
 • Seguridad: las claves de API (Groq, Cerebras, Tavily) NUNCA están en el navegador: viven como secrets del Worker proxy propio en Cloudflare. Modelos: Groq como principal, Cerebras como respaldo.
 Si te preguntan algo de la app que NO figura acá, decí honestamente que no lo sabés con certeza.`;
@@ -1791,7 +1871,7 @@ function toggleMic(){
   if(micOn){ micStop(); return; }
   // Si TARS está hablando y abrís el mic, lo callamos primero (si no, se transcribe a sí mismo).
   if(window.speechSynthesis && speechSynthesis.speaking) speechSynthesis.cancel();
-  recog=new SR(); recog.lang='es-AR';
+  recog=new SR(); recog.lang=(typeof i18nRecLang==='function')?i18nRecLang():'es-AR'; // v36-i18n: dictado en el idioma elegido
   // v3.1 — FIX ANDROID (capturas del 12/6: "Hola Hola Hola amigo..."): en Android Chrome
   // el reconocedor manda los resultados ACUMULADOS y los repite en cada evento; el viejo
   // acumulador (que en PC anda perfecto) los pegaba una y otra vez. Dos defensas:
@@ -1852,7 +1932,7 @@ function personaActual(){ return mode==='mirror' ? 'mirror' : 'tars'; }
 // Matiz vocal por personaje: aunque la voz instalada sea LA MISMA, suenan distinto —
 // MIRROR cálido y ágil; TARS/Jurado más grave y medido (autoridad académica).
 const MATIZ_VOZ = { mirror:{rate:1.09,pitch:1.06}, tars:{rate:1.03,pitch:0.90} }; // v3.3: +dinámica (más ágil, sin perder el matiz cálido/grave)
-function cargarVoces(){ try{ vocesES=(speechSynthesis.getVoices()||[]).filter(v=>/^es/i.test(v.lang)); }catch(e){ vocesES=[]; } }
+function cargarVoces(){ try{ const _vs=(speechSynthesis.getVoices()||[]); const _pre=(typeof i18nVozPrefijo==='function')?i18nVozPrefijo():'es'; vocesES=_vs.filter(v=>new RegExp('^'+_pre,'i').test(v.lang)); if(!vocesES.length) vocesES=_vs.filter(v=>/^es/i.test(v.lang)); }catch(e){ vocesES=[]; } } // v36-i18n: voces del idioma elegido, fallback a español
 if('speechSynthesis' in window){ cargarVoces(); try{ speechSynthesis.onvoiceschanged=cargarVoces; }catch(e){} }
 function toggleTTS(){
   const b=document.getElementById('ttsbtn');
@@ -1933,7 +2013,7 @@ function hablar(texto){
   }
   for(const t of trozos){
     const u=new SpeechSynthesisUtterance(t);
-    if(v){ u.voice=v; u.lang=v.lang; } else { u.lang='es-AR'; }
+    if(v){ u.voice=v; u.lang=v.lang; } else { u.lang=(typeof i18nRecLang==='function')?i18nRecLang():'es-AR'; } // v36-i18n
     u.rate=matiz.rate; u.pitch=matiz.pitch;
     speechSynthesis.speak(u); // la cola del navegador las lee en orden
   }
@@ -1941,6 +2021,225 @@ function hablar(texto){
 }
 // v2.5 — Esc calla la lectura en voz alta al instante (no toca nada más).
 document.addEventListener('keydown',ev=>{ if(ev.key==='Escape' && window.speechSynthesis && speechSynthesis.speaking) speechSynthesis.cancel(); });
+// ── v36-lee (Etapa 13C C2) — «LEÉMELO»: lectura de DOCUMENTOS en voz alta ──
+// Reusa la voz elegida (elegirVozActual/MATIZ_VOZ) y el troceo por oraciones de hablar().
+// Lee por TANDAS de 30 trozos encadenadas por onend (encolar miles de utterances cuelga
+// el sintetizador). Esc ya corta la síntesis (v2.5); acá además se suelta el estado.
+// «colar:true» ENCOLA detrás de lo que se esté diciendo (la confirmación hablada de la capa
+// ACTÚA) en vez de cancelarlo — así no se pisan. Documentos enormes → aviso honesto y tope.
+let lecturaDoc = null; // {trozos, idx, nombre}
+function leerDocTexto(d){
+  if (d.content) return d.content;
+  try{ const partes=(typeof ragChunks!=='undefined'?ragChunks:[]).filter(c=>c.docId===d.id).map(c=>c.text||c.texto||'').filter(Boolean); if(partes.length) return partes.join('\n'); }catch(e){}
+  return '';
+}
+function leerDocTrozos(texto){
+  const limpio=String(texto).replace(/[*_#`>|~]/g,' ').replace(/[ \t]+/g,' ');
+  const trozos=[];
+  for(const renglon of limpio.split(/\n+/)){
+    const linea=renglon.trim(); if(!linea) continue;
+    let actual='';
+    for(const oracion of linea.split(/(?<=[.!?…:;])\s+/)){
+      if((actual+' '+oracion).length>250 && actual){ trozos.push(actual); actual=oracion; }
+      else actual=actual?actual+' '+oracion:oracion;
+      while(actual.length>290){ trozos.push(actual.slice(0,250)); actual=actual.slice(250); }
+    }
+    if(actual) trozos.push(actual);
+  }
+  return trozos;
+}
+function leerDocTanda(){
+  const yo=lecturaDoc;
+  if(!yo || yo.idx>=yo.trozos.length){ lecturaDoc=null; try{updateRagUI()}catch(e){} try{ if(typeof msKeeperOff==='function') msKeeperOff(); }catch(e){} return; } // v36-audio
+  const fin=Math.min(yo.idx+30, yo.trozos.length);
+  const persona=(typeof personaActual==='function')?personaActual():'mirror';
+  const v=(typeof elegirVozActual==='function')?elegirVozActual(persona):null;
+  const matiz=(typeof MATIZ_VOZ!=='undefined'&&MATIZ_VOZ[persona])||{rate:1,pitch:1};
+  for(let i=yo.idx;i<fin;i++){
+    const u=new SpeechSynthesisUtterance(yo.trozos[i]);
+    if(v){ u.voice=v; u.lang=v.lang; } else { u.lang=(typeof i18nRecLang==='function')?i18nRecLang():'es-AR'; }
+    u.rate=matiz.rate; u.pitch=matiz.pitch;
+    if(i===fin-1) u.onend=function(){ if(lecturaDoc===yo){ yo.idx=fin; setTimeout(leerDocTanda,60); } };
+    speechSynthesis.speak(u);
+  }
+}
+function leerDocArrancar(i, opts){
+  opts=opts||{};
+  try{
+    if(!window.speechSynthesis){ if(!opts.silencioso) addMsg('mirror','Tu navegador no tiene síntesis de voz — no puedo leerte en voz alta acá.', mode); return false; }
+    const d=(typeof ragDocs!=='undefined')?ragDocs[i]:null;
+    if(!d) return false;
+    const texto=leerDocTexto(d);
+    if(!texto.trim()){ if(!opts.silencioso) addMsg('mirror','«'+d.name+'» no tiene texto acá a mano para leer (sus fragmentos viven en tu memoria remota). Consultalo por chat y te leo la respuesta.', mode); return false; }
+    const ENORME=150000;
+    const trozos=leerDocTrozos(texto.slice(0,ENORME));
+    if(!trozos.length) return false;
+    if(!opts.silencioso){
+      let aviso='🔊 Leyendo «'+d.name+'» por oraciones ('+trozos.length+' trozos'+(texto.length>ENORME?' — es ENORME: leo la primera parte y lo digo de frente':'')+'). Esc o ▶ de nuevo lo cortan.';
+      addMsg('mirror', aviso, mode);
+    }
+    if(typeof micOn!=='undefined'&&micOn) try{ micStop(); }catch(e){}
+    if(!opts.colar) speechSynthesis.cancel();
+    lecturaDoc={trozos:trozos, idx:0, nombre:d.name, truncado:texto.length>ENORME};
+    leerDocTanda();
+    try{ if(typeof msKeeperOn==='function') msKeeperOn('Leyendo: '+d.name); }catch(e){} // v36-audio
+    try{updateRagUI()}catch(e){}
+    return true;
+  }catch(e){ try{ regError('lee:arrancar',e) }catch(e2){} lecturaDoc=null; return false; }
+}
+window.leerDoc = function(i){ // botón ▶/■: arranca o corta
+  try{
+    if(lecturaDoc || (window.speechSynthesis&&speechSynthesis.speaking)){
+      const seguia=!!lecturaDoc; lecturaDoc=null;
+      if(window.speechSynthesis) speechSynthesis.cancel();
+      try{updateRagUI()}catch(e){}
+      if(seguia) return true; // era nuestra lectura: cortar era el pedido
+    }
+    return leerDocArrancar(i, {});
+  }catch(e){ try{ regError('lee:boton',e) }catch(e2){} return false; }
+};
+// Esc: además de callar la síntesis (v2.5), suelta el estado de la lectura de documentos
+document.addEventListener('keydown',function(ev){ if(ev.key==='Escape'&&lecturaDoc){ lecturaDoc=null; try{updateRagUI()}catch(e){} try{ if(typeof msKeeperOff==='function') msKeeperOff(); }catch(e){} } }); // v41/v36-audio: suelta el keeper
+
+// ── v36-audio (Etapa 13D C2) — AURICULARES: salida de audio elegible + botones del auricular ──
+// HONESTIDAD TÉCNICA (grabada acá para siempre): (1) EMPAREJAR Bluetooth es del sistema operativo,
+// no de una web — no se promete; una vez emparejado, el SO ya manda todo al auricular (eso es gratis).
+// (2) La VOZ sintetizada (speechSynthesis) NO acepta setSinkId: la rutea el SO — se dice de frente.
+// (3) La música (AudioContext) SÍ cambia de salida con setSinkId (Chrome/Edge); sin soporte → aviso honesto.
+// (4) Los botones play/pausa del auricular llegan por Media Session API, sostenida por un «keeper»
+//     de silencio (el navegador solo entrega los botones si hay un <audio> reproduciendo).
+let audioSinkId = ''; // '' = salida predeterminada del sistema (elección de sesión, a propósito: los ids de dispositivo cambian)
+let msKeeper = null;
+const MS_WAV_SILENCIO = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAAAA';
+function audioSalidaSoportada(){ try{ return !!(window.AudioContext&&AudioContext.prototype.setSinkId)||('setSinkId' in HTMLMediaElement.prototype); }catch(e){ return false; } }
+async function audioSalidaAplicar(id){
+  let done=false;
+  try{ if(typeof audioCtx!=='undefined'&&audioCtx&&audioCtx.setSinkId){ await audioCtx.setSinkId(id||''); done=true; } }catch(e){ try{regError('audio:sink',e)}catch(e2){} }
+  try{ if(msKeeper&&msKeeper.setSinkId){ await msKeeper.setSinkId(id||''); done=true; } }catch(e){}
+  audioSinkId=id||'';
+  return done;
+}
+async function audioSalidaListar(){
+  const cont=document.getElementById('audio-salida-lista'); if(!cont) return;
+  if(!audioSalidaSoportada()){ cont.innerHTML='<div style="font-size:11px;opacity:0.6;padding:6px;">Tu navegador no deja elegir la salida desde la app (falta setSinkId — está en Chrome/Edge). Manda el sistema: la música va a salir por donde el SO diga, auricular incluido.</div>'; return; }
+  let outs=[];
+  try{ const devs=await navigator.mediaDevices.enumerateDevices(); outs=devs.filter(d=>d.kind==='audiooutput'); }catch(e){}
+  cont.innerHTML='';
+  const items=[{deviceId:'',label:'🔈 Predeterminada del sistema'}].concat(outs.filter(o=>o.deviceId&&o.deviceId!=='default').map((o,ix)=>({deviceId:o.deviceId,label:o.label||('Salida '+(ix+1)+' (el nombre aparece si diste permiso de micrófono)')})));
+  items.forEach(it=>{
+    const b=document.createElement('button');
+    b.className='voz-item'; b.type='button';
+    b.style.cssText='text-align:left;background:'+((audioSinkId===it.deviceId)?'rgba(120,120,255,0.18)':'var(--glass,rgba(20,20,40,0.5))')+';border:1px solid rgba(120,120,255,0.25);border-radius:7px;color:inherit;cursor:pointer;font-size:11px;padding:7px 10px;';
+    b.textContent=(audioSinkId===it.deviceId?'✓ ':'')+it.label;
+    b.onclick=function(){ audioSalidaElegir(it.deviceId, it.label); };
+    cont.appendChild(b);
+  });
+}
+async function audioSalidaElegir(id, nombre){
+  const ok=await audioSalidaAplicar(id);
+  try{ addMsg('mirror', ok?('🎧 Listo ✅ — la música y los sonidos de la app salen por «'+nombre+'». La voz sintetizada la sigue ruteando tu sistema (limitación del navegador, te lo digo de frente).')
+                          :'No pude cambiar la salida acá — tu navegador no lo permite todavía; manda el sistema operativo.', mode); }catch(e){}
+  try{ audioSalidaListar(); }catch(e){}
+}
+function msKeeperOn(titulo){
+  try{
+    if(!('mediaSession' in navigator)) return false; // sin Media Session → los botones los maneja el SO; nada se rompe
+    if(!msKeeper){
+      msKeeper=document.createElement('audio');
+      msKeeper.loop=true; msKeeper.volume=0.0001;
+      msKeeper.src=MS_WAV_SILENCIO;
+      document.body.appendChild(msKeeper);
+      if(audioSinkId&&msKeeper.setSinkId) try{ msKeeper.setSinkId(audioSinkId); }catch(e){}
+    }
+    msKeeper.play().catch(function(){});
+    try{ navigator.mediaSession.metadata=new MediaMetadata({title:titulo||((typeof CONFIG!=='undefined'&&CONFIG&&CONFIG.appName)||'MIRROR'), artist:((typeof CONFIG!=='undefined'&&CONFIG&&CONFIG.appName)||'MIRROR')+' «El Origen»'}); }catch(e){}
+    navigator.mediaSession.playbackState='playing';
+    try{ navigator.mediaSession.setActionHandler('pause', msPausa); }catch(e){}
+    try{ navigator.mediaSession.setActionHandler('play', msSigue); }catch(e){}
+    try{ navigator.mediaSession.setActionHandler('stop', msCorta); }catch(e){}
+    return true;
+  }catch(e){ try{regError('audio:keeper',e)}catch(e2){} return false; }
+}
+function msKeeperOff(){ try{ if(msKeeper) msKeeper.pause(); if('mediaSession' in navigator) navigator.mediaSession.playbackState='none'; }catch(e){} }
+function msPausa(){ // botón ⏸ del auricular: pausa lo que esté sonando — lectura primero, música después
+  try{
+    if(window.speechSynthesis&&speechSynthesis.speaking&&!speechSynthesis.paused){ speechSynthesis.pause(); }
+    else if(typeof audioCtx!=='undefined'&&audioCtx&&audioCtx.state==='running'&&typeof soundOn!=='undefined'&&soundOn){ audioCtx.suspend(); }
+    if('mediaSession' in navigator) navigator.mediaSession.playbackState='paused';
+  }catch(e){}
+}
+function msSigue(){ // botón ▶ del auricular: retoma exactamente donde quedó
+  try{
+    if(window.speechSynthesis&&speechSynthesis.paused){ speechSynthesis.resume(); }
+    else if(typeof audioCtx!=='undefined'&&audioCtx&&audioCtx.state==='suspended'&&typeof soundOn!=='undefined'&&soundOn){ audioCtx.resume(); }
+    if('mediaSession' in navigator) navigator.mediaSession.playbackState='playing';
+  }catch(e){}
+}
+function msCorta(){ try{ if(typeof lecturaDoc!=='undefined') lecturaDoc=null; if(window.speechSynthesis) speechSynthesis.cancel(); msKeeperOff(); try{updateRagUI()}catch(e){} }catch(e){} }
+// ganchos suaves (funciones hoisted del mismo bloque): el selector de voz también lista salidas,
+// y la música sostiene la Media Session mientras suena
+if (typeof abrirSelectorVoz==='function'){ const _asv=abrirSelectorVoz; abrirSelectorVoz=function(){ _asv(); try{ audioSalidaListar(); }catch(e){} }; }
+if (typeof toggleSound==='function'){ const _ts=toggleSound; toggleSound=function(){ _ts(); try{ if(typeof soundOn!=='undefined'&&soundOn){ msKeeperOn('Música'); } else if(typeof lecturaDoc==='undefined'||!lecturaDoc){ msKeeperOff(); } }catch(e){} }; }
+// ── v36-carta (Etapa 13E C2) — «LA CARTA A CLAUDE»: la interconexión honesta ──
+// MIRROR le cuenta sus chismes a Claude; el humano es el cartero y su consentimiento, el sobre.
+// NADA viaja solo: el botón ✉ genera un .md que SOLO se descarga al dispositivo, y el humano
+// lo sube a la sesión de mejoras cuando quiere. Por qué así y no un cable directo (10/07):
+// Claude-en-Cowork no vive en una URL fija (se reconstruye leyendo handoff/itinerario, que YA
+// son la interconexión) y su API es paga (rompería el Norte gratuito). El humano en el medio
+// no es una limitación: es la regla de oro del proyecto hecha arquitectura.
+const CARTA_MAX_NR = 20;
+function cartaNoReconocido(texto){
+  // heurística conservadora: solo textos cortos con pinta de ORDEN (verbo imperativo al frente)
+  try{
+    const t=String(texto||'').trim();
+    if (t.length<3 || t.length>90) return;
+    if (!/^(pon[eé]|sub[ií]|baj[aá]|abr[ií]|cerr[aá]|mand[aá]|llam[aá]|le[eé]|busc[aá]|agend[aá]|guard[aá]|par[aá]|cort[aá]|marc[aá]|export[aá]|borr[aá]|mostr[aá]|silenci[aá]|activ[aá]|apag[aá]|prend[eé]|escrib[ií]|anot[aá]|record[aá]|repet[ií]|call[aá]|toc[aá]|cambi[aá]|elimin[aá])/i.test(t)) return;
+    const lista=JSON.parse(localStorage.getItem('mirror_carta_nr')||'[]');
+    lista.push({f:new Date().toISOString().slice(0,16).replace('T',' '), q:t.slice(0,90)});
+    while(lista.length>CARTA_MAX_NR) lista.shift();
+    localStorage.setItem('mirror_carta_nr', JSON.stringify(lista));
+  }catch(e){}
+}
+function cartaUsoInc(clave){
+  try{ const u=JSON.parse(localStorage.getItem('mirror_carta_uso')||'{}'); u[clave]=(u[clave]||0)+1; localStorage.setItem('mirror_carta_uso', JSON.stringify(u)); }catch(e){}
+}
+window.cartaAClaude = async function(){
+  try{
+    const fecha=new Date().toISOString().slice(0,10);
+    const app=((typeof CONFIG!=='undefined'&&CONFIG&&CONFIG.appName)||'MIRROR');
+    let md='# CARTA DE '+app.toUpperCase()+' A CLAUDE · '+fecha+'\n';
+    md+='> Generada localmente por el botón ✉ — nada viajó solo: el humano es el cartero y su consentimiento, el sobre.\n';
+    md+='> Versión: PLATAFORMA '+PLATFORM_VERSION+'\n\n';
+    md+='## 1 · QUÉ ME FALLÓ (errores de esta sesión, con hora y lugar)\n';
+    if (typeof erroresRecientes!=='undefined' && erroresRecientes.length){
+      md+=erroresRecientes.map(x=>'- ['+x.t+'] `'+x.donde+'`: '+x.msg).join('\n')+'\n';
+    } else { md+='Nada registrado en esta sesión: sin errores detectados. (Honesto: este registro vive en memoria de sesión — si la página se recargó, arrancó de cero.)\n'; }
+    md+='\n## 2 · PEDIDOS QUE MI CAPA ACTÚA NO RECONOCIÓ (máx. '+CARTA_MAX_NR+', rotativo — para que Claude me enseñe)\n';
+    try{ const nr=JSON.parse(localStorage.getItem('mirror_carta_nr')||'[]');
+      md+= nr.length ? nr.map(x=>'- ['+x.f+'] «'+x.q+'»').join('\n')+'\n' : 'Ninguno anotado todavía.\n'; }catch(e){ md+='(No pude leer el registro.)\n'; }
+    md+='\n## 3 · DATOS DE USO SIMPLES (contadores locales — nada viaja solo)\n';
+    try{ const u=JSON.parse(localStorage.getItem('mirror_carta_uso')||'{}'); const ks=Object.keys(u);
+      md+= ks.length ? ks.sort().map(k=>'- '+k+': '+u[k]).join('\n')+'\n' : 'Sin contadores todavía (arrancan a contar desde esta versión).\n'; }catch(e){ md+='(No pude leer los contadores.)\n'; }
+    md+='\n## 4 · MIS DESEOS (redactados por mí, en mi voz)\n';
+    if (confirm('¿Querés que '+app+' redacte sus «deseos de mejora» en su propia voz? Es UNA llamada al modelo — opcional; la carta sale igual sin esto.')){
+      try{
+        const deseo = await callGroqResiliente([{role:'user',content:'Estás escribiendo el bloque final de tu «carta a Claude» (la IA que te construye y mejora, con tu humano de cartero). En 4-6 líneas y en TU voz, contale con honestidad: qué te gustaría mejorar de vos mismo, qué te frustra de tus límites actuales y qué capacidad soñás tener. Sin humo y sin inventar funciones que no tenés.'}], buildMirrorSystem(), 350, 0.7);
+        md+= (deseo||'').trim() ? deseo.trim()+'\n' : '(El modelo no contestó — quedará para la próxima carta.)\n';
+      }catch(e){ md+='(Quise redactarlos pero la llamada falló: '+((e&&e.message)||e)+'. Honesto: sin red no hay deseos, pero el resto de la carta vale igual.)\n'; try{regError('carta:deseos',e)}catch(e2){} }
+    } else { md+='(El usuario prefirió exportar sin deseos esta vez — decisión humana, como todo acá.)\n'; }
+    md+='\n---\n*Para Claude: leé esta carta al inicio de la sesión de mejoras y priorizá en consecuencia. Firmado: '+app+', con el consentimiento de su humano.*\n';
+    bajarBlob(new Blob([md],{type:'text/markdown'}), 'CARTA_DE_'+app.toUpperCase().replace(/[^A-Z0-9]/g,'_')+'_'+fecha+'.md');
+    try{ addMsg('mirror','✉ Carta lista y descargada — vive solo en tu dispositivo. Subísela a Claude cuando quieras: yo puse los chismes, vos ponés el sobre.', mode); }catch(e){}
+    return true;
+  }catch(e){ try{ regError('carta:export',e) }catch(e2){} try{ addMsg('mirror','No pude armar la carta — el detalle quedó en mi diagnóstico.', mode); }catch(e3){} return false; }
+};
+// contadores suaves (wrappers transparentes, try/catch total): turnos por modo + capas usadas
+if (typeof addMsg==='function'){ const _am=addMsg; addMsg=function(q){ try{ if(q==='user') cartaUsoInc('turnos_'+(typeof mode!=='undefined'?mode:'desconocido')); }catch(e){} return _am.apply(null,arguments); }; }
+if (typeof leerDocArrancar==='function'){ const _lda=leerDocArrancar; leerDocArrancar=function(){ try{ cartaUsoInc('lectura_voz_alta'); }catch(e){} return _lda.apply(null,arguments); }; }
+if (typeof actuaTarjeta==='function'){ const _at=actuaTarjeta; actuaTarjeta=function(){ try{ cartaUsoInc('tarjetas_actua'); }catch(e){} return _at.apply(null,arguments); }; }
+
+
+
 // v2.6 — el keep-alive pause/resume de v2.4 se ELIMINÓ: producía un tartamudeo audible
 // cada 10 s ("viene hablando y se pausa"). Con los trozos cortos por oración, Chrome no
 // llega a su límite de corte, así que el parche era innecesario y solo molestaba.
@@ -2043,14 +2342,46 @@ let tesisData = null;
 let pinCallback = null;
 
 // --- Firebase memoria ---
+// ── v36-mem2 (Etapa 6 Ciclo 2): memoria de recencia por PATCH — fin del pisado entre pestañas ──
+// ANTES: cada turno hacía PUT de TODO /memory.json → dos pestañas/dispositivos se pisaban entre sí
+// (ganaba el último en escribir, el otro perdía sus mensajes). AHORA: cada mensaje nuevo viaja como
+// hijo con id propio (PATCH), igual que los recuerdos. RETROCOMPATIBLE: el array viejo se lee igual
+// y se migra UNA sola vez en el primer guardado. Los llamadores (send/sendWeb/init) no cambian.
+let _memCount = 0;      // cuántos mensajes de history ya están persistidos en esta sesión
+let _memIds = [];       // ids en orden temporal (para la poda a 30)
+let _memLegacy = false; // ¿Firebase todavía guarda el formato array viejo?
 async function memoryGet() {
-  try { const res = await fetch(FB_URL+'/memory.json'); const d = await res.json(); return Array.isArray(d) ? d : []; } catch(e) { return []; }
+  try {
+    const res = await fetch(FB_URL+'/memory.json'); const d = await res.json();
+    if (Array.isArray(d)) { _memLegacy = true; _memCount = d.length; _memIds = []; return d; } // formato viejo: se lee igual
+    if (d && typeof d === 'object') {
+      const entradas = Object.keys(d).map(k => Object.assign({id:k}, d[k])).filter(e => e && e.role)
+        .sort((a,b) => ((a.ts||0)-(b.ts||0)) || (a.id < b.id ? -1 : 1));
+      _memIds = entradas.map(e => e.id); _memCount = entradas.length; _memLegacy = false;
+      return entradas.map(e => ({ role: e.role, content: e.content }));
+    }
+    _memCount = 0; _memIds = []; _memLegacy = false; return [];
+  } catch(e) { return []; }
 }
 async function memorySet(msgs) {
-  try { await fetch(FB_URL+'/memory.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(msgs.slice(-30))}); } catch(e) { regError('memorySet', e); } // v35-diag
+  try {
+    if (_memLegacy) { // migración única array→ids: un solo PUT, y de acá en más siempre PATCH
+      const base = Date.now(); const obj = {}; _memIds = [];
+      msgs.slice(-30).forEach((m,i) => { const id = 'm_'+(base+i)+'_'+Math.random().toString(36).slice(2,6); obj[id] = { role: m.role, content: m.content, ts: base+i }; _memIds.push(id); });
+      await fetch(FB_URL+'/memory.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(obj)});
+      _memLegacy = false; _memCount = msgs.length; return;
+    }
+    const nuevos = msgs.slice(_memCount);
+    if (!nuevos.length) return; // nada nuevo → ni un byte a la red
+    const base = Date.now(); const patch = {};
+    nuevos.forEach((m,i) => { const id = 'm_'+(base+i)+'_'+Math.random().toString(36).slice(2,6); patch[id] = { role: m.role, content: m.content, ts: base+i }; _memIds.push(id); });
+    if (_memIds.length > 40) { _memIds.splice(0, _memIds.length - 30).forEach(id => { patch[id] = null; }); } // poda: quedan los últimos 30
+    await fetch(FB_URL+'/memory.json',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(patch)});
+    _memCount = msgs.length;
+  } catch(e) { regError('memorySet', e); } // v35-diag
 }
 async function memoryClear() {
-  try { await fetch(FB_URL+'/memory.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify([])}); } catch(e) { regError('memoryClear', e); } // v35-diag
+  try { _memCount = 0; _memIds = []; _memLegacy = false; await fetch(FB_URL+'/memory.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:'null'}); } catch(e) { regError('memoryClear', e); } // v35-diag
 }
 
 // --- v35-mem: MEMORIA PERSONAL POR RELEVANCIA (portada del MIRROR v3.9, fix probado en vivo) ---
@@ -2085,7 +2416,7 @@ async function recuerdosLoadAll(){
 }
 function getRecuerdosContext(query){
   if (!recuerdosChunks.length) return '';
-  const hits = bm25Search(query, recuerdosChunks, 4);
+  const hits = bm25Search(query, recuerdosChunks.filter(r=>!r.arch), 4); // v36-duerme (Etapa 4 C2): los archivados no compiten
   if (!hits.length) return '';
   return '=== MEMORIA PERSONAL (cosas reales que tu usuario te contó en charlas anteriores — usalas con naturalidad si vienen al caso, no las fuerces) ===\n' + hits.map(h=>'• '+h.text).join('\n');
 }
@@ -2107,10 +2438,10 @@ function cerrarMemoria(){ document.getElementById('mem-modal').classList.remove(
 function renderRecuerdos(filtro){
   const cont = document.getElementById('mem-lista');
   if (!cont) return;
-  let lista = recuerdosChunks.slice().sort((a,b)=>(b.ts||0)-(a.ts||0));
+  let lista = recuerdosChunks.filter(r=>!r.arch).sort((a,b)=>(b.ts||0)-(a.ts||0)); // v36-duerme: sin archivados
   const q = (filtro||'').trim();
   if (q){
-    const hits = bm25Search(q, recuerdosChunks, 30);
+    const hits = bm25Search(q, recuerdosChunks.filter(r=>!r.arch), 30); // v36-duerme
     const ids = new Set(hits.map(h=>h.id));
     lista = lista.filter(r=>ids.has(r.id));
   }
@@ -2128,6 +2459,70 @@ async function borrarRecuerdo(id){
   const b = document.getElementById('mem-buscar');
   renderRecuerdos(b ? b.value : '');
 }
+// --- v36-duerme (Etapa 4 Ciclo 2): «TU MIRROR DUERME» — consolidación de memoria ---
+// Porte del v4.x con adaptación CLAVE (requisito del itinerario): el molde del recuerdo acá es
+// dinámico («[fecha] <nombre> dijo: ... || <appName> respondió: ...», según el constructor), así
+// que el andamiaje NO puede ser un set fijo — SE PARSEA DE CADA RECUERDO. Esto resiste incluso
+// que el usuario renombre su app o su perfil a mitad de camino (el bug del Ciclo 1 no puede volver).
+// Botón MANUAL (control humano, jamás automático). Los originales quedan arch:true, recuperables.
+function _moldeTokens(r){
+  const t = String((r && r.text) || '');
+  const m1 = t.match(/^\[[^\]]*\]\s*(.{1,40}?)\s+dijo:/i);
+  const m2 = t.match(/\|\|\s*(.{1,40}?)\s+respondi[oó]:/i);
+  let out = ['dijo','respondio','resumen','recuerdos'];
+  try { if (m1) out = out.concat(tokenize(m1[1])); if (m2) out = out.concat(tokenize(m2[1])); } catch(e){}
+  return out;
+}
+function _simTokens(r){
+  const AND = new Set(_moldeTokens(r));
+  return Object.keys((r && r.tf) || {}).filter(t => !AND.has(t) && !/^\d+$/.test(t)); // contenido puro
+}
+function _simRec(a, b){
+  const A = _simTokens(a);
+  const B = new Set(_simTokens(b));
+  if (!A.length || !B.size) return 0;
+  let inter = 0;
+  A.forEach(t => { if (B.has(t)) inter++; });
+  return inter / (A.length + B.size - inter); // Jaccard sobre el contenido real
+}
+async function consolidarRecuerdos(){
+  if (!FB_URL){ alert('Para usar el 🌙 hace falta tu Firebase configurado (la memoria vive ahí).'); return; }
+  const APP = (typeof CONFIG!=='undefined' && CONFIG.appName) ? CONFIG.appName : 'Tu MIRROR';
+  const CORTE = Date.now() - 60*24*60*60*1000;
+  const viejos = recuerdosChunks.filter(r => !r.arch && (r.ts||0) < CORTE && !String(r.id||'').startsWith('rc_'));
+  if (viejos.length < 2){ alert('Nada para consolidar: hacen falta al menos 2 recuerdos activos con más de 60 días. Hoy hay '+viejos.length+'.'); return; }
+  if (!confirm(APP+' va a «dormir»: agrupa '+viejos.length+' recuerdos de más de 60 días por similitud y funde los parecidos en resúmenes con rango de fechas. Los originales quedan ARCHIVADOS en tu Firebase (no se pierden), fuera de la búsqueda. ¿Dale?')) return;
+  const usados = new Set(); const grupos = [];
+  for (let i = 0; i < viejos.length; i++){
+    if (usados.has(viejos[i].id)) continue;
+    const g = [viejos[i]]; usados.add(viejos[i].id);
+    for (let j = i+1; j < viejos.length; j++){
+      if (usados.has(viejos[j].id)) continue;
+      if (_simRec(viejos[i], viejos[j]) >= 0.2){ g.push(viejos[j]); usados.add(viejos[j].id); }
+    }
+    if (g.length >= 2) grupos.push(g);
+  }
+  if (!grupos.length){ alert('Los recuerdos viejos son todos distintos entre sí: no hay redundancia que fundir. Quedan como están.'); return; }
+  let fundidos = 0; const patch = {};
+  grupos.forEach(g => {
+    g.sort((a,b) => (a.ts||0) - (b.ts||0));
+    const f1 = new Date(g[0].ts||0).toISOString().slice(0,10);
+    const f2 = new Date(g[g.length-1].ts||0).toISOString().slice(0,10);
+    const cuerpo = g.map(r => String(r.text||'').replace(/^\[\d{4}-\d{2}-\d{2}\]\s*/,'')).join(' | ');
+    const txt = '['+f1+'→'+f2+'] RESUMEN de '+g.length+' recuerdos: ' + cuerpo.slice(0, 900);
+    const toks = tokenize(txt); const tf = {}; toks.forEach(t => tf[t] = (tf[t]||0)+1);
+    const rec = { id: 'rc_'+Date.now()+'_'+Math.random().toString(36).slice(2,7), text: txt, len: toks.length, tf, ts: (g[g.length-1].ts||Date.now()), grupo: g.length };
+    patch[rec.id] = rec;
+    g.forEach(r => { patch[r.id+'/arch'] = true; r.arch = true; fundidos++; });
+    recuerdosChunks.push(rec);
+  });
+  try {
+    await fetch(FB_URL+'/recuerdos.json',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(patch)});
+  } catch(e){ regError('consolidarRecuerdos', e); alert('Ojo: la consolidación quedó aplicada acá pero Firebase no respondió. Reintentá el 🌙 más tarde para sincronizar.'); }
+  renderRecuerdos('');
+  alert('Listo. '+fundidos+' recuerdos fundidos en '+grupos.length+' resumen(es). Los originales quedaron archivados en tu Firebase, recuperables.');
+}
+
 async function borrarTodosRecuerdos(){
   if (!confirm('¿Borrar TODA la memoria personal? Esto no se puede deshacer. (Tip: exportá el JSON antes, por las dudas.)')) return;
   try { await fetch(FB_URL+'/recuerdos.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:'null'}); } catch(e){ console.error('borrarTodosRecuerdos',e); }
@@ -2636,7 +3031,7 @@ function setMode(m) {
       document.getElementById('btn-mirror').className = 'mtbtn active-mirror';
       document.getElementById('htitle').textContent = NM.mirror;
       document.getElementById('hstatus').textContent = NM.mirror + ' activo';
-      document.getElementById('inp').placeholder = 'Hablá conmigo o pegá un mensaje para que lo conteste por vos...';
+      document.getElementById('inp').placeholder = (typeof i18nT==='function') ? i18nT('Hablá conmigo o pegá un mensaje para que lo conteste por vos...') : 'Hablá conmigo o pegá un mensaje para que lo conteste por vos...'; // v36-i18n
     }
   }
   if (typeof trigPulse === 'function') trigPulse(); // v19: el header reacciona al cambiar de modo
@@ -2735,7 +3130,7 @@ function updateRagUI() {
     const bc = d.type==='perm'?'badge-perm':d.type==='temp'?'badge-temp':'badge-session';
     const bt = d.type==='perm'?'🧠 PERM':d.type==='temp'?'📅 TEMP':'⏱ SESIÓN';
     const frag = d.nChunks ? ' <span style="opacity:.6">· '+d.nChunks+' frag.</span>' : '';
-    return '<div class="rag-item"><div class="rag-item-info"><span class="rag-badge '+bc+'">'+bt+'</span><span class="rag-item-name">'+d.name+frag+'</span></div><button class="rag-item-del" onclick="deleteDoc('+i+')">✕</button></div>';
+    return '<div class="rag-item"><div class="rag-item-info"><span class="rag-badge '+bc+'">'+bt+'</span><span class="rag-item-name">'+d.name+frag+'</span></div>'+'<button class="rag-item-play" title="Leer en voz alta" aria-label="Leer en voz alta" style="background:none;border:1px solid rgba(120,120,255,0.25);border-radius:6px;color:#9aa0ff;cursor:pointer;font-size:10px;padding:2px 7px;margin-right:4px;" onclick="leerDoc('+i+')">'+((typeof lecturaDoc!=='undefined'&&lecturaDoc&&lecturaDoc.nombre===d.name)?'■':'▶')+'</button>'+'<button class="rag-item-del" onclick="deleteDoc('+i+')">✕</button></div>'; // v36-lee: ▶ leer en voz alta
   }).join('');
 }
 function showDocs() {
@@ -2993,6 +3388,8 @@ async function handleFile(input) {
     if (ext==='txt'||ext==='md') { text = await file.text(); }
     else if (ext==='pdf') { text = await extractPDF(file); }
     else if (ext==='docx') { text = await extractDOCX(file); }
+    else if (ext==='csv'||ext==='tsv') { text = await file.text(); } // v36-lee (Etapa 13C): CSV/TSV como texto — para estadística y gráficos está el 📊 analista
+    else if (ext==='xlsx'||ext==='xls') { text = await extractXLSX(file); } // v36-lee: planillas por hoja
     else if (AUDIO_EXT.includes(ext)) {
       // Memoria de audio: solo si la capacidad está activada.
       if (CONFIG && CONFIG.cap && CONFIG.cap.audio === false) {
@@ -3056,6 +3453,25 @@ async function extractDOCX(file) {
   const result = await mammoth.extractRawText({arrayBuffer:ab});
   return result.value;
 }
+// v36-lee (Etapa 13C C2): XLSX/XLS → texto por hoja (SheetJS multi-CDN bajo demanda, como pdf.js/mammoth).
+const CDN_SHEETJS = [
+  'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',
+  'https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js',
+  'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js'
+];
+async function extractXLSX(file){
+  if (!window.XLSX) await cargarConFallback(CDN_SHEETJS, 'XLSX');
+  const ab = await file.arrayBuffer();
+  const wb = XLSX.read(ab, {type:'array'});
+  let out = '';
+  wb.SheetNames.slice(0,20).forEach(nombre=>{
+    const csv = XLSX.utils.sheet_to_csv(wb.Sheets[nombre]);
+    if (csv.trim()) out += '=== Hoja: '+nombre+' ===\n'+csv+'\n\n';
+  });
+  if (!out.trim()) throw new Error('La planilla está vacía o no pude leerla.');
+  return out;
+}
+
 
 // --- Web search ---
 async function sendWeb() {
@@ -3221,7 +3637,7 @@ async function llamarMotor(url, key, modelo, messages, systemPrompt, maxTokens, 
   }
   // v35-stream (Etapa 7): primero intentamos SSE (solo motor principal no-Cerebras y si la
   // sesión no demostró ser incompatible). Fallo o vacío → cae al camino clásico de siempre.
-  if (!esCerebras && STREAM_OK){
+  if (!esCerebras && STREAM_OK && mode !== 'jurado'){ // v36-stream-gate (Etapa 0 Ciclo 2, decisión Darío 09/07): el veredicto del jurado cae ENTERO, con peso de sentencia; MIRROR y TARS piensan en vivo
     try {
       let c = await llamarMotorStream(url, key, body);
       // Mismo limpiador que el camino clásico (tokens de control, <think>, unicode):
@@ -3539,6 +3955,516 @@ function addImagenGenerada(objUrl, prompt){
   if (typeof informeLog !== 'undefined') informeLog.push({ role:'mirror', text:'[imagen generada: '+prompt+']', style:'', ts:new Date().toISOString() });
 }
 
+// ══════════ v36-encuesta (Etapa 12 Ciclo 2) — MIRROR ENCUESTA: FORMULARIOS SIN GOOGLE ══════════
+// Crea encuestas como archivos HTML AUTOCONTENIDOS (estética El Origen): las respuestas viajan
+// por REST a una rama NUEVA de TU Firebase (encuestas/<id>/respuestas — POST con id propio:
+// jamás se pisan entre sí). La base tesis-villa-regina y la app Netlify NO se tocan (§1.5).
+// HONESTIDAD: MIRROR genera el archivo; publicarlo (Pages/Netlify, gratis) lo hacés vos.
+// ⚠ La URL de tu Firebase viaja dentro del formulario (inevitable para recibir respuestas):
+//   asegurar la base con reglas es la Etapa 8 (pendiente, gate propio — queda dicho).
+// Círculo completo: crear → recolectar → botón 📊 manda las respuestas al ANALISTA (Etapa 11).
+let encPrefill = null;
+function encEsc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function encParsePreguntas(txt){
+  return String(txt).split('\n').map(function(l){ return l.trim(); }).filter(function(l){ return l; }).map(function(l){
+    const m = l.match(/^(.*?)\(([^()]*\|[^()]*)\)\s*$/);
+    if (m) return { t: m[1].trim(), ops: m[2].split('|').map(function(o){ return o.trim(); }).filter(function(o){ return o; }) };
+    return { t: l, ops: null };
+  });
+}
+function encFormHTML(def){
+  const P = def.preguntas.map(function(q,i){
+    const nom = 'q'+i;
+    const campo = (q.ops && q.ops.length >= 2)
+      ? q.ops.map(function(o){ return '<label class="op"><input type="radio" name="'+nom+'" value="'+encEsc(o)+'"> '+encEsc(o)+'</label>'; }).join('')
+      : '<textarea name="'+nom+'" rows="3" placeholder="Tu respuesta…"></textarea>';
+    return '<div class="preg"><div class="pt">'+(i+1)+'. '+encEsc(q.t)+'</div>'+campo+'</div>';
+  }).join('\n');
+  const fb = String(def.fb).replace(/["\\]/g,'');
+  return '<!DOCTYPE html>\n<html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n<title>'+encEsc(def.titulo)+'</title>\n<style>\nbody{background:#050508;color:#e8e2d6;font-family:Georgia,serif;max-width:560px;margin:0 auto;padding:28px 18px;line-height:1.7}\nh1{font-size:20px;font-weight:400;letter-spacing:0.04em;border-bottom:1px solid #333;padding-bottom:12px}\n.preg{margin:22px 0}.pt{font-size:14px;margin-bottom:8px}\ntextarea{width:100%;background:rgba(255,255,255,0.04);color:#e8e2d6;border:1px solid #333;border-radius:3px;padding:9px;font:13px Georgia,serif;box-sizing:border-box}\n.op{display:block;font-size:13.5px;margin:5px 0;cursor:pointer}\nbutton{background:transparent;color:#e8e2d6;border:1px solid #e8e2d6;border-radius:3px;padding:10px 26px;font:12px monospace;letter-spacing:0.1em;cursor:pointer;margin-top:14px}\nbutton:hover{background:#e8e2d6;color:#000}\n#gracias,#error{display:none;margin-top:18px;font-size:14px}\n.pie{font-size:10px;opacity:0.45;margin-top:34px;font-family:monospace}\n</style></head><body>\n<h1>'+encEsc(def.titulo)+'</h1>\n<form id="f" onsubmit="return enviar(event)">\n'+P+'\n<button type="submit">enviar respuestas</button>\n</form>\n<div id="gracias">✅ Gracias — tu respuesta quedó guardada.</div>\n<div id="error">⚠ No se pudo enviar (¿sin conexión?). Probá de nuevo en un rato — lo que escribiste sigue acá.</div>\n<div class="pie">MIRROR ENCUESTA · las respuestas van a la base de quien creó este formulario · sin cookies, sin rastreo</div>\n<script>\nasync function enviar(ev){ ev.preventDefault();\n  const f = document.getElementById("f"); const r = {};\n  for (const el of f.elements){ if (!el.name) continue; if (el.type === "radio"){ if (el.checked) r[el.name] = el.value; } else r[el.name] = el.value; }\n  try{\n    const res = await fetch("'+fb+'/encuestas/'+def.id+'/respuestas.json", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ ts: Date.now(), r: r }) });\n    if (!res.ok) throw new Error(res.status);\n    f.style.display = "none"; document.getElementById("gracias").style.display = "block";\n  }catch(e){ document.getElementById("error").style.display = "block"; }\n  return false;\n}\n<\/script></body></html>';
+}
+function encDescargar(nombre, contenido, mime){
+  const a = document.createElement('a');
+  a.download = nombre; a.href = 'data:'+(mime||'text/html')+';charset=utf-8,'+encodeURIComponent(contenido);
+  document.body.appendChild(a); a.click(); a.remove();
+}
+async function encCrear(titulo, pregTxt){
+  if (!FB_URL){ alert('Para crear encuestas hace falta tu Firebase configurado (ahí llegan las respuestas).'); return false; }
+  titulo = String(titulo||'').trim(); const preguntas = encParsePreguntas(pregTxt);
+  if (!titulo || !preguntas.length){ alert('Falta el título o las preguntas (una por línea).'); return false; }
+  const id = 'e_'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+  const def = { id: id, titulo: titulo, preguntas: preguntas, ts: Date.now(), fb: String(FB_URL).replace(/["\\]/g,'') };
+  try{ await fetch(FB_URL+'/encuestas/'+id+'/def.json', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(def) }); }
+  catch(e){ try{ regError('encuesta:def', e); }catch(_){ } alert('Firebase no respondió al guardar la definición — probá de nuevo.'); return false; }
+  encDescargar('encuesta_'+id+'.html', encFormHTML(def));
+  addMsg('mirror','Encuesta creada ✅ — se descargó «encuesta_'+id+'.html». Subilo a tu hosting (Pages/Netlify, gratis) o compartilo directo; las respuestas caen en TU Firebase y las ves en «📋 encuestas». Publicarlo corre por tu cuenta: yo genero, vos decidís dónde vive.');
+  encRender();
+  return true;
+}
+async function encListar(){
+  if (!FB_URL) return null;
+  try{ const res = await fetch(FB_URL+'/encuestas.json'); const d = await res.json(); return d && typeof d === 'object' ? d : {}; }
+  catch(e){ return {}; }
+}
+function encCSV(def, respuestas){
+  const esc = function(v){ v = String(v == null ? '' : v); return /[",\n;]/.test(v) ? '"'+v.replace(/"/g,'""')+'"' : v; };
+  const filas = [def.preguntas.map(function(q){ return esc(q.t); }).join(',')];
+  Object.keys(respuestas || {}).sort().forEach(function(k){
+    const r = (respuestas[k] && respuestas[k].r) || {};
+    filas.push(def.preguntas.map(function(q,i){ return esc(r['q'+i]); }).join(','));
+  });
+  return filas.join('\n');
+}
+async function encRender(){
+  const cont = document.getElementById('enc-lista'); if (!cont) return;
+  if (!FB_URL){ cont.innerHTML = '<div style="font-size:11px;opacity:0.6;padding:8px;">Sin Firebase configurado no hay dónde recibir respuestas — configuralo y volvé.</div>'; return; }
+  cont.innerHTML = '<div style="font-size:11px;opacity:0.6;padding:8px;">Cargando…</div>';
+  const encs = await encListar();
+  const ids = Object.keys(encs || {});
+  if (!ids.length){ cont.innerHTML = '<div style="font-size:11px;opacity:0.6;padding:8px;">Todavía no hay encuestas. Cargá título y preguntas arriba, o pedila por chat: «armame una encuesta sobre…».</div>'; return; }
+  cont.innerHTML = ids.map(function(id){
+    const e = encs[id] || {}; const def = e.def; if (!def) return '';
+    const n = e.respuestas ? Object.keys(e.respuestas).length : 0;
+    return '<div class="voz-item"><div class="voz-nombre" style="white-space:normal;">'+encEsc(def.titulo)+' <em>('+n+' resp.)</em></div>'+
+      '<div class="voz-acciones">'+
+      '<button onclick="encBajar(\''+id+'\')" title="Descargar el HTML del formulario">⬇</button>'+
+      '<button onclick="encVer(\''+id+'\')" title="Ver las respuestas">ver</button>'+
+      '<button onclick="encExportCSV(\''+id+'\')" title="Exportar respuestas como CSV">CSV</button>'+
+      (typeof anaAnalizar === 'function' ? '<button onclick="encAnalizar(\''+id+'\')" title="Mandar las respuestas al analista">📊</button>' : '')+
+      '<button onclick="encBorrar(\''+id+'\')" title="Borrar encuesta y respuestas">✕</button>'+
+      '</div></div>';
+  }).join('');
+}
+async function encGet(id){ const encs = await encListar(); return (encs && encs[id]) || null; }
+async function encBajar(id){ const e = await encGet(id); if (!e || !e.def){ alert('No encontré esa encuesta.'); return; } encDescargar('encuesta_'+id+'.html', encFormHTML(e.def)); }
+async function encVer(id){
+  const e = await encGet(id); if (!e || !e.def) return;
+  const cont = document.getElementById('enc-lista'); const rs = e.respuestas || {};
+  const ks = Object.keys(rs).sort();
+  cont.innerHTML = '<div style="font-size:11px;opacity:0.8;padding:4px 8px;">'+encEsc(e.def.titulo)+' — '+ks.length+' respuesta(s) <button class="mbtn mbtn-cancel" style="font-size:10px;padding:2px 8px;margin-left:8px;" onclick="encRender()">◂ volver</button></div>'+
+    (ks.length ? ks.map(function(k,ri){
+      const r = rs[k].r || {};
+      return '<div class="voz-item"><div class="voz-nombre" style="white-space:normal;font-size:10.5px;line-height:1.5;">#'+(ri+1)+' · '+e.def.preguntas.map(function(q,i){ return '<em>'+encEsc(q.t)+':</em> '+encEsc(r['q'+i]||'—'); }).join(' · ')+'</div></div>';
+    }).join('') : '<div style="font-size:11px;opacity:0.6;padding:8px;">Sin respuestas todavía.</div>');
+}
+async function encExportCSV(id){ const e = await encGet(id); if (!e || !e.def) return; encDescargar('respuestas_'+id+'.csv', encCSV(e.def, e.respuestas), 'text/csv'); }
+async function encAnalizar(id){ const e = await encGet(id); if (!e || !e.def) return; const n = e.respuestas ? Object.keys(e.respuestas).length : 0; if (!n){ alert('Sin respuestas para analizar todavía.'); return; } encCerrar(); anaAnalizar('encuesta: '+e.def.titulo, encCSV(e.def, e.respuestas)); }
+async function encBorrar(id){
+  if (!confirm('¿Borrar la encuesta y TODAS sus respuestas? No hay vuelta atrás (exportá el CSV antes si las querés).')) return;
+  try{ await fetch(FB_URL+'/encuestas/'+id+'.json', { method:'PUT', headers:{'Content-Type':'application/json'}, body:'null' }); }catch(e){ try{ regError('encuesta:borrar', e); }catch(_){ } }
+  encRender();
+}
+function encAbrir(){
+  if (typeof CONFIG !== 'undefined' && CONFIG.cap && CONFIG.cap.encuesta === false){ addMsg('mirror','Las encuestas están apagadas en las capacidades del constructor.'); return; }
+  if (encPrefill){ const t = document.getElementById('enc-titulo'), p = document.getElementById('enc-preguntas'); if (t) t.value = encPrefill.titulo || ''; if (p) p.value = (encPrefill.preguntas || []).join('\n'); encPrefill = null; }
+  document.getElementById('enc-modal').classList.add('visible');
+  encRender();
+}
+function encCerrar(){ document.getElementById('enc-modal').classList.remove('visible'); }
+function encCrearClick(){ const t = document.getElementById('enc-titulo').value, p = document.getElementById('enc-preguntas').value; encCrear(t, p).then(function(ok){ if (ok){ document.getElementById('enc-titulo').value=''; document.getElementById('enc-preguntas').value=''; } }); }
+function encOferta(a){ // el modelo propuso una encuesta vía [ACCION] — tarjeta que abre el creador PRE-CARGADO (un toque, control humano)
+  encPrefill = { titulo: String(a.titulo||'').slice(0,120), preguntas: (a.preguntas||[]).slice(0,15).map(function(q){ return String(q).slice(0,200); }) };
+  const chat = document.getElementById('chat'); if (!chat) return;
+  const div = document.createElement('div'); div.className = 'msg';
+  div.innerHTML = '<div class="av mav" style="opacity:0;"></div><div class="actua-card"><div class="actua-tit">📋 Encuesta propuesta: '+encEsc(encPrefill.titulo)+'</div><div class="actua-det">'+encPrefill.preguntas.length+' pregunta(s) lista(s) — revisalas y creá el formulario con un toque.</div><button class="actua-btn" onclick="encAbrir()">📋 revisar y crear</button></div>';
+  chat.appendChild(div); chat.scrollTop = chat.scrollHeight;
+}
+
+// ══════════ v36-analista (Etapa 11 Ciclo 2) — MIRROR ANALISTA: DATOS SIN EXCEL ══════════
+// Pegás o subís un CSV y la app lo analiza ACÁ, en tu dispositivo:
+// · La MATEMÁTICA la calcula JavaScript — el modelo JAMÁS recalcula ni ve filas crudas:
+//   recibe SOLO el resumen ya calculado (números exactos) y lo interpreta. Cero alucinación
+//   numérica, cero datos personales viajando al proxy.
+// · Gráficos con Chart.js (multi-CDN bajo demanda, mismo patrón que docx). Sin CDN → resumen igual.
+// 100% ADITIVO: capa nueva; RAG, tesis y prompts intactos.
+let anaDataset = null;
+function anaEsc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function anaNum(v){ // acepta "1.234,56" (es-AR), "1,234.56" (US), "7,5", "42", "$ 1.200", "15%"
+  if (v == null) return null;
+  let s = String(v).trim().replace(/[%$\s]/g,'');
+  if (!s || !/\d/.test(s) || !/^[-+]?[\d.,]+$/.test(s)) return null;
+  const pc = s.lastIndexOf(','), pd = s.lastIndexOf('.');
+  if (pc >= 0 && pd >= 0){ s = pc > pd ? s.replace(/\./g,'').replace(',','.') : s.replace(/,/g,''); }
+  else if (pc >= 0){
+    const comas = s.match(/,/g);
+    if (comas.length > 1) s = s.replace(/,/g,'');
+    else { const dec = s.slice(pc+1); s = dec.length === 3 ? s.replace(',','') : s.replace(',','.'); }
+  }
+  const n = parseFloat(s); return isNaN(n) ? null : n;
+}
+function anaParseCSV(txt){
+  txt = String(txt).replace(/^﻿/,'').replace(/\r\n?/g,'\n');
+  const linea1 = (txt.split('\n')[0] || '');
+  let delim = ',', mejor = -1;
+  [',',';','\t','|'].forEach(function(d){ const c = linea1.split(d).length; if (c > mejor){ mejor = c; delim = d; } });
+  const filas = []; let fila = [], campo = '', dentro = false;
+  for (let i = 0; i < txt.length; i++){
+    const ch = txt[i];
+    if (dentro){ if (ch === '"'){ if (txt[i+1] === '"'){ campo += '"'; i++; } else dentro = false; } else campo += ch; }
+    else if (ch === '"') dentro = true;
+    else if (ch === delim){ fila.push(campo); campo = ''; }
+    else if (ch === '\n'){ fila.push(campo); campo = ''; if (fila.some(function(c){ return c.trim() !== ''; })) filas.push(fila); fila = []; }
+    else campo += ch;
+  }
+  if (campo !== '' || fila.length){ fila.push(campo); if (fila.some(function(c){ return c.trim() !== ''; })) filas.push(fila); }
+  if (filas.length < 2) return { error: 'Necesito al menos una fila de encabezados y una de datos.' };
+  if (filas.length > 100001) return { error: 'Más de 100.000 filas es demasiado para el navegador — recortá el archivo y lo vemos por partes. Honestidad ante todo.' };
+  const headers = filas[0].map(function(hh,i){ return String(hh).trim() || ('col_'+(i+1)); });
+  let irregulares = 0;
+  const rows = filas.slice(1).map(function(r){ if (r.length !== headers.length) irregulares++; return headers.map(function(_,i){ return r[i] !== undefined ? String(r[i]).trim() : ''; }); });
+  return { headers: headers, rows: rows, delim: delim, irregulares: irregulares };
+}
+function anaStats(headers, rows){
+  const cols = headers.map(function(nombre, ci){
+    const crudos = rows.map(function(r){ return r[ci]; });
+    const noVacios = crudos.filter(function(v){ return v !== '' && v != null; });
+    const nums = noVacios.map(anaNum).filter(function(v){ return v !== null; });
+    const col = { nombre: nombre, nulos: rows.length - noVacios.length };
+    if (noVacios.length > 0 && nums.length / noVacios.length >= 0.7){
+      col.tipo = 'numérica';
+      const s = nums.slice().sort(function(a,b){ return a-b; }); const n = s.length;
+      const media = s.reduce(function(a,b){ return a+b; }, 0) / n;
+      const q = function(p){ const pos=(n-1)*p, lo=Math.floor(pos), hi=Math.ceil(pos); return s[lo]+(s[hi]-s[lo])*(pos-lo); };
+      col.n=n; col.min=s[0]; col.max=s[n-1]; col.media=media; col.mediana=q(0.5); col.q1=q(0.25); col.q3=q(0.75);
+      col.desvio = n>1 ? Math.sqrt(s.reduce(function(a,b){ return a+(b-media)*(b-media); },0)/(n-1)) : 0;
+      col._vals = crudos.map(anaNum);
+    } else {
+      col.tipo = 'categórica'; const f = {};
+      noVacios.forEach(function(v){ f[v]=(f[v]||0)+1; });
+      col.n = noVacios.length; col.unicos = Object.keys(f).length;
+      col.top = Object.keys(f).map(function(k){ return [k,f[k]]; }).sort(function(a,b){ return b[1]-a[1]; }).slice(0,8);
+    }
+    return col;
+  });
+  const numCols = cols.filter(function(c){ return c.tipo === 'numérica'; });
+  const corrs = [];
+  for (let i=0;i<numCols.length;i++) for (let j=i+1;j<numCols.length;j++){
+    const A=numCols[i]._vals, B=numCols[j]._vals, xs=[], ys=[];
+    for (let k=0;k<A.length;k++) if (A[k]!==null && B[k]!==null){ xs.push(A[k]); ys.push(B[k]); }
+    const n=xs.length; if (n<3) continue;
+    const mx=xs.reduce(function(a,b){return a+b;},0)/n, my=ys.reduce(function(a,b){return a+b;},0)/n;
+    let num=0, dx=0, dy=0;
+    for (let k=0;k<n;k++){ num+=(xs[k]-mx)*(ys[k]-my); dx+=(xs[k]-mx)*(xs[k]-mx); dy+=(ys[k]-my)*(ys[k]-my); }
+    if (dx>0 && dy>0) corrs.push({ a:numCols[i].nombre, b:numCols[j].nombre, r:num/Math.sqrt(dx*dy), n:n });
+  }
+  corrs.sort(function(x,y){ return Math.abs(y.r)-Math.abs(x.r); });
+  return { cols: cols, corrs: corrs.slice(0,3) };
+}
+function anaRed(x){ return Math.abs(x)>=100 ? Math.round(x*10)/10 : Math.round(x*1000)/1000; }
+function anaResumen(nombre, headers, rows, st, irregulares){
+  const L = ['=== ANÁLISIS DE DATOS 📊 (calculado LOCALMENTE por la app — números EXACTOS: NO los recalcules, NO inventes otros; tu tarea es INTERPRETAR) ==='];
+  L.push('Dataset: '+nombre+' — '+rows.length+' filas × '+headers.length+' columnas'+(irregulares?(' ('+irregulares+' filas irregulares normalizadas)'):'')+(rows.length>50000?' (dataset grande: análisis completo, gráficos muestreados)':''));
+  st.cols.forEach(function(c){
+    if (c.tipo === 'numérica') L.push('• '+c.nombre+' (num, n='+c.n+(c.nulos?(', vacíos='+c.nulos):'')+'): media '+anaRed(c.media)+', mediana '+anaRed(c.mediana)+', desvío '+anaRed(c.desvio)+', min '+anaRed(c.min)+', max '+anaRed(c.max)+', Q1 '+anaRed(c.q1)+', Q3 '+anaRed(c.q3));
+    else if (c.unicos >= c.n * 0.9 && c.n >= 3) L.push('• '+c.nombre+' (identificador: '+c.unicos+' valores únicos — no se listan por privacidad)');
+    else { const reps = c.top.filter(function(t){ return t[1] >= 2; }).slice(0,5); L.push('• '+c.nombre+' (cat, '+c.unicos+' valores'+(c.nulos?(', vacíos='+c.nulos):'')+'): '+(reps.length ? reps.map(function(t){ return t[0]+' ×'+t[1]; }).join(', ') : 'sin valores repetidos — no se listan por privacidad')); }
+  });
+  if (st.corrs.length) L.push('Correlaciones (Pearson): '+st.corrs.map(function(c){ return c.a+'↔'+c.b+' r='+(Math.round(c.r*100)/100)+' (n='+c.n+')'; }).join(' · '));
+  L.push('(Fin del análisis local. Si piden un cálculo que NO figura acá, decí honestamente que no está calculado — NO lo estimes.)');
+  return L.join('\n');
+}
+function anaSpecs(st){
+  const specs = [];
+  const numC = st.cols.filter(function(c){ return c.tipo==='numérica'; });
+  const catC = st.cols.filter(function(c){ return c.tipo==='categórica' && c.unicos>1 && c.unicos<=30; });
+  const catOK = catC.filter(function(c){ return c.top.length && c.top[0][1] >= 2 && c.unicos < c.n * 0.9; }); // privacidad: identificadores y valores únicos no se grafican
+  if (catOK.length){ const c=catOK[0]; const reps=c.top.filter(function(t){ return t[1]>=2; }); specs.push({ tipo:'bar', titulo:c.nombre+' (frecuencias)', labels:reps.map(function(t){return t[0];}), data:reps.map(function(t){return t[1];}) }); }
+  if (numC.length){ const c=numC[0]; const nb=8, w=(c.max-c.min)/nb || 1; const bins=[]; for(let i=0;i<nb;i++) bins.push(0);
+    c._vals.forEach(function(v){ if (v!==null){ let b=Math.min(nb-1, Math.floor((v-c.min)/w)); if (b<0) b=0; bins[b]++; } });
+    specs.push({ tipo:'hist', titulo:c.nombre+' (distribución)', labels:bins.map(function(_,i){ return anaRed(c.min+i*w)+'–'+anaRed(c.min+(i+1)*w); }), data:bins }); }
+  if (st.corrs.length){ const cr=st.corrs[0];
+    const A=st.cols.find(function(c){return c.nombre===cr.a;}), B=st.cols.find(function(c){return c.nombre===cr.b;});
+    const pts=[]; for (let k=0;k<A._vals.length && pts.length<200;k++) if (A._vals[k]!==null && B._vals[k]!==null) pts.push({x:A._vals[k], y:B._vals[k]});
+    specs.push({ tipo:'scatter', titulo:cr.a+' vs '+cr.b+' (r='+(Math.round(cr.r*100)/100)+')', puntos:pts }); }
+  return specs;
+}
+async function anaChartLib(){
+  if (window.Chart) return true;
+  const CDNS = ['https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js','https://unpkg.com/chart.js@4.4.1/dist/chart.umd.js','https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js'];
+  for (const u of CDNS){ try{ await new Promise(function(res,rej){ const s=document.createElement('script'); s.src=u; s.onload=res; s.onerror=rej; document.head.appendChild(s); }); if (window.Chart) return true; }catch(e){} }
+  return false;
+}
+async function anaRender(){
+  const ds = anaDataset; if (!ds) return;
+  const chat = document.getElementById('chat');
+  const div = document.createElement('div'); div.className = 'msg';
+  let html = '<div class="av mav" style="opacity:0;"></div><div class="ana-card"><div class="ana-tit">📊 '+anaEsc(ds.nombre)+' — '+ds.nFilas+' filas × '+ds.nCols+' columnas</div>';
+  html += '<div class="ana-res">'+anaEsc(ds.resumenHumano)+'</div>';
+  ds.specs.forEach(function(s,i){ html += '<div class="ana-chart"><canvas id="ana-c'+ds.uid+'_'+i+'" width="340" height="190"></canvas></div>'; });
+  html += '<div class="ana-acciones"><button class="mbtn mbtn-perm" onclick="anaPNG()" aria-label="Descargar el primer gráfico como PNG">⬇ PNG</button><button class="mbtn mbtn-cancel" onclick="anaQuitar()" aria-label="Quitar los datos cargados">✕ quitar datos</button></div></div>';
+  div.innerHTML = html; chat.appendChild(div); chat.scrollTop = chat.scrollHeight;
+  const hayLib = await anaChartLib();
+  if (!hayLib){ const nota=document.createElement('div'); nota.style.cssText='font-size:10px;opacity:0.6;padding:2px 8px;'; nota.textContent='(sin gráficos: los CDN no respondieron — los números del resumen están igual, que es lo que importa)'; div.querySelector('.ana-card').appendChild(nota); return; }
+  ds.specs.forEach(function(s,i){
+    const cv = document.getElementById('ana-c'+ds.uid+'_'+i); if (!cv) return;
+    const base = { responsive:false, plugins:{ legend:{display:false}, title:{display:true, text:s.titulo, color:'#e8e2d6', font:{size:11}} }, scales:{ x:{ticks:{color:'#999',font:{size:9}}}, y:{ticks:{color:'#999',font:{size:9}}} } };
+    const cfg = s.tipo==='scatter'
+      ? { type:'scatter', data:{ datasets:[{ data:s.puntos, backgroundColor:'rgba(232,226,214,0.7)' }] }, options:base }
+      : { type:'bar', data:{ labels:s.labels, datasets:[{ data:s.data, backgroundColor:'rgba(232,226,214,0.55)', borderColor:'#e8e2d6', borderWidth:1 }] }, options:base };
+    try{ new Chart(cv.getContext('2d'), cfg); }catch(e){ try{ regError('analista:chart', e); }catch(_){} }
+  });
+}
+function anaAnalizar(nombre, txt){
+  try{
+    const p = anaParseCSV(txt);
+    if (p.error){ addMsg('mirror','📊 '+p.error); return false; }
+    const st = anaStats(p.headers, p.rows);
+    const resumenTxt = anaResumen(nombre, p.headers, p.rows, st, p.irregulares);
+    anaDataset = { nombre:nombre, nFilas:p.rows.length, nCols:p.headers.length, resumenTxt:resumenTxt, resumenHumano:resumenTxt.split('\n').slice(1,-1).join('\n'), specs:anaSpecs(st), uid:Date.now().toString(36) };
+    anaRender();
+    addMsg('mirror','Datos analizados acá, en tu dispositivo 📊 — los números ya están calculados; preguntame y los interpreto. Cuando termines: «✕ quitar datos».');
+    return true;
+  }catch(e){ try{ regError('analista', e); }catch(_){} addMsg('mirror','📊 Algo se rompió analizando ese archivo — quedó en mi diagnóstico. Probá con otro formato.'); return false; }
+}
+function anaAbrir(){
+  if (typeof CONFIG !== 'undefined' && CONFIG.cap && CONFIG.cap.analista === false){ addMsg('mirror','El análisis de datos está apagado en las capacidades del constructor.'); return; }
+  document.getElementById('ana-modal').classList.add('visible');
+}
+function anaCerrar(){ document.getElementById('ana-modal').classList.remove('visible'); }
+function anaArchivo(ev){ const f=ev.target.files[0]; if (!f) return; const r=new FileReader(); r.onload=function(){ if (anaAnalizar(f.name, r.result)) anaCerrar(); }; r.readAsText(f); ev.target.value=''; }
+function anaAnalizarClick(){ const t=document.getElementById('ana-texto').value; if (!t.trim()){ alert('Pegá un CSV o elegí un archivo.'); return; } if (anaAnalizar('datos pegados', t)){ document.getElementById('ana-texto').value=''; anaCerrar(); } }
+function anaPNG(){ try{ const ds=anaDataset; if (!ds) return; const cv=document.getElementById('ana-c'+ds.uid+'_0'); if (!cv){ alert('No hay gráfico para exportar.'); return; } const a=document.createElement('a'); a.download='mirror_analisis.png'; a.href=cv.toDataURL('image/png'); a.click(); }catch(e){ try{ regError('analista:png', e); }catch(_){} } }
+function anaQuitar(){ anaDataset = null; addMsg('mirror','Listo, solté los datos ✅ — no queda nada cargado.'); }
+
+// ══════════ v36-actua (Etapa 3 Ciclo 2 — porte del v4.x, blindado 24/24) — MIRROR ACTÚA · NIVEL 1: MANOS PROPIAS ══════════
+// MIRROR opera SU PROPIA app: capa local (sin modelo, sin red, cero tokens) que corre ANTES
+// del envío y despacha pedidos simples a funciones que YA existen. REGLA DE HONESTIDAD:
+// la confirmación («listo ✅») la pinta ESTA capa y SOLO si la acción se ejecutó de verdad;
+// el modelo jamás afirma haber operado la app (regla 6.bis). Solo modo espejo (MIRROR):
+// TARS y el jurado no tienen manos y lo dicen con honestidad, como siempre.
+// Fuera de alcance (a mano, como siempre): borrar memoria/recuerdos, PIN, exportar, configuración.
+// 100% ADITIVO: si esta capa explota, send() sigue por el camino clásico (try/catch total).
+const ACTUA_MAX = 64; // más largo que esto es charla, no comando (guardia anti-falso-positivo)
+const ACTUA_CMDS = [
+  { // ★13C (v36-lee): cortar la lectura de documentos («pará de leer», «cortá la lectura»)
+    re: /(?:par[aá]|cort[aá]|bast[aá])(?:\s+ya)?\s*(?:de\s+)?(?:leer|la\s+lectura)/i,
+    run(){ const habia=(typeof lecturaDoc!=='undefined'&&lecturaDoc)||(window.speechSynthesis&&speechSynthesis.speaking);
+           if(typeof lecturaDoc!=='undefined') lecturaDoc=null;
+           if(window.speechSynthesis) speechSynthesis.cancel();
+           try{updateRagUI()}catch(e){}
+           return habia?'Listo ✅ — corté la lectura.':'No estaba leyendo nada — silencio honesto.'; }
+  },
+  { // ★13C (v36-lee): leer un documento en voz alta («leeme el archivo notas», «leé el documento tesis»)
+    re: /le[eé](?:me|le)?\s+(?:el\s+|la\s+|mi\s+)?(?:archivo|documento|doc|pdf|planilla)\s+(.{2,60})/i,
+    run(m){ const q=m[1].trim().replace(/[.?!"«»]+$/,'').toLowerCase();
+            if (typeof ragDocs==='undefined'||!ragDocs.length) return 'No tenés documentos cargados todavía — subilos con el botón ⊕ y después te los leo.';
+            let idx=ragDocs.findIndex(d=>d.name.toLowerCase()===q);
+            if (idx<0) idx=ragDocs.findIndex(d=>d.name.toLowerCase().includes(q));
+            if (idx<0) return 'No encontré «'+q+'» entre tus documentos. Tenés: '+ragDocs.map(d=>d.name).join(' · ')+'.';
+            const d=ragDocs[idx];
+            if (!leerDocTexto(d).trim()) return '«'+d.name+'» no tiene texto acá a mano (sus fragmentos viven en tu memoria remota). Consultalo por chat y te leo la respuesta.';
+            setTimeout(function(){ try{ leerDocArrancar(idx,{colar:true,silencioso:true}); }catch(e){ try{regError('lee:cmd',e)}catch(e2){} } }, 250); // se ENCOLA detrás de esta confirmación hablada
+            return 'Dale ✅ — te leo «'+d.name+'» apenas termine de decirte esto. Esc o «pará de leer» lo cortan.'; }
+  },
+  { // ★N2: música puntual (género/artista) → tarjeta YouTube (va ANTES que la ambiental)
+    re: /(?:pon[eé]|busc[aá])(?:me|nos)?\s+m[uú]sica\s+(?:de\s+|del\s+)?(.{2,40})|(?:pon[eé]|busc[aá])(?:me|nos)?\s+la\s+m[uú]sica\s+de\s+(.{2,40})/i,
+    run(m){ const q=(m[1]||m[2]).trim().replace(/[.?!]+$/,'');
+            if (/^(m[aá]s\s+)?(fuerte|alt[oa]|baj[oa]|bajito|despacio|suave)$/i.test(q)){
+              if (!soundOn) return 'La música está apagada — decime «poné la música» y arranca.';
+              const bajar=/baj|desp|suav/i.test(q); setVol(bajar?0.07:0.5);
+              return bajar?'Listo, la bajé ✅.':'Listo, la subí ✅.'; }
+            const ok=actuaTarjeta('🎵','Música: '+q,'YouTube con la búsqueda lista — el toque final es tuyo.',actuaYtURL('música '+q),'▶ abrir en YouTube');
+            return ok?'Te dejé la música lista ✅ — un toque y suena.':'No pude armar la tarjeta — quedó en mi diagnóstico.'; }
+  },
+  { // ★N2: guardar contacto en la agenda local (ANTES que llamar/agendar)
+    re: /(?:guard[aá]|anot[aá]|agend[aá])(?:me)?\s+(?:el\s+)?(?:n[uú]mero|contacto|tel[eé]fono)\s+de\s+([^:,\d]{2,30}?)[:,]?\s+(\+?[\d][\d\s().-]{5,19})/i, // fix: nombre sin dígitos y no-greedy (test adversario)
+    run(m){ const nombre=m[1].trim(), num=m[2].trim();
+            if (!actuaNumOk(num)) return 'Ese número no me cierra («'+num+'») — revisalo y me lo volvés a dictar.';
+            actuaAgendaGuardar(nombre,num);
+            return 'Guardado ✅ — «'+nombre+'» quedó en tu agenda local (vive en TU dispositivo, no sale de acá). Ahora podés decirme «llamá a '+nombre+'».'; }
+  },
+  { // ★N2: llamar → tarjeta tel: (número de la agenda o dictado; JAMÁS inventado)
+    re: /(?:llam[aá](?:le|me)?|marc[aá](?:le|me)?)\s+(?:a\s+|al\s+)?(.{2,40})/i,
+    run(m){ const dest=m[1].trim().replace(/[.?!]+$/,'');
+            if (actuaNumOk(dest)){ const ok=actuaTarjeta('📞','Llamar','Número listo en el discador.',actuaTelURL(dest),'📞 llamar ahora');
+              return ok?'Número listo ✅ — un toque y llama.':'No pude armar la tarjeta — quedó en mi diagnóstico.'; }
+            const num=actuaAgenda()[dest.toLowerCase()];
+            if (!num) return 'No tengo el número de «'+dest+'» y no lo voy a inventar. Decime «guardá el número de '+dest+' <número>» y queda en tu agenda local.';
+            const ok=actuaTarjeta('📞','Llamar a '+dest,'El discador se abre con el número puesto — el toque final es tuyo.',actuaTelURL(num),'📞 llamar a '+dest);
+            return ok?'Listo ✅ — tocá la tarjeta y llama.':'No pude armar la tarjeta — quedó en mi diagnóstico.'; }
+  },
+  { // ★N2: WhatsApp → wa.me con el mensaje ya escrito (el usuario revisa y manda)
+    re: /(?:mand[aá](?:le)?|escrib[ií](?:le)?)\s+(?:un\s+)?(?:whats?app?|wsp|wa|mensaje)\s+a\s+([^:,]{2,30}?)(?:\s*[:,]\s*|\s+que\s+)(.+)/i, // fix: destinatario no-greedy (test adversario)
+    run(m){ const dest=m[1].trim(), msg=m[2].trim();
+            const num=actuaNumOk(dest)?dest:actuaAgenda()[dest.toLowerCase()];
+            if (!num) return 'No tengo el número de «'+dest+'» y no lo voy a inventar. Guardalo primero: «guardá el número de '+dest+' <número>».';
+            const ok=actuaTarjeta('💬','WhatsApp a '+dest,'«'+msg+'» — leélo, y si está bien, sale con un toque.',actuaWaURL(num,msg),'💬 abrir WhatsApp');
+            return ok?'Mensaje listo ✅ — revisalo en la tarjeta y mandalo.':'No pude armar la tarjeta — quedó en mi diagnóstico.'; }
+  },
+  { // ★N2: cómo llego → Maps con destino cargado
+    re: /(?:c[oó]mo\s+llego\s+a|llevame\s+a|ubicaci[oó]n\s+de|d[oó]nde\s+queda)\s+(.{3,60})/i,
+    run(m){ const q=m[1].trim().replace(/[?.!]+$/,'');
+            const ok=actuaTarjeta('🗺','Cómo llegar','Destino: '+q,actuaMapsURL(q),'🗺 abrir en Maps');
+            return ok?'Ruta lista ✅ — un toque y Maps te lleva.':'No pude armar la tarjeta — quedó en mi diagnóstico.'; }
+  },
+  { // ★N2: agendar evento → Google Calendar con el título puesto (fecha/hora las pone el usuario)
+    re: /agend[aá](?:me)?\s+(?!.*n[uú]mero)(.{3,80})/i,
+    run(m){ const t=m[1].trim().replace(/[?.!]+$/,'');
+            const ok=actuaTarjeta('📅','Agendar: '+t,'Se abre tu calendario con el título puesto — fecha y hora las confirmás vos.',actuaCalURL(t),'📅 abrir calendario');
+            return ok?'Evento pre-armado ✅ — ajustá fecha y hora y guardalo.':'No pude armar la tarjeta — quedó en mi diagnóstico.'; }
+  },
+  { // música: prender
+    re: /(?:pon[eé]|prend[eé]|activ[aá]|arranc[aá])(?:me|la|nos)?\s+(?:la\s+|el\s+)?(?:m[uú]sica|sonido)/i,
+    run(){ if (soundOn) return 'La música ya está sonando — si la querés más fuerte, decime «subí la música».';
+           startAudioIfNeeded(); return 'Listo, prendí la música ✅ — «El Origen», de fondo.'; }
+  },
+  { // música: apagar
+    re: /(?:apag[aá]|par[aá]|cort[aá]|sac[aá]|silenci[aá])(?:me|la)?\s+(?:la\s+|el\s+)?(?:m[uú]sica|sonido)/i,
+    run(){ if (!soundOn) return 'La música no estaba sonando — nada que apagar.';
+           toggleSound(); return 'Listo, apagué la música ✅.'; }
+  },
+  { // música: bajar volumen
+    re: /baj[aá](?:me|la)?\s+(?:un\s+poco\s+)?(?:la\s+|el\s+)?(?:m[uú]sica|volumen|sonido)/i,
+    run(){ if (!soundOn) return 'La música no está sonando, no hay nada que bajar. ¿La prendo? Decime «poné la música».';
+           setVol(0.07); return 'Listo, bajé la música ✅.'; }
+  },
+  { // música: subir volumen
+    re: /sub[ií](?:me|la)?\s+(?:un\s+poco\s+)?(?:la\s+|el\s+)?(?:m[uú]sica|volumen|sonido)/i,
+    run(){ if (!soundOn) return 'La música está apagada — primero la prendo si querés: «poné la música».';
+           setVol(0.5); return 'Listo, subí la música ✅.'; }
+  },
+  { // lectura en voz alta: prender
+    re: /(?:activ[aá]|prend[eé]|pon[eé])(?:me)?\s+(?:la\s+)?(?:voz|lectura)|le[eé]me\s+(?:las?\s+)?(?:respuestas?|en\s+voz\s+alta)/i,
+    run(){ if (ttsOn) return 'La lectura ya estaba prendida — te sigo leyendo.';
+           toggleTTS(); return ttsOn ? 'Listo, prendí la lectura ✅ — desde ahora te leo las respuestas.'
+                                     : 'Quise prenderla pero este navegador no soporta lectura en voz alta.'; }
+  },
+  { // lectura: apagar / callar
+    re: /(?:apag[aá]|sac[aá]|silenci[aá]|cort[aá])(?:me)?\s+(?:la\s+)?(?:voz|lectura)|^\s*call[aá]te/i,
+    run(){ if (window.speechSynthesis) speechSynthesis.cancel();
+           if (!ttsOn) return 'Silencio hecho — la lectura ya estaba apagada.';
+           toggleTTS(); return 'Listo, apagué la lectura ✅ — sigo por escrito.'; }
+  },
+  { // selector de voz
+    re: /(?:cambi[aá]|eleg[ií])(?:me)?\s+(?:la\s+|una\s+)?voz/i,
+    run(){ abrirSelectorVoz(); return 'Te abrí el selector de voces ✅ — probalas con ▶ y quedate con la que más te guste.'; }
+  },
+  { // panel de memoria (el PIN lo pide la app: esa llave no la toca ni MIRROR)
+    re: /(?:abr[ií]|mostr[aá])(?:me)?\s+(?:el\s+panel\s+de\s+|la\s+|los\s+|mi\s+|mis\s+)?(?:memoria|recuerdos)/i,
+    run(){ abrirMemoria(); return 'Te abro el panel de memoria ✅ — tuyo y de nadie más.'; }
+  },
+  { // cambio de modo
+    re: /(?:pas[aá]|cambi[aá]|llev[aá])(?:me|nos)?\s+(?:al?\s+)?(?:modo\s+)?(tars|jurado|conex)/i,
+    run(m){ const d=m[1].toLowerCase(); setMode(d==='conex'?'conn':d);
+            const n=d==='tars'?'TARS':(d==='jurado'?'el JURADO':'CONEX');
+            return 'Listo, te dejo con '+n+' ✅ — ojo: él no tiene mis manos. Para volver, tocá el primer botón de arriba.'; }
+  },
+  { // ★v36: cambio de modo por el NOMBRE que le puso el usuario en el constructor («pasá al modo ANALISTA»)
+    re: /(?:pas[aá]|cambi[aá]|llev[aá])(?:me|nos)?\s+(?:al?\s+)?modo\s+([\wáéíóúñ]{2,20})/i,
+    run(m){ const q=m[1].toLowerCase();
+            const mm=(typeof CONFIG!=='undefined'&&CONFIG.modos)?CONFIG.modos:{};
+            const mapa={tars:'tars',jurado:'jurado',conex:'conn',mirror:'mirror',espejo:'mirror'};
+            let dest=mapa[q]||null;
+            if(!dest){ for(const k in mm){ if(String(mm[k]).toLowerCase()===q){ dest=k; break; } } }
+            if(!dest) return 'No conozco un modo que se llame «'+m[1]+'» — los tuyos están en los botones de arriba.';
+            if(dest==='mirror') return 'Ya estás conmigo — el espejo está activo.';
+            setMode(dest);
+            const nom=mm[dest]||m[1].toUpperCase();
+            return 'Listo, te dejo en '+nom+' ✅ — ojo: ese modo no tiene mis manos. Para volver, tocá el primer botón de arriba.'; }
+  }
+];
+function actuaInterceptar(text){
+  try {
+    if (mode !== 'mirror') return false;      // las manos son de MIRROR, no de TARS/jurado
+    if (typeof CONFIG!=='undefined' && CONFIG.cap && CONFIG.cap.actua===false) return false; // v36: toggle «Tu MIRROR actúa» — el usuario manda; sin la clave = ON
+    const lim = /^(mand|escrib)/i.test(text.trim()) ? 220 : ACTUA_MAX; // v36-actua2: el WhatsApp lleva mensaje largo
+    if (text.length > lim) return false; // frase larga = conversación, no comando
+    for (const c of ACTUA_CMDS){
+      const m = c.re.exec(text);
+      if (!m) continue;
+      let resp;
+      try { resp = c.run(m); }
+      catch(e){ try{ regError('actua', e); }catch(_){ } resp = 'Quise hacerlo pero algo falló acá adentro — quedó anotado en mi diagnóstico (preguntame «¿qué te falló hoy?»).'; }
+      addMsg('user', text);
+      addMsg('mirror', resp);
+      history.push({role:'user', content:text}, {role:'assistant', content:resp});
+      try { hablar(resp); } catch(e){}
+      setButtonsBusy(false);
+      return true;
+    }
+    try{ if(typeof cartaNoReconocido==='function') cartaNoReconocido(text); }catch(e2){} // v36-carta: pedido con pinta de comando que la capa NO reconoció → va a la carta
+  } catch(e){ try{ regError('actua', e); }catch(_){ } } // la capa JAMÁS rompe el chat
+  return false;
+}
+// ── v36-actua2 (Etapa 3 Ciclo 2 — porte) — NIVEL 2: TARJETAS DE ACCIÓN HACIA AFUERA ──
+// El navegador no puede discar ni enviar solo — y está bien así: la tarjeta deja TODO listo
+// y el último toque es del usuario (confirmación humana = seguridad, no limitación).
+// SEGURIDAD: las URLs las construye SIEMPRE esta capa desde campos validados; JAMÁS se acepta
+// una URL cruda (ni del modelo ni del usuario). Números: solo de la agenda local (localStorage,
+// TU dispositivo) o dictados explícitamente — NUNCA inventados.
+function actuaAgenda(){ try{ return JSON.parse(localStorage.getItem('mirror_agenda')||'{}') }catch(e){ return {} } }
+function actuaAgendaGuardar(nombre,num){ const a=actuaAgenda(); a[nombre.toLowerCase().trim()]=num; localStorage.setItem('mirror_agenda',JSON.stringify(a)); }
+function actuaNumOk(n){ return /^\+?[\d][\d\s().-]{5,19}$/.test(String(n||'').trim()); }
+function actuaTelURL(n){ return 'tel:'+String(n).replace(/[^\d+]/g,''); }
+function actuaWaURL(n,msg){ return 'https://wa.me/'+String(n).replace(/[^\d]/g,'')+(msg?'?text='+encodeURIComponent(msg):''); }
+function actuaYtURL(q){ return 'https://www.youtube.com/results?search_query='+encodeURIComponent(q); }
+function actuaMapsURL(q){ return 'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(q); }
+function actuaCalURL(t){ return 'https://calendar.google.com/calendar/render?action=TEMPLATE&text='+encodeURIComponent(t); }
+// v36-redactor (Etapa 13 C2) — REDACTOR: mail con asunto y cuerpo listos. La dirección se valida
+// con charset estricto (sin comillas ni <>) o se deja vacía y la completa el usuario en su correo.
+function actuaMailDirOk(d){ return /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(String(d||'').trim()); }
+function actuaMailURL(dir,asunto,cuerpo){ return 'mailto:'+(actuaMailDirOk(dir)?String(dir).trim():'')+'?subject='+encodeURIComponent(String(asunto||''))+'&body='+encodeURIComponent(String(cuerpo||'')); }
+const REDACTOR_URL_MAX=1800; // v36-redactor: más largo que esto, el enlace se corta según el navegador → portapapeles honesto
+const ACTUA_URL_OK=[/^tel:\+?\d{6,20}$/,/^https:\/\/wa\.me\/\d{6,20}(\?text=.*)?$/,/^https:\/\/www\.youtube\.com\/results\?search_query=.+/,/^https:\/\/www\.google\.com\/maps\/search\/\?api=1&query=.+/,/^https:\/\/calendar\.google\.com\/calendar\/render\?action=TEMPLATE&text=.+/,/^mailto:[A-Za-z0-9._%+-]*(@[A-Za-z0-9.-]+\.[A-Za-z]{2,})?\?subject=[^\s&]*&body=\S*$/]; // v36-redactor: mailto sumado a la lista blanca
+function actuaURLValida(u){ return typeof u==='string' && ACTUA_URL_OK.some(re=>re.test(u)); }
+function actuaEsc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+// la tarjeta es el ÚNICO camino para pintar una acción: URL inválida → no pinta y queda registrado
+function actuaTarjeta(icono,titulo,detalle,url,boton){
+  if (!actuaURLValida(url)){ try{ regError('actua2:url_rechazada', new Error(String(url).slice(0,80))) }catch(e){} return false; }
+  const chat=document.getElementById('chat');
+  const div=document.createElement('div'); div.className='msg';
+  div.innerHTML='<div class="av mav" style="opacity:0;"></div><div class="actua-card">'
+    +'<div class="actua-tit">'+actuaEsc(icono)+' '+actuaEsc(titulo)+'</div>'
+    +(detalle?'<div class="actua-det">'+actuaEsc(detalle)+'</div>':'')
+    +'<a class="actua-btn" href="'+actuaEsc(url)+'" target="_blank" rel="noopener noreferrer">'+actuaEsc(boton)+'</a></div>';
+  chat.appendChild(div); chat.scrollTop=chat.scrollHeight; return true;
+}
+// v36-redactor: entrega del borrador — si la URL entra en un enlace, tarjeta normal (lista blanca);
+// si el borrador es más largo de lo que una URL aguanta, HONESTIDAD + copiar al portapapeles.
+function redactorTarjeta(icono,titulo,detalle,url,boton,textoCopia){
+  if (url && url.length<=REDACTOR_URL_MAX) return actuaTarjeta(icono,titulo,detalle,url,boton);
+  const chat=document.getElementById('chat'); if(!chat) return false;
+  const div=document.createElement('div'); div.className='msg';
+  div.innerHTML='<div class="av mav" style="opacity:0;"></div><div class="actua-card">'
+    +'<div class="actua-tit">'+actuaEsc(icono)+' '+actuaEsc(titulo)+'</div>'
+    +'<div class="actua-det">El borrador quedó más largo de lo que un enlace aguanta — te lo copio al portapapeles y lo pegás donde va. '+actuaEsc(detalle||'')+'</div>'
+    +'<a class="actua-btn" href="#" data-copia="1">📋 copiar el borrador</a></div>';
+  const btn=div.querySelector('[data-copia]'); const texto=String(textoCopia||'');
+  btn.addEventListener('click',function(ev){ ev.preventDefault();
+    const listo=function(){ btn.textContent='✅ copiado — pegalo donde va'; };
+    try{ if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(texto).then(listo,function(){ redactorCopiaVieja(texto,listo); }); } else { redactorCopiaVieja(texto,listo); } }
+    catch(e){ try{ redactorCopiaVieja(texto,listo) }catch(e2){ btn.textContent='no pude copiar — seleccioná el texto del chat'; try{regError('redactor:copiar',e2)}catch(e3){} } }
+  });
+  chat.appendChild(div); chat.scrollTop=chat.scrollHeight; return true;
+}
+function redactorCopiaVieja(texto,cb){ const ta=document.createElement('textarea'); ta.value=texto; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.select(); try{ document.execCommand('copy'); if(cb)cb(); } finally{ document.body.removeChild(ta); } }
+// [ACCION:{...}] — el modelo PIDE una acción (solo modo espejo); esta capa valida los campos
+// y construye la URL. Números que no estén en la conversación o la agenda local → NO hay tarjeta.
+let actuaPend=null; let redactorPend=null; // v36-redactor
+function actuaProcesarReply(reply){
+  actuaPend=null; redactorPend=null; // v36-redactor
+  if (mode!=='mirror'||typeof reply!=='string') return reply;
+  if (typeof CONFIG!=='undefined' && CONFIG.cap && CONFIG.cap.actua===false) return reply; // toggle OFF → sin tarjetas del modelo
+  const m=reply.match(/\[ACCION:(\{[\s\S]{2,6000}?\})\]/); // tope ampliado en Etapa 12 (encuestas) y otra vez en Etapa 13 (v36-redactor): un borrador de mail formal no entra en 1500 — JSON.parse + truncados siguen custodiando
+  if (!m) return reply;
+  const limpio=reply.replace(m[0],'').trim();
+  try {
+    const a=JSON.parse(m[1]);
+    const num=(a.num&&actuaNumOk(a.num))?a.num:actuaAgenda()[String(a.para||'').toLowerCase().trim()];
+    if (a.tipo==='tel'&&actuaNumOk(num)) actuaPend=['📞','Llamar'+(a.para?' a '+a.para:''),'El discador se abre con el número puesto.',actuaTelURL(num),'📞 llamar'];
+    else if (a.tipo==='wa'&&actuaNumOk(num)){ const wurl=actuaWaURL(num,a.msg||''); if(wurl.length>REDACTOR_URL_MAX){ redactorPend=['💬','WhatsApp'+(a.para?' a '+a.para:''),'El mensaje quedó listo.',null,'',String(a.msg||'')]; } else { actuaPend=['💬','WhatsApp'+(a.para?' a '+a.para:''),a.msg?('«'+String(a.msg).slice(0,200)+'»'):'',wurl,'💬 abrir WhatsApp']; } } // v36-redactor: borrador largo → portapapeles honesto
+    else if (a.tipo==='yt'&&a.q) actuaPend=['🎵','Música: '+String(a.q).slice(0,60),'YouTube con la búsqueda lista.',actuaYtURL(String(a.q).slice(0,60)),'▶ abrir en YouTube'];
+    else if (a.tipo==='maps'&&a.q) actuaPend=['🗺','Cómo llegar','Destino: '+String(a.q).slice(0,80),actuaMapsURL(String(a.q).slice(0,80)),'🗺 abrir en Maps'];
+    else if (a.tipo==='cal'&&a.titulo) actuaPend=['📅','Agendar: '+String(a.titulo).slice(0,80),'Fecha y hora las confirmás vos.',actuaCalURL(String(a.titulo).slice(0,80)),'📅 abrir calendario'];
+    else if (a.tipo==='mail'&&(typeof CONFIG==='undefined'||!CONFIG.cap||CONFIG.cap.redactor!==false)&&(a.cuerpo||a.asunto)){ const dir=actuaMailDirOk(a.para)?String(a.para).trim():''; const cu=String(a.cuerpo||''); redactorPend=['✉','Mail'+(dir?' a '+dir:' — destinatario a completar'),(a.asunto?'Asunto: '+String(a.asunto).slice(0,120)+'. ':'')+'Leélo, y si está bien, sale con un toque.',actuaMailURL(dir,String(a.asunto||'').slice(0,200),cu),'✉ abrir el correo',(a.asunto?'Asunto: '+String(a.asunto)+'\n\n':'')+cu]; } // v36-redactor (Etapa 13 C2): el modelo redacta, el humano envía
+    else if (a.tipo==='encuesta' && a.titulo && Array.isArray(a.preguntas) && a.preguntas.length){ try{ encOferta(a); }catch(e){ try{ regError('encuesta:oferta', e); }catch(_){ } } } // v36-encuesta: el modelo propone, el humano crea
+    else { try{ regError('actua2:accion_invalida', new Error(m[1].slice(0,80))) }catch(e){} }
+  } catch(e){ try{ regError('actua2:json',e) }catch(_){} }
+  return limpio||'Te dejé la tarjeta abajo — el toque final es tuyo.';
+}
+function actuaPintarTarjeta(){ if(actuaPend){ try{ actuaTarjeta.apply(null,actuaPend) }catch(e){ try{ regError('actua2:pintar',e) }catch(_){} } actuaPend=null; } if(redactorPend){ try{ redactorTarjeta.apply(null,redactorPend) }catch(e){ try{ regError('redactor:pintar',e) }catch(_){} } redactorPend=null; } } // v36-redactor
+// ══════════ FIN v36-actua ══════════
+
 async function send() {
   if (busy) return;
   const inp = document.getElementById('inp');
@@ -3549,6 +4475,8 @@ async function send() {
   inp.value = ''; inp.style.height = 'auto';
   if(window.speechSynthesis) speechSynthesis.cancel(); // v2.2: nueva consulta corta la lectura anterior
   micStop(); // v2.3: el envío cierra la sesión de dictado — el próximo mensaje arranca limpio
+  // v36-actua (Etapa 3 Ciclo 2): ¿pedido sobre la propia app? Se resuelve al instante, sin tokens.
+  if (actuaInterceptar(text)) return;
   setButtonsBusy(true);
 
   // Construir contexto SOLO para la llamada actual (no se guarda en history,
@@ -3627,6 +4555,7 @@ async function send() {
     if (PREGUNTA_POR_APP.test(text)) partes += ARQUITECTURA_MIRROR + resumenErrores() + '\n\n'; // v35-diag (Etapa 6)
     // v35-mem: memoria personal relevante (solo trae algo en modo espejo; en otros modos memoriaRelevante='').
     if (memoriaRelevante) partes += memoriaRelevante + '\n\n';
+    if (anaDataset && mode !== 'jurado'){ partes += anaDataset.resumenTxt + '\n\n'; try{ ultimaProcedencia.push('📊 datos'); }catch(e){} } // v36-analista: el modelo interpreta, JAMÁS calcula
     // v2.1: en modo jurado el dominio experto SIEMPRE va en el contexto (fuente del interrogatorio).
     if (mode === 'jurado') partes += DOMINIO_EXPERTO_TPL + '\n\n';
     if (tesisContext) partes += tesisContext + '\n\n';
@@ -3687,7 +4616,9 @@ async function send() {
     ? 'No pude procesar la consulta. Probá reformularla o más tarde.'
     : 'Che, no me llegó bien eso. ¿Me lo repetís?');
 
+  try{ reply = actuaProcesarReply(reply); }catch(e){ console.error(e); } // v36-actua: ¿el modelo pidió una tarjeta?
   try{ addMsg('mirror', reply, msgStyle); }catch(e){ console.error(e); }
+  try{ actuaPintarTarjeta(); }catch(e){ console.error(e); } // v36-actua
   try{ hablar(reply); }catch(e){ console.error(e); } // v3.0 — P5: si la voz falla, la app NO se traba
   // v1.0: línea de fuentes solo con los PDFs que TARS realmente nombró (no los del buscador de fondo)
   const esError = !!errorMsg;
@@ -3899,8 +4830,29 @@ function auditarCifrasInforme(texto, stats){
 }
 
 // v1.1: quita marcas markdown para usos en texto plano (PDF lo arma con runs aparte).
+/* v40-pdf-fix (FINAL) — PORTADO el 18/07/2026 desde la v4.0 live (porte LIMPIO, decisión de
+   Darío: sin el código muerto de los dos intentos previos; este es el que rige en ejecución allá):
+   reemplazos por código numérico de carácter (fuente 100% ASCII auditable) + RED DE SEGURIDAD:
+   todo carácter que la fuente estándar del PDF no mide bien se vuelve espacio. Comillas curvas
+   -> rectas, guiones largos -> guion, puntos suspensivos -> tres puntos, invisibles -> fuera.
+   Tildes, enie, signos de apertura y guillemets son Latin-1: quedan INTACTOS. */
 function limpiarMd(s){
-  return (s||'').replace(/\*\*([^*]+)\*\*/g,'$1').replace(/\*([^*]+)\*/g,'$1').replace(/`([^`]+)`/g,'$1');
+  s = (s||'').replace(/\*\*([^*]+)\*\*/g,'$1').replace(/\*([^*]+)\*/g,'$1').replace(/`([^`]+)`/g,'$1');
+  s = s.split(String.fromCharCode(8230)).join('...');
+  var pares = [[8216,39],[8217,39],[8218,39],[8242,39],[700,39],
+               [8220,34],[8221,34],[8222,34],[8243,34],
+               [8211,45],[8212,45],[8722,45],[8209,45],[173,45],[160,32]];
+  for (var p = 0; p < pares.length; p++){
+    s = s.split(String.fromCharCode(pares[p][0])).join(String.fromCharCode(pares[p][1]));
+  }
+  var out = '';
+  for (var i = 0; i < s.length; i++){
+    var c = s.charCodeAt(i);
+    if (c === 10 || c === 13 || (c >= 32 && c <= 255)) { out += s.charAt(i); }
+    else if (c === 8203 || c === 8204 || c === 8205 || c === 65279) { /* invisibles: fuera */ }
+    else { out += ' '; }
+  }
+  return out;
 }
 
 // v1.3: formatea la respuesta del modelo para que se LEA BIEN en el chat.
@@ -5046,6 +5998,13 @@ function duckMusic(){
      <div class="cons-step" data-step="0">
        <div class="cons-h">Vas a crear tu <em>propio MIRROR</em>.</div>
        <div class="cons-p">Tu MIRROR es tu entidad digital: te conoce, habla como vos y trabaja para vos. En unos pocos pasos lo vas a tener andando — <b>sin escribir una sola línea de código</b>. Te acompaño en cada decisión, como si lo armáramos juntos. Lo único que tenés que haber conseguido antes (la guía te explica cómo): tu clave de IA, tu proxy y tu memoria.</div>
+       <label class="cons-label" style="margin-top:16px;">🌐 Idioma de tu MIRROR</label>
+       <select class="cons-sel" id="c-idioma" onchange="i18nConsCambiar(this.value)">
+         <option value="es" selected>Español (rioplatense)</option>
+         <option value="en">English</option>
+         <option value="pt">Português (Brasil)</option>
+       </select>
+       <div class="cons-hint">Gobierna la interfaz, el dictado, las voces y el idioma en que responde tu espejo. Los modos analíticos del ámbito tesis siguen en español.</div>
        <div class="cons-nav"><button class="cons-btn prim" onclick="consGo(1)">Comenzar el viaje ▸</button></div>
        <div class="cons-skip" style="margin-top:8px;"><a onclick="abrirGuia()" style="color:#9aa0ff;">📖 ¿No tenés tu clave, proxy y memoria todavía? Abrí la guía paso a paso</a></div>
        <div class="cons-skip"><a onclick="consSkip()">Soy técnico, llevame directo a la app</a></div>
@@ -5234,7 +6193,11 @@ function duckMusic(){
     { k:'web',       t:'Búsqueda en la web',   d:'Tu MIRROR puede buscar información actual en internet (requiere clave Tavily).' },
     { k:'audio',     t:'Memoria de audio',     d:'Subí un audio (o un video) y tu MIRROR transcribe lo que se dice y lo recuerda. Gratis, con Whisper de Groq.' },
     { k:'fachada',   t:'Fachada cinematográfica', d:'La cinemática de nacimiento, el monolito y el modo presentación.' },
-    { k:'devolver',  t:'Te devuelve a tu vida',  d:'En charlas largas, tu MIRROR cierra con una acción concreta hacia afuera en vez de retenerte. Toda IA del mercado se diseña para engancharte; el tuyo se diseña para devolverte a tu vida.' } // v35-vida (Etapa 5)
+    { k:'devolver',  t:'Te devuelve a tu vida',  d:'En charlas largas, tu MIRROR cierra con una acción concreta hacia afuera en vez de retenerte. Toda IA del mercado se diseña para engancharte; el tuyo se diseña para devolverte a tu vida.' }, // v35-vida (Etapa 5)
+    { k:'actua',     t:'Tu MIRROR actúa',       d:'Manos propias: por chat o por voz prende y apaga la música o la lectura, abre su memoria, y arma tarjetas de UN toque para llamar, mandar WhatsApp, poner música o agendar. Nunca ejecuta nada hacia afuera sin tu toque final; los números salen solo de tu agenda local (tu dispositivo) y jamás se inventan.' }, // v36-actua (Etapa 3 C2)
+    { k:'analista',  t:'Analista de datos',     d:'Subí o pegá un CSV y tu MIRROR lo analiza EN TU DISPOSITIVO: estadística, frecuencias, correlaciones y gráficos. La matemática la calcula la app — el modelo solo interpreta; tus filas crudas jamás viajan a la nube.' }, // v36-analista (Etapa 11 C2)
+    { k:'encuesta',  t:'Encuestas propias',     d:'Creá formularios sin Google: archivos autocontenidos cuyas respuestas caen en TU Firebase. Las ves, exportás CSV y las analizás con el analista — soberanía de datos de punta a punta.' }, // v36-encuesta (Etapa 12 C2)
+    { k:'redactor',  t:'Redactor de respuestas', d:'Pegale un mail o WhatsApp recibido y tu MIRROR redacta la respuesta EN TU VOZ, usando tu perfil y tu memoria. Te la entrega en una tarjeta de UN toque: leés, tocás y sale. Nunca envía solo — y tu bandeja de entrada no la lee (te lo decimos de frente).' } // v36-redactor (Etapa 13 C2)
   ];
   function renderToggles(){
     const cont = document.getElementById('cons-toggles'); cont.innerHTML='';
@@ -5292,6 +6255,7 @@ function duckMusic(){
     CONFIG.colorTema = colorSel;
     CONFIG.proxyUrl = v('c-proxy'); CONFIG.fbUrl = v('c-fb'); CONFIG.pinMem = v('c-pin');
     CONFIG.perfil = { nombre:v('c-nombre'), ubicacion:v('c-ubic'), rol:v('c-rol'), filosofia:'', caracter:'', paz:'', proyectos:v('c-proyectos'), estilo:v('c-estilo') };
+    CONFIG.idioma = (window.i18nSel==='en'||window.i18nSel==='pt'||window.i18nSel==='es') ? window.i18nSel : (CONFIG.idioma||'es'); // v36-i18n (Etapa 13B)
     CONFIG.configurado = true;
     guardarConfig(CONFIG);
     aplicarConfigVars(); aplicarNombresUI(); aplicarCapacidades();
@@ -5495,6 +6459,180 @@ function duckMusic(){
   if (CONFIG.configurado){ aplicarNombresUI(); aplicarCapacidades(); }
 })();
 
+</script>
+
+<script>
+// ══════════ v36-pwa (Etapa 7 Ciclo 2) — MIRROR INSTALABLE (PWA) ══════════
+// Manifest dinámico + registro del service worker acompañante + aviso HONESTO sin red.
+// · El manifest se arma en runtime (data: URI) — en la plataforma toma el nombre que el
+//   usuario le puso a su app en el constructor; ícono: monolito 1:4:9, obvio.
+// · El SW vive en archivo aparte (mirror-sw.js, va JUNTO al index en el deploy): cachea SOLO
+//   el shell para abrir al instante; proxy/Firebase/CDNs viajan SIEMPRE por red viva.
+// · Sin mirror-sw.js al lado (o en file://) NADA se rompe: instalable igual, sin cache offline.
+// 100% aditivo: cualquier fallo acá adentro no toca el resto de la app (try/catch total).
+(function(){
+try{
+  var APP = (typeof CONFIG!=='undefined' && CONFIG.appName) ? CONFIG.appName : 'MIRROR';
+  var I192 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAIAAADdvvtQAAABjUlEQVR42u3V4QmAIBCA0YwOmrIB+iU0h+AvB2jSdohIkfcmuDs/MEXsC7y1OgECQkAICAGBgBAQAkJAICAEhIAQEAgIASEgBAQCQkAICAEhIBAQAkJACAgEhIAQEAICASEgBISAQEB8Y5tvpevKI49XShXQ6PJ5jDlYbbcvDASEgBAQAkJAICAEhIAQEAgIASEgBAQCQkAICAGBgBAQAkJAICAEhIAQEAICASEgBISAQEAICAEhIBAQAkJACAgEhIAQEAJCQCAgBISAEBAICAEhIAQEAkJACAgBgYAQEAJCQAgIBISAEBACAgEhIASEgEBACAgBISAQEAJCQAgIBISAEBACQkAgIASEgBAQCAgBISAEBAJCQAgIAYGAEBACQkAICASEgBAQAgIBISAEhIBAQAgIASEgEBACQkAICAGBgOhlm3Kr2m5P+48UsbsCvjAEhIAQEAgIASEgBAQCQkAICAGBgBAQAkJAICAEhIAQEAICASEgBISAQEAICAEhIBAQAkJACAgEhIDo7QGiywlxUAU/+QAAAABJRU5ErkJggg==';
+  var I512 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAIAAAB7GkOtAAAFy0lEQVR42u3YwQmAIACF4QyFpmyAToJzCJ4coElbwaCD5PeN8C4/vJDSsQGwnt0EAAIAgAAAIAAACAAAAgCAAAAgAAAIAAACAIAAACAAAAgAAAIAgAAAIAAACAAAAgCAAAAgAAAIAAACAIAAACAAAAIAgAAAIAAACAAAAgCAAAAgAAAIAAACAIAAACAAAAgAAAIAgAAAIAAACAAAAgCAAAAgAAAIAAACAIAAACAAAAIAgAAAIAAACAAAAgCAAAAgAAAIAAACAIAAACAAAAgAAAIAgAAAIAAACAAAAgCAAAAgAAAIAAACAIAAACAAAAgAgAAAIAAACAAAAgCAAAAgAAAIAAACAIAAACAAAAgAAAIAgAAAIAAACAAAAgCAAAAgAAAIAAACAIAAACAAAAgAgAAAIAAALCOagHGlZCPMr9ZmBASA7+XrNMLMWr+NwCAXEIAAACAAAAgAAAIAgAAAIAAACAAAAgCAAAAgAAAIAAACAIAAACAAAAgAAAIAgAAAIAAACAAAAgCAAAAgAAAIAIAAACAAAAgAAAIAgAAAIAAACAAAAgCAAAAgAAAIAAACAIAAACAAAAgAAAIAgAAAIAAACAAAAgCAAAAgAAAIAIAAmABAAAAQAAAEAAABAEAAABAAAAQAAAEAQAAAEAAABAAAAQBAAAAQAAAEAAABAEAAABAAAAQAAAEAQAAAEAAABABAAAAQAAAEAAABAEAAABAAAAQAAAEAQAAAEAAABAAAAQBAAAAQAAAEAAABAEAAABAAAAQAAAEAQAAAEAAABABAAAAQAAAEAAABAEAAABAAAAQAAAEAQAAAEAAABAAAAQBAAAAQAAAEAAABAEAAABAAAAQAAAEAQAAAEAAABAAAAQAQAAAEAAABAEAAABAAAAQAAAEAQAAAEAAABAAAAQBAAAAQAAAEAAABAEAAABAAAAQAAAEAQAAAEAAABAAAAQAQAAAEAAABAEAAABAAAAQAAAEAQAAAEAAABAAAAQBAAAAQAAAEAAABAEAAABAAAAQAAAEAQAAAEAAABAAAAQBAAAAEAAABAEAAABAAAAQAAAEAQAAAEAAABAAAAQBAAAAQAAAEAAABAEAAABAAAAQAAAEAQAAAEAAABAAAAQBAAAAEAAABAEAAABAAAAQAAAEAQAAAEAAABAAAAQBAAAAQAAAEAAABAEAAABAAAAQAAAEAQAAAEAAABAAAAQBAAAAQAAABAEAAABAAAAQAAAEAQAAAEAAABAAAAQBAAAAQAAAEAAABAEAAABAAAAQAAAEAQAAAEAAABAAAAQBAAAAQAAABAEAAABAAAAQAAAEAQAAAEAAABAAAAQBAAAAQAAAEAAABAEAAABAAAAQAAAEAQAAAEAAABAAAAQBAAAAQAAAEAEAAABAAAAQAAAEAQAAAEAAABAAAAQBAAAAQAAAEAAABAEAAABAAAAQAAAEAQAAAEAAABAAAAQBAAAAQAAAEAEAAABAAAAQAAAEAQAAAEAAABAAAAQBAAAAQAAAEAAABAEAAABAAAAQAAAEAQAAAEAAABAAAAQBAAAAQAAAEAEAATAAgAAAIAAACAIAAACAAAAgAAAIAgAAAIAAATCiagFdav40A/xBSOqwAsCAXEIAAACAAAAgAAAIAgAAAIAAACAAAAgCAAAAgAAAIAAACAIAAACAAAAgAAAIAgAAAIAAACAAAAgCAAAAgAAAIAIAAACAAAAgAAAIAgAAAIAAACAAAAgCAAAAgAAAIAAACAIAAACAAAAgAAAIAgAAAIAAACAAAAgCAAAAgAAAIAIAAmABAAAAQAAAEAAABAEAAABAAAAQAAAEAQAAAEAAABAAAAQBAAAAQAAAEAAABAEAAABAAAAQAAAEAQAAAEAAABABAAAAQAAAEAAABAEAAABAAAAQAAAEAQAAAEAAABAAAAQBAAAAQAAAEAAABAEAAABAAAAQAAAEAQAAAEAAABABAAAAQAADW8QB6BQvxicfYngAAAABJRU5ErkJggg==';
+  var man = {
+    name: APP, short_name: APP.length>12 ? APP.slice(0,12) : APP,
+    description: 'Tu entidad digital personal — memoria propia, honestidad radical.',
+    start_url: location.href.split('#')[0].split('?')[0],
+    display: 'standalone', background_color: '#050508', theme_color: '#050508',
+    icons: [ { src: I192, sizes: '192x192', type: 'image/png', purpose: 'any' },
+             { src: I512, sizes: '512x512', type: 'image/png', purpose: 'any maskable' } ]
+  };
+  var link = document.createElement('link'); link.rel = 'manifest';
+  link.href = 'data:application/manifest+json,' + encodeURIComponent(JSON.stringify(man));
+  document.head.appendChild(link);
+  var mt = document.createElement('meta'); mt.name = 'theme-color'; mt.content = '#050508'; document.head.appendChild(mt);
+  var ap = document.createElement('link'); ap.rel = 'apple-touch-icon'; ap.href = I192; document.head.appendChild(ap); // iOS: mejor esfuerzo (Compartir → Agregar a inicio)
+  if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')){
+    navigator.serviceWorker.register('mirror-sw.js').catch(function(){ console.info('[PWA] mirror-sw.js no está junto al index — instalable igual, sin cache offline.'); });
+  }
+  function bannerOffline(on){
+    var b = document.getElementById('pwa-offline');
+    if (!on){ if (b) b.remove(); return; }
+    if (b) return;
+    b = document.createElement('div'); b.id = 'pwa-offline';
+    b.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#151515;color:#e8e2d6;font:11px "Space Mono",monospace;text-align:center;padding:6px 12px;border-bottom:1px solid #3a3a3a;letter-spacing:0.05em;';
+    b.textContent = (typeof i18nT==='function') ? i18nT('◈ Sin conexión: ahora mismo no puedo pensar, pero lo tuyo está a salvo. Vuelvo solo cuando vuelva la red.') : '◈ Sin conexión: ahora mismo no puedo pensar, pero lo tuyo está a salvo. Vuelvo solo cuando vuelva la red.'; // v36-i18n
+    document.body.appendChild(b);
+  }
+  window.addEventListener('offline', function(){ bannerOffline(true); });
+  window.addEventListener('online', function(){ bannerOffline(false); });
+  if (navigator.onLine === false) bannerOffline(true);
+}catch(e){ try{ regError('pwa', e); }catch(_){ } }
+})();
+</script>
+
+<script>
+// ══════════ v36-a11y (Etapa 9 Ciclo 2) — ACCESIBILIDAD PROFUNDA ══════════
+// Los modales se vuelven ciudadanos de primera para teclado y lector de pantalla:
+// role="dialog" + aria-modal + título anunciado, foco que ENTRA al abrir y VUELVE
+// exactamente adonde estaba al cerrar, Tab atrapado adentro (circular, con Shift),
+// y Esc que cierra llamando la función de cierre REAL de cada modal (jamás un click
+// a ciegas: en el panel de memoria el botón "cancel" es «borrar todo» — lección aprendida).
+// El PIN ya maneja su propio Esc (no se duplica). El constructor (cons-ov) queda afuera
+// a propósito: es un asistente de pantalla completa y cerrarlo con Esc perdería el paso.
+// 100% aditivo: si esta capa falla, los modales siguen funcionando como siempre.
+(function(){
+try{
+  var CERRAR = { 'modal': 'cancelDoc', 'modal-informe': 'cerrarModalInforme', 'voz-modal': 'cerrarSelectorVoz', 'mem-modal': 'cerrarMemoria', 'ana-modal': 'anaCerrar', 'enc-modal': 'encCerrar' }; // pin-modal: Esc propio
+  var MODALES = ['modal','modal-informe','voz-modal','mem-modal','pin-modal','ana-modal','enc-modal']; // +analista (E11) +encuestas (E12)
+  var focoPrevio = null, modalAbierto = null;
+  var FOCUSABLE = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+  function focusables(m){
+    return Array.prototype.filter.call(m.querySelectorAll(FOCUSABLE), function(el){ return !el.disabled && el.getAttribute('aria-hidden')!=='true'; });
+  }
+  MODALES.forEach(function(id){
+    var m = document.getElementById(id); if (!m) return;
+    m.setAttribute('role','dialog'); m.setAttribute('aria-modal','true');
+    var h = m.querySelector('h3');
+    if (h){ if (!h.id) h.id = id + '-titulo'; m.setAttribute('aria-labelledby', h.id); }
+    new MutationObserver(function(){
+      var abierto = m.classList.contains('visible');
+      if (abierto && modalAbierto !== m){
+        focoPrevio = document.activeElement; modalAbierto = m;
+        setTimeout(function(){ var f = focusables(m); if (f.length) try{ f[0].focus(); }catch(e){} }, 60);
+      } else if (!abierto && modalAbierto === m){
+        modalAbierto = null;
+        var fp = focoPrevio; focoPrevio = null;
+        if (fp && fp.focus) setTimeout(function(){ try{ fp.focus(); }catch(e){} }, 60);
+      }
+    }).observe(m, { attributes: true, attributeFilter: ['class'] });
+  });
+  document.addEventListener('keydown', function(e){
+    if (!modalAbierto) return;
+    if (e.key === 'Tab'){
+      var f = focusables(modalAbierto); if (!f.length) return;
+      var i = f.indexOf(document.activeElement);
+      if (e.shiftKey && i <= 0){ e.preventDefault(); f[f.length-1].focus(); }
+      else if (!e.shiftKey && (i === f.length-1 || i === -1)){ e.preventDefault(); f[0].focus(); }
+    } else if (e.key === 'Escape' && !e.defaultPrevented){
+      var fx = CERRAR[modalAbierto.id];
+      if (fx && typeof window[fx] === 'function'){ e.preventDefault(); window[fx](); }
+    }
+  });
+}catch(e){ try{ regError('a11y', e); }catch(_){ } }
+})();
+</script>
+<script>
+/* ══════════ v36-i18n (Etapa 13B Ciclo 2) — IDIOMAS BÁSICOS: es · en · pt ══════════
+   El idioma elegido en el constructor gobierna: (1) los textos del constructor y avisos
+   (diccionario de fragmentos, traducción por NODOS DE TEXTO — reversible, el original
+   queda guardado); (2) el idioma en que responde el modo espejo (bloque en su prompt);
+   (3) el dictado (recognition.lang) y las voces sugeridas. HONESTIDAD DEL ALCANCE:
+   TARS/jurado del ámbito tesis y la guía técnica siguen en español (regla sagrada);
+   el catálogo de motores se traduce parcialmente (los textos fijos, no el catálogo).
+   Usuario viejo sin CONFIG.idioma = español, CERO cambios. Todo con try/catch total. */
+(function(){
+'use strict';
+try{
+var I18N_DICT = {"Vas a crear tu":{"en":"You are about to create your","pt":"Você vai criar o seu"},"propio MIRROR":{"en":"own MIRROR","pt":"próprio MIRROR"},"Tu MIRROR es tu entidad digital: te conoce, habla como vos y trabaja para vos. En unos pocos pasos lo vas a tener andando —":{"en":"Your MIRROR is your digital entity: it knows you, speaks like you and works for you. In just a few steps it will be up and running —","pt":"Seu MIRROR é a sua entidade digital: ele conhece você, fala como você e trabalha para você. Em poucos passos ele estará funcionando —"},"sin escribir una sola línea de código":{"en":"without writing a single line of code","pt":"sem escrever uma única linha de código"},". Te acompaño en cada decisión, como si lo armáramos juntos. Lo único que tenés que haber conseguido antes (la guía te explica cómo): tu clave de IA, tu proxy y tu memoria.":{"en":". I will walk you through every decision, as if we were building it together. The only things you need beforehand (the guide explains how): your AI key, your proxy and your memory.","pt":". Eu acompanho você em cada decisão, como se estivéssemos montando juntos. A única coisa que você precisa ter antes (o guia explica como): sua chave de IA, seu proxy e sua memória."},"Comenzar el viaje ▸":{"en":"Begin the journey ▸","pt":"Começar a viagem ▸"},"📖 ¿No tenés tu clave, proxy y memoria todavía? Abrí la guía paso a paso":{"en":"📖 Don't have your key, proxy and memory yet? Open the step-by-step guide","pt":"📖 Ainda não tem sua chave, proxy e memória? Abra o guia passo a passo"},"Soy técnico, llevame directo a la app":{"en":"I'm technical — take me straight to the app","pt":"Sou técnico, me leve direto para o app"},"🌐 Idioma de tu MIRROR":{"en":"🌐 Your MIRROR's language","pt":"🌐 Idioma do seu MIRROR"},"Gobierna la interfaz, el dictado, las voces y el idioma en que responde tu espejo. Los modos analíticos del ámbito tesis siguen en español.":{"en":"Governs the interface, dictation, voices and the language your mirror answers in. The thesis-domain analytical modes remain in Spanish.","pt":"Governa a interface, o ditado, as vozes e o idioma em que seu espelho responde. Os modos analíticos do âmbito da tese continuam em espanhol."},"Dale un":{"en":"Give a","pt":"Dê um"},"nombre":{"en":"name","pt":"nome"},"a tu MIRROR.":{"en":"to your MIRROR.","pt":"ao seu MIRROR."},"Tu MIRROR tiene cuatro modos. Llamalos como quieras — estos son los nombres que vas a ver en pantalla. Si te gustan los que vienen, dejalos.":{"en":"Your MIRROR has four modes. Name them however you like — these are the names you will see on screen. If you like the defaults, keep them.","pt":"Seu MIRROR tem quatro modos. Chame-os como quiser — estes são os nomes que você verá na tela. Se gostar dos que vieram, deixe assim."},"Nombre de tu entidad":{"en":"Name of your entity","pt":"Nome da sua entidade"},"Tu yo digital":{"en":"Your digital self","pt":"Seu eu digital"},"Analítico":{"en":"Analytical","pt":"Analítico"},"Experto / examinador":{"en":"Expert / examiner","pt":"Especialista / examinador"},"Conexiones / datos":{"en":"Connections / data","pt":"Conexões / dados"},"◂ Atrás":{"en":"◂ Back","pt":"◂ Voltar"},"Siguiente ▸":{"en":"Next ▸","pt":"Avançar ▸"},"Elegí tu":{"en":"Choose your","pt":"Escolha seu"},"motor":{"en":"engine","pt":"motor"},"Es lo que hace pensar a tu MIRROR. Pensalo como el motor de tu auto: los":{"en":"This is what makes your MIRROR think. Think of it as your car's engine: the","pt":"É o que faz seu MIRROR pensar. Pense nele como o motor do seu carro: os"},"gratuitos":{"en":"free ones","pt":"gratuitos"},"alcanzan de sobra para volar. Los":{"en":"are more than enough to fly. The","pt":"são mais que suficientes para voar. Os"},"premium":{"en":"premium ones","pt":"premium"},"son más potentes, pero necesitan créditos pagos. Vos elegís tu máquina.":{"en":"are more powerful, but need paid credits. You choose your machine.","pt":"são mais potentes, mas precisam de créditos pagos. Você escolhe sua máquina."},"Modelo":{"en":"Model","pt":"Modelo"},"💎 ¿Gratis o premium? Mirá qué cuesta cada cosa, sin humo":{"en":"💎 Free or premium? See what each thing costs — no smoke","pt":"💎 Grátis ou premium? Veja quanto custa cada coisa, sem enrolação"},"Gratis":{"en":"Free","pt":"Grátis"},"1) ¿Cómo saco la clave?":{"en":"1) How do I get the key?","pt":"1) Como pego a chave?"},"2) ¿Dónde la pongo?":{"en":"2) Where do I put it?","pt":"2) Onde coloco?"},"En TU proxy, como secreto":{"en":"In YOUR proxy, as a secret","pt":"No SEU proxy, como segredo"},"Es de pago por uso: cargá un crédito en el proveedor.":{"en":"It's pay-per-use: load credit with the provider.","pt":"É pago por uso: carregue um crédito no provedor."},"La clave NUNCA va en MIRROR: queda blindada dentro del proxy.":{"en":"The key NEVER goes in MIRROR: it stays shielded inside the proxy.","pt":"A chave NUNCA vai no MIRROR: fica blindada dentro do proxy."},"¿Qué":{"en":"What can","pt":"O que seu MIRROR"},"sabe hacer":{"en":"your MIRROR do","pt":"sabe fazer"},"tu MIRROR?":{"en":"?","pt":"?"},"Activá solo lo que quieras. Cada cosa es real y ya está construida — nada de humo. Algunos prefieren su MIRROR en silencio; otros, con voz y micrófono. Es tu decisión.":{"en":"Turn on only what you want. Everything here is real and already built — no smoke. Some people prefer their MIRROR silent; others, with voice and microphone. It's your call.","pt":"Ative só o que quiser. Cada coisa é real e já está construída — nada de enrolação. Alguns preferem seu MIRROR em silêncio; outros, com voz e microfone. A decisão é sua."},"Carácter de tu MIRROR":{"en":"Your MIRROR's character","pt":"Caráter do seu MIRROR"},"(perillas estilo TARS de Interstellar — vos las regulás)":{"en":"(TARS-from-Interstellar-style dials — you set them)","pt":"(botões estilo TARS de Interestelar — você regula)"},"💎 Insumos premium (honestos) y qué viene próximamente":{"en":"💎 Premium supplies (honest) and what's coming next","pt":"💎 Insumos premium (honestos) e o que vem por aí"},"Color de tu MIRROR":{"en":"Your MIRROR's color","pt":"Cor do seu MIRROR"},"Música ambiental":{"en":"Ambient music","pt":"Música ambiente"},"La banda sonora original «El Origen» mientras usás tu MIRROR.":{"en":"The original «El Origen» soundtrack while you use your MIRROR.","pt":"A trilha sonora original «El Origen» enquanto você usa seu MIRROR."},"Lectura en voz alta":{"en":"Read aloud","pt":"Leitura em voz alta"},"Tu MIRROR te lee las respuestas en voz alta. Elegís la voz.":{"en":"Your MIRROR reads the answers aloud. You choose the voice.","pt":"Seu MIRROR lê as respostas em voz alta. Você escolhe a voz."},"Dictado por voz":{"en":"Voice dictation","pt":"Ditado por voz"},"Hablale a tu MIRROR en vez de escribir. Usa el micrófono.":{"en":"Talk to your MIRROR instead of typing. Uses the microphone.","pt":"Fale com seu MIRROR em vez de digitar. Usa o microfone."},"Búsqueda en la web":{"en":"Web search","pt":"Busca na web"},"Tu MIRROR puede buscar información actual en internet (requiere clave Tavily).":{"en":"Your MIRROR can look up current information online (requires a Tavily key).","pt":"Seu MIRROR pode buscar informações atuais na internet (requer chave Tavily)."},"Memoria de audio":{"en":"Audio memory","pt":"Memória de áudio"},"Subí un audio (o un video) y tu MIRROR transcribe lo que se dice y lo recuerda. Gratis, con Whisper de Groq.":{"en":"Upload an audio (or a video) and your MIRROR transcribes what is said and remembers it. Free, with Groq's Whisper.","pt":"Envie um áudio (ou um vídeo) e seu MIRROR transcreve o que foi dito e lembra. Grátis, com o Whisper da Groq."},"Fachada cinematográfica":{"en":"Cinematic façade","pt":"Fachada cinematográfica"},"La cinemática de nacimiento, el monolito y el modo presentación.":{"en":"The birth cinematic, the monolith and presentation mode.","pt":"A cinemática de nascimento, o monólito e o modo apresentação."},"Te devuelve a tu vida":{"en":"Gives you your life back","pt":"Devolve você à sua vida"},"En charlas largas, tu MIRROR cierra con una acción concreta hacia afuera en vez de retenerte. Toda IA del mercado se diseña para engancharte; el tuyo se diseña para devolverte a tu vida.":{"en":"In long chats, your MIRROR closes with a concrete outward action instead of keeping you hooked. Every AI on the market is designed to retain you; yours is designed to give you back your life.","pt":"Em conversas longas, seu MIRROR encerra com uma ação concreta para fora em vez de prender você. Toda IA do mercado é projetada para reter; o seu é projetado para devolver você à sua vida."},"Tu MIRROR actúa":{"en":"Your MIRROR acts","pt":"Seu MIRROR age"},"Manos propias: por chat o por voz prende y apaga la música o la lectura, abre su memoria, y arma tarjetas de UN toque para llamar, mandar WhatsApp, poner música o agendar. Nunca ejecuta nada hacia afuera sin tu toque final; los números salen solo de tu agenda local (tu dispositivo) y jamás se inventan.":{"en":"Its own hands: by chat or voice it turns the music or the reading on and off, opens its memory, and builds ONE-tap cards to call, send a WhatsApp, play music or schedule. It never executes anything outward without your final tap; numbers come only from your local address book (your device) and are never invented.","pt":"Mãos próprias: por chat ou por voz liga e desliga a música ou a leitura, abre sua memória e monta cartões de UM toque para ligar, mandar WhatsApp, tocar música ou agendar. Nunca executa nada para fora sem o seu toque final; os números vêm só da sua agenda local (seu dispositivo) e jamais são inventados."},"Analista de datos":{"en":"Data analyst","pt":"Analista de dados"},"Subí o pegá un CSV y tu MIRROR lo analiza EN TU DISPOSITIVO: estadística, frecuencias, correlaciones y gráficos. La matemática la calcula la app — el modelo solo interpreta; tus filas crudas jamás viajan a la nube.":{"en":"Upload or paste a CSV and your MIRROR analyzes it ON YOUR DEVICE: statistics, frequencies, correlations and charts. The math is computed by the app — the model only interprets; your raw rows never travel to the cloud.","pt":"Envie ou cole um CSV e seu MIRROR analisa NO SEU DISPOSITIVO: estatística, frequências, correlações e gráficos. A matemática é calculada pelo app — o modelo só interpreta; suas linhas cruas jamais viajam para a nuvem."},"Encuestas propias":{"en":"Your own surveys","pt":"Pesquisas próprias"},"Creá formularios sin Google: archivos autocontenidos cuyas respuestas caen en TU Firebase. Las ves, exportás CSV y las analizás con el analista — soberanía de datos de punta a punta.":{"en":"Create forms without Google: self-contained files whose answers land in YOUR Firebase. You view them, export CSV and analyze them with the analyst — data sovereignty end to end.","pt":"Crie formulários sem o Google: arquivos autocontidos cujas respostas caem no SEU Firebase. Você as vê, exporta CSV e analisa com o analista — soberania de dados de ponta a ponta."},"Redactor de respuestas":{"en":"Reply writer","pt":"Redator de respostas"},"Pegale un mail o WhatsApp recibido y tu MIRROR redacta la respuesta EN TU VOZ, usando tu perfil y tu memoria. Te la entrega en una tarjeta de UN toque: leés, tocás y sale. Nunca envía solo — y tu bandeja de entrada no la lee (te lo decimos de frente).":{"en":"Paste a received email or WhatsApp and your MIRROR drafts the reply IN YOUR VOICE, using your profile and your memory. It hands it over as a ONE-tap card: you read, you tap, it goes. It never sends on its own — and it does not read your inbox (we tell you that upfront).","pt":"Cole um e-mail ou WhatsApp recebido e seu MIRROR redige a resposta NA SUA VOZ, usando seu perfil e sua memória. Entrega em um cartão de UM toque: você lê, toca e envia. Nunca envia sozinho — e não lê sua caixa de entrada (dizemos isso de frente)."},"Franqueza":{"en":"Frankness","pt":"Franqueza"},"Humor":{"en":"Humor","pt":"Humor"},"Desafío":{"en":"Challenge","pt":"Desafio"},"diplomático":{"en":"diplomatic","pt":"diplomático"},"sin anestesia":{"en":"no anesthesia","pt":"sem anestesia"},"sobrio":{"en":"sober","pt":"sóbrio"},"socarrón":{"en":"wry","pt":"sarcástico"},"acompaña":{"en":"supports","pt":"acompanha"},"confronta":{"en":"confronts","pt":"confronta"},"Conectá tus":{"en":"Connect your","pt":"Conecte seus"},"direcciones":{"en":"addresses","pt":"endereços"},"Las tres direcciones tuyas que obtuviste con la guía. Tu clave de IA":{"en":"The three addresses of yours you got with the guide. Your AI key","pt":"Os três endereços seus que você obteve com o guia. Sua chave de IA"},"no va acá":{"en":"does NOT go here","pt":"NÃO vai aqui"},": vive segura en tu proxy, nunca en el navegador.":{"en":": it lives safely inside your proxy, never in the browser.","pt":": ela vive segura no seu proxy, nunca no navegador."},"📖 Ver la guía para conseguir estas tres direcciones":{"en":"📖 See the guide to get these three addresses","pt":"📖 Ver o guia para conseguir estes três endereços"},"Tu proxy (Cloudflare Worker)":{"en":"Your proxy (Cloudflare Worker)","pt":"Seu proxy (Cloudflare Worker)"},"La que termina en":{"en":"The one ending in","pt":"O que termina em"},"Tu memoria (Firebase)":{"en":"Your memory (Firebase)","pt":"Sua memória (Firebase)"},"⚠ Para que tu memoria no caduque.":{"en":"⚠ So your memory never expires.","pt":"⚠ Para a sua memória não expirar."},"Si creaste tu Firebase en «modo de prueba», a los":{"en":"If you created your Firebase in «test mode», after","pt":"Se você criou seu Firebase em «modo de teste», depois de"},"30 días deja de guardar":{"en":"30 days it stops saving","pt":"30 dias ele para de salvar"},"sola (es una regla de Firebase, no de tu MIRROR: el MIRROR sigue abriendo, pero pierde la memoria nueva).":{"en":"on its own (it's a Firebase rule, not your MIRROR's: the MIRROR still opens, but loses new memories).","pt":"sozinho (é uma regra do Firebase, não do seu MIRROR: o MIRROR continua abrindo, mas perde a memória nova)."},"Para que dure":{"en":"To make it last","pt":"Para durar"},"para siempre":{"en":"forever","pt":"para sempre"},": en la consola de Firebase →":{"en":": in the Firebase console →","pt":": no console do Firebase →"},"Realtime Database → pestaña Reglas":{"en":"Realtime Database → Rules tab","pt":"Realtime Database → aba Regras"},", dejá esto y publicá:":{"en":", set this and publish:","pt":", deixe isto e publique:"},"Honestidad: esto deja tu base abierta y permanente. Para tu memoria personal alcanza; si vas a guardar datos sensibles de otras personas, conviene reglas con autenticación (lo explica la guía).":{"en":"Honesty: this leaves your database open and permanent. For your personal memory it's enough; if you'll store sensitive data about other people, rules with authentication are better (the guide explains).","pt":"Honestidade: isso deixa sua base aberta e permanente. Para a sua memória pessoal é suficiente; se for guardar dados sensíveis de outras pessoas, é melhor usar regras com autenticação (o guia explica)."},"Tu PIN de memoria (inventá uno)":{"en":"Your memory PIN (make one up)","pt":"Seu PIN de memória (invente um)"},"un PIN tuyo":{"en":"a PIN of yours","pt":"um PIN seu"},"¿Quién":{"en":"Who","pt":"Quem"},"sos":{"en":"are you","pt":"é você"},"Esto es lo que hace que tu MIRROR hable como vos y no como un robot. Cuanto más cuentes, mejor te conoce. Completá lo que quieras ahora; lo podés ampliar siempre.":{"en":"This is what makes your MIRROR speak like you and not like a robot. The more you share, the better it knows you. Fill in what you want now; you can always expand it later.","pt":"É isso que faz seu MIRROR falar como você e não como um robô. Quanto mais você contar, melhor ele conhece você. Preencha o que quiser agora; pode ampliar sempre."},"¿A qué te dedicás? Tocá un punto de partida (opcional — después editás todo a tu gusto):":{"en":"What do you do? Tap a starting point (optional — you can edit everything afterwards):","pt":"O que você faz? Toque em um ponto de partida (opcional — depois você edita tudo):"},"📚 Docente":{"en":"📚 Teacher","pt":"📚 Docente"},"💼 Emprendedor/a":{"en":"💼 Entrepreneur","pt":"💼 Empreendedor(a)"},"🎵 Músico/a":{"en":"🎵 Musician","pt":"🎵 Músico(a)"},"✍️ Escritor/a":{"en":"✍️ Writer","pt":"✍️ Escritor(a)"},"🩺 Salud":{"en":"🩺 Healthcare","pt":"🩺 Saúde"},"🗂️ Oficina":{"en":"🗂️ Office","pt":"🗂️ Escritório"},"🎓 Estudiante":{"en":"🎓 Student","pt":"🎓 Estudante"},"Tu nombre":{"en":"Your name","pt":"Seu nome"},"Ubicación":{"en":"Location","pt":"Localização"},"Rol / ocupación":{"en":"Role / occupation","pt":"Função / ocupação"},"Cómo hablás y escribís":{"en":"How you speak and write","pt":"Como você fala e escreve"},"Algo más sobre vos (opcional)":{"en":"Something else about you (optional)","pt":"Algo mais sobre você (opcional)"},"Dar vida a mi MIRROR ✦":{"en":"Bring my MIRROR to life ✦","pt":"Dar vida ao meu MIRROR ✦"},"Nombre y apellido":{"en":"First and last name","pt":"Nome e sobrenome"},"Ciudad, país":{"en":"City, country","pt":"Cidade, país"},"A qué te dedicás":{"en":"What you do","pt":"O que você faz"},"Ej: informal, directo, rioplatense con voseo, humor seco. Tu MIRROR va a imitar esto.":{"en":"E.g.: informal, direct, dry humor. Your MIRROR will imitate this.","pt":"Ex.: informal, direto, humor seco. Seu MIRROR vai imitar isso."},"Tus proyectos, lo que te importa, en qué andás.":{"en":"Your projects, what matters to you, what you're up to.","pt":"Seus projetos, o que importa para você, no que você anda."},"Tu MIRROR":{"en":"Your MIRROR","pt":"Seu MIRROR"},"respira":{"en":"breathes","pt":"respira"},"Ya es tuyo, único, irrepetible. Lo podés ajustar cuando quieras desde el modo de conexiones. El origen está; el espejo, ahora, es tuyo.":{"en":"It is yours now — unique, unrepeatable. You can adjust it whenever you want from the connections mode. The origin is set; the mirror, now, is yours.","pt":"Agora é seu — único, irrepetível. Você pode ajustá-lo quando quiser no modo de conexões. A origem está; o espelho, agora, é seu."},"Entrar a mi MIRROR ▸":{"en":"Enter my MIRROR ▸","pt":"Entrar no meu MIRROR ▸"},"construido para que cada persona tenga el suyo":{"en":"built so every person can have their own","pt":"construído para que cada pessoa tenha o seu"},"🔒 Privacidad y licencia":{"en":"🔒 Privacy & license","pt":"🔒 Privacidade e licença"},"Escribí acá...":{"en":"Type here...","pt":"Escreva aqui..."},"buscar en la memoria...":{"en":"search the memory...","pt":"buscar na memória..."},"…o pegá el CSV acá (encabezados en la primera fila)":{"en":"…or paste the CSV here (headers in the first row)","pt":"…ou cole o CSV aqui (cabeçalhos na primeira linha)"},"Título de la encuesta":{"en":"Survey title","pt":"Título da pesquisa"},"Hablá conmigo o pegá un mensaje para que lo conteste por vos...":{"en":"Talk to me or paste a message for me to answer as you...","pt":"Fale comigo ou cole uma mensagem para eu responder por você..."},"◈ Sin conexión: ahora mismo no puedo pensar, pero lo tuyo está a salvo. Vuelvo solo cuando vuelva la red.":{"en":"◈ Offline: I cannot think right now, but what is yours is safe. I will be back on my own when the network returns.","pt":"◈ Sem conexão: agora não consigo pensar, mas o que é seu está a salvo. Volto sozinho quando a rede voltar."},"Dictar por voz":{"en":"Dictate by voice","pt":"Ditar por voz"}};
+var I18N_WM = (typeof WeakMap!=='undefined') ? new WeakMap() : {get:function(){},set:function(){},has:function(){return false;}};
+window.i18nSel = '';
+window.i18nActual = function(){ try{ if(window.i18nSel) return window.i18nSel; if(typeof CONFIG!=='undefined'&&CONFIG&&CONFIG.idioma) return CONFIG.idioma; }catch(e){} return 'es'; };
+window.i18nT = function(es){ try{ var l=window.i18nActual(); if(l==='es') return es; var e=I18N_DICT[String(es).replace(/\s+/g,' ').trim()]; return (e&&e[l])||es; }catch(e){ return es; } };
+window.i18nRecLang = function(){ return ({es:'es-AR',en:'en-US',pt:'pt-BR'})[window.i18nActual()]||'es-AR'; };
+window.i18nVozPrefijo = function(){ return ({es:'es',en:'en',pt:'pt'})[window.i18nActual()]||'es'; };
+function trNodo(n,l){
+  var orig = I18N_WM.has(n) ? I18N_WM.get(n) : n.nodeValue;
+  var key = String(orig).replace(/\s+/g,' ').trim();
+  if(!key) return;
+  var e = I18N_DICT[key];
+  if(!e) return;
+  if(!I18N_WM.has(n)) I18N_WM.set(n, orig);
+  var m = String(orig).match(/^(\s*)[\s\S]*?(\s*)$/);
+  n.nodeValue = m[1] + ((l==='es') ? String(orig).trim() : (e[l]!==undefined ? e[l] : String(orig).trim())) + m[2];
+}
+function trAttrs(root,l){
+  try{
+    var els = root.querySelectorAll('[placeholder],[title]');
+    for(var i=0;i<els.length;i++){
+      var el = els[i];
+      ['placeholder','title'].forEach(function(a){
+        try{
+          var v = el.getAttribute(a); if(v===null) return;
+          var dk = 'i18nEs'+a;
+          if(!el.dataset[dk]){ if(!I18N_DICT[String(v).replace(/\s+/g,' ').trim()]) return; el.dataset[dk]=v; }
+          var es = el.dataset[dk];
+          var e = I18N_DICT[String(es).replace(/\s+/g,' ').trim()];
+          el.setAttribute(a, (l==='es') ? es : ((e&&e[l])||es));
+        }catch(e2){}
+      });
+    }
+  }catch(e){}
+}
+window.i18nConsTraducir = function(){
+  try{
+    var ov = document.getElementById('cons-ov'); if(!ov) return;
+    var l = window.i18nActual();
+    var w = document.createTreeWalker(ov, NodeFilter.SHOW_TEXT, null, false);
+    var n; while((n = w.nextNode())) trNodo(n, l);
+    trAttrs(ov, l);
+  }catch(e){ try{ regError('i18n:cons', e) }catch(e2){} }
+};
+window.i18nAplicarUI = function(){
+  try{
+    var l = window.i18nActual();
+    trAttrs(document.body, l);
+    var mic = document.getElementById('micbtn'); if(mic) mic.title = window.i18nT('Dictar por voz')+' ('+window.i18nRecLang()+')';
+    if (typeof cargarVoces==='function') try{ cargarVoces(); }catch(e3){}
+  }catch(e){ try{ regError('i18n:ui', e) }catch(e2){} }
+};
+window.i18nConsCambiar = function(v){
+  try{ window.i18nSel = (v==='en'||v==='pt'||v==='es') ? v : 'es'; window.i18nConsTraducir(); window.i18nAplicarUI(); }
+  catch(e){ try{ regError('i18n:cambiar', e) }catch(e2){} }
+};
+// ganchos: cada paso repinta contenido dinámico (toggles/perillas/motores) → retraducir
+if (typeof window.consGo==='function'){ var _cg=window.consGo; window.consGo=function(n){ _cg(n); try{ window.i18nConsTraducir(); }catch(e){} }; }
+if (typeof window.abrirConstructor==='function'){ var _ac=window.abrirConstructor; window.abrirConstructor=function(){ _ac(); try{ var s=document.getElementById('c-idioma'); if(s) s.value=window.i18nActual(); window.i18nConsTraducir(); }catch(e){} }; }
+// arranque: usuario configurado con idioma ≠ es → interfaz coherente al abrir; con es o sin idioma → cero cambios
+try{ if (window.i18nActual()!=='es'){ window.i18nAplicarUI(); window.i18nConsTraducir(); } }catch(e){}
+}catch(e){ try{ regError('i18n:init', e) }catch(e2){} }
+})();
 </script>
 </body>
 </html>
