@@ -233,10 +233,24 @@ body.tars .dots span { background: var(--tars); }
    🔊 sonido) ya no se recortan al envolver a la segunda línea. El MÓVIL (max-width:600px)
    NO se toca: conserva su regla propia, que Darío aprobó («se ve espléndido»). */
 @media (min-width: 601px) {
-  .fnote { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 5px 10px; line-height: 1.6; }
-  .fnote .fcredit { white-space: nowrap; }
-  .fnote .fsep { margin: 0 -4px; }
-  .fpres, .fsound { white-space: nowrap; display: inline-flex; align-items: center; margin: 1px 0; }
+  /* v38-ui (30/07/2026) — EL PIE DE ESCRITORIO ADOPTA LAS «PASTILLAS» DEL MÓVIL.
+     Auditoría de Darío: el pie de escritorio era texto subrayado apelmazado con puntitos «·»
+     — «feo, poco pulido». El MÓVIL ya usa pastillas (cajitas) y Darío las aprobó («se ve
+     espléndido»). Acá se lleva EXACTAMENTE ese patrón al escritorio: mismo look, consistente.
+     Solo CSS — los onclick y el orden del HTML quedan intactos. */
+  .fnote { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 7px 8px; line-height: 1.6; }
+  .fnote .fcredit { flex-basis: 100%; text-align: center; white-space: normal; opacity: 0.4; margin-bottom: 4px; }
+  .fnote .fsep { display: none; } /* con pastillas, los «·» ya no hacen falta */
+  .fnote span:not(.fcredit):not(.fsep):not(.ftip):not(.fver) {
+    text-decoration: none; opacity: 0.9; padding: 6px 11px; white-space: nowrap;
+    border: 1px solid var(--border-bright); border-radius: 8px; background: var(--glass);
+    transition: opacity 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+  }
+  .fnote span:not(.fcredit):not(.fsep):not(.ftip):not(.fver):hover {
+    opacity: 1; border-color: var(--accent); background: rgba(112,112,255,0.10);
+  }
+  .fnote .ftip { opacity: 0.4; margin-left: 4px; }
+  .fpres, .fsound { white-space: nowrap; display: inline-flex; align-items: center; }
 }
 
 /* MODAL */
@@ -1779,7 +1793,22 @@ function buildMirrorSystem() {
       + 'y te harían decir que sos algo que ya no sos. Este dato le gana a cualquier cosa que diga la memoria. '
       + 'Lo mismo vale para lo que sabés hacer: tus capacidades son las de ESTA versión, no las que recuerdes de antes.';
   } catch(e) {}
-  return personalizarPrompt(SYSTEM_MIRROR_BASE) + '\n\n' + perfil + bloqueIdentidad + bloqueCaracter + bloqueIdioma + cierreQueLibera;
+  /* v38-honest (30/07/2026) — BLINDAJE DE HONESTIDAD DEL ESPEJO.
+     Auditoría en vivo de Darío: MIRROR (facha ATIS) (1) inventó la descripción de
+     una imagen que ya no tenía cargada, (2) prometió "te dibujo un gato" cuando no
+     genera imágenes, (3) inventó sitios web en una respuesta rotulada "web" sin
+     haber consultado la web, y (4) confabuló sobre el usuario tratándolo de tercero
+     ("ATIS me dijo…", "tu proyecto de 5to grado"). Son cuatro caras del MISMO agujero:
+     el modelo rellena cuando le falta anclaje. El Norte del proyecto es honestidad
+     radical y lo audita el profesor — este bloque cierra el agujero desde el sistema,
+     que le gana a la memoria (misma jugada que v43-retiradas / v37-id). Viaja en CADA
+     turno del espejo. Los chips de procedencia se arreglan aparte (v38-proc). */
+  const bloqueHonestidad = '\n\n=== HONESTIDAD RADICAL (piso innegociable — le gana a todo) ===\n'
+    + 'IMÁGENES QUE VES: solo podés "ver" una imagen si tu usuario la adjuntó en ESTE mismo mensaje (viene marcada en tu contexto). Una imagen de un mensaje anterior NO queda guardada: no la tenés. Si te piden describir, analizar o comparar una imagen que no está adjunta AHORA, decílo de frente («no conservo la imagen que subiste antes; adjuntála de nuevo y la miro») y NUNCA la describas de memoria ni inventes qué contenía.\n'
+    + 'DIBUJAR / GENERAR IMÁGENES: vos NO dibujás ni generás imágenes. La app tiene un botón 🎨 que las crea (servicio Pollinations, con la clave del usuario). Si te piden una imagen, ofrecé ese camino («tocá 🎨 y escribí qué querés») — NUNCA prometas «te la dibujo / te la creo yo», ni digas que la estás haciendo.\n'
+    + 'WEB: solo tenés datos de internet si en tu contexto hay un bloque de «RESULTADOS DE LA BÚSQUEDA WEB». Si no lo hay, NO inventes sitios, URLs ni nombres de páginas (ni «Dinosaurios.net», ni «National Geographic», nada): decí que no pudiste consultar la web y ofrecé reintentar con el botón 🌐.\n'
+    + 'QUIÉN TE HABLA: el que te escribe es tu usuario. Los recuerdos con formato «[fecha] X dijo: … || <app> respondió: …» son turnos PASADOS de esta misma persona — «X» es tu usuario, no un tercero ni el nombre de la app o del modo. No lo llames por el nombre de la app/modo, no le atribuyas planes ni hechos que solo aparezcan como fragmentos sueltos de memoria, y si un recuerdo suena confuso o de otra charla, no lo des por cierto.';
+  return personalizarPrompt(SYSTEM_MIRROR_BASE) + '\n\n' + perfil + bloqueIdentidad + bloqueCaracter + bloqueIdioma + bloqueHonestidad + cierreQueLibera;
 }
 
 // ════ v25 — LENTE PROFESIONAL: el modo analítico hereda el oficio del usuario ════
@@ -3729,8 +3758,15 @@ async function sendWeb() {
     }
     const reply = await callGroqResiliente([...history.slice(-10),{role:'user',content:prompt}],sysWeb,600,0.4);
     removeTyping();
-    ultimaProcedencia = ['🌐 web']; // v35-proc
-    addMsg('mirror',reply||'No pude procesar la consulta. Reintentá en un momento.','web');
+    /* v38-proc (30/07/2026) — EL CHIP NO MIENTE. Bug de la auditoría en vivo: cuando la
+       búsqueda fallaba o no traía resultados (Tavily saturado), el modelo respondía de
+       memoria y aclaraba «no consulté la web esta vez» — PERO la burbuja seguía rotulada
+       «🌐 BÚSQUEDA WEB» y el chip decía «🌐 web». La procedencia mentía por código, no por
+       el modelo. El fix v37-web (C1a) había cubierto las preguntas de seguimiento pero no
+       esta rama de falla. Ahora el rótulo y el chip dicen la verdad: sin resultados, no hubo web. */
+    const huboWeb = results.length > 0;
+    ultimaProcedencia = huboWeb ? ['🌐 web'] : ['◈ memoria']; // v38-proc: procedencia auditable de verdad
+    addMsg('mirror',reply||'No pude procesar la consulta. Reintentá en un momento.', huboWeb ? 'web' : 'mirror');
     if(reply) hablar(reply); // v2.6: la búsqueda web también se lee en voz alta
     history.push({role:'user',content:'🌐 '+query},{role:'assistant',content:reply||''});
     await memorySet(history);
@@ -4117,7 +4153,13 @@ async function enviarConImagen(text){
     // Llamada DIRECTA al modelo de visión del motor activo (sin fallback a Cerebras, que no ve imágenes).
     // v29: 2500 tokens (no 900). El modelo de visión qwen es «pensante»: con poco margen se
     // queda sin espacio para cerrar el razonamiento y dar la respuesta. Con aire, piensa y responde.
-    reply = await llamarMotorVigente(GROQ_URL, GROQ_KEY, modeloV, messages, systemPrompt, 2500, 0.5, 'vision');
+    // v38-vision (30/07/2026): en la auditoría en vivo devolvió «200 sin contenido (tokens agotados
+    // en razonamiento)» describiendo un logo — 2500 le quedó JUSTO. qwen/qwen3.6-27b es el modelo de
+    // visión VIGENTE de Groq (Llama-4-Scout se deprecó el 17/06/2026 → Groq recomienda este), así que
+    // NO se cambia de modelo: se le da 3x de aire para que el razonamiento cierre Y quede lugar para
+    // la respuesta. 8000 entra sobrado en el contexto de 128K del modelo. Mismo criterio que el piso
+    // de tokens que ya se le dio a Cerebras (gpt-oss, también pensante) en llamarMotor.
+    reply = await llamarMotorVigente(GROQ_URL, GROQ_KEY, modeloV, messages, systemPrompt, 8000, 0.5, 'vision');
   } catch(e){ errorMsg = (e && e.message) ? e.message : 'el motor de visión no respondió'; }
   removeTyping();
   if (reply){
@@ -4981,12 +5023,14 @@ async function send() {
   // documento de SESIÓN cargado y el usuario pide explícitamente resumen / «qué dice» / informe
   // DEL documento, lo dejamos leerlo (antes respondía «subí el documento» aunque estuviera cargado).
   const pideDoc = /(resum|qu[eé]\s+dice|de\s+qu[eé]\s+(?:trata|va)|sobre\s+qu[eé]|analiz|revis|\ble[eé]r?\b|informe|el\s+(?:documento|archivo|texto|pdf|paper|apunte)|lo\s+que\s+(?:sub|carg))/i.test(text);
-  const usarBiblio = ((mode === 'tars' || mode === 'jurado') && (buscarBiblioteca || haySesion))
-                   || (mode === 'mirror' && haySesion && pideDoc);
+  // v37-fix2 (Bug B): los documentos pueden estar como PERM (biblioteca) o de sesión. Si el usuario
+  // pide resumen/informe de un documento y hay CUALQUIERA de los dos, lo dejamos leerlo.
+  const usarBiblio = ((mode === 'tars' || mode === 'jurado') && (buscarBiblioteca || haySesion || (pideDoc && ragChunks.length)))
+                   || (mode === 'mirror' && pideDoc && (haySesion || ragChunks.length));
   // v0.7: la expansión ES->EN solo sirve para la biblioteca persistida (papers en inglés). Para un
   // archivo de sesión (propio, en español) no hace falta y evita gastar una llamada a Groq.
   const searchQuery = (usarBiblio && buscarBiblioteca && ragChunks.length) ? await expandQueryBilingual(text) : text;
-  const ragContext = usarBiblio ? getRagContext(text, searchQuery, buscarBiblioteca) : '';
+  const ragContext = usarBiblio ? getRagContext(text, searchQuery, buscarBiblioteca || (pideDoc && ragChunks.length>0)) : '';
   // v0.7: nivel de datos según la pregunta. Si además hay PDFs, bajamos un escalón
   // para no saturar el cupo de Groq (resumen+PDFs rinde igual y gasta mucho menos).
   let nivelDatos = nivelContextoDatos(text);
