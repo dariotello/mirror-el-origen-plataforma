@@ -1434,7 +1434,7 @@ function recortar_(s, max) {
 // ── CATÁLOGO DE MOTORES DE IA ─────────────────────────────────────────────
 // Todos hablan el formato OpenAI (chat completions), así que el motor interno
 // es uno solo. El proxy rutea a cada proveedor con la clave que el usuario guardó.
-const PLATFORM_VERSION = 'v36';  // ← ÚNICA fuente de verdad: actualizar SOLO acá en cada deploy (regla de Darío) · salto v35→v36 el 15/07/2026 por orden de Darío (TFI calificado 10)
+const PLATFORM_VERSION = 'v37';  // ← ÚNICA fuente de verdad: actualizar SOLO acá en cada deploy (regla de Darío) · salto v35→v36 el 15/07/2026 (TFI calificado 10) · salto v36→v37 el 30/07/2026 por orden de Darío tras auditoría en vivo (honestidad radical, visión, directez, pie nuevo)
 window.addEventListener('load', function(){ try{ document.querySelectorAll('[data-ver]').forEach(function(e){ e.textContent = PLATFORM_VERSION; }); }catch(_){} });
 const MOTORES = {
   groq: {
