@@ -4105,8 +4105,12 @@ function handleImagen(input){
   reader.onload = (e)=>{
     const img = new Image();
     img.onload = ()=>{
-      // Redimensionar a 1280px lado mayor y comprimir: liviano para enviar y para los tokens.
-      const MAX = 1280;
+      // v38-vision3 (30/07/2026) — IMAGEN MÁS CHICA PARA EL LÍMITE DE 8000 TPM DEL TIER GRATIS.
+      // A 1280px la imagen tokenizaba en ~2500 tokens y una sola petición pedía ~7500 de los
+      // 8000 tok/min → al reintentar se apilaban y rebotaba con «rate limit». A 768px baja a
+      // ~1000 tokens (la mitad larga): sigue legible para describir/leer, y la petición entra
+      // holgada bajo el límite. Para lectura fina de exámenes (v38) se podrá subir con motor de pago.
+      const MAX = 768;
       let w = img.width, h = img.height;
       if (w > MAX || h > MAX){ if (w >= h){ h = Math.round(h*MAX/w); w = MAX; } else { w = Math.round(w*MAX/h); h = MAX; } }
       try {
@@ -4171,10 +4175,12 @@ async function enviarConImagen(text){
     // en razonamiento)» describiendo un logo — 2500 le quedó JUSTO. qwen/qwen3.6-27b es el modelo de
     // visión VIGENTE de Groq (Llama-4-Scout se deprecó el 17/06/2026 → Groq recomienda este), así que
     // NO se cambia de modelo: se le da 3x de aire para que el razonamiento cierre Y quede lugar para
-    // la respuesta. v38-vision2: con el system corto de arriba, el INPUT baja de ~5800 a ~1000
-    // tokens, así que 5000 de salida entra cómodo bajo el límite de 8000 TPM (≈6000 total) y le
-    // deja al modelo pensante margen de sobra para razonar Y responder. (Antes 8000 rompía el TPM.)
-    reply = await llamarMotorVigente(GROQ_URL, GROQ_KEY, modeloV, messages, systemPrompt, 5000, 0.5, 'vision');
+    // la respuesta. v38-vision2/3: system corto (~100 tok) + imagen a 768px (~1000 tok) = input
+    // ~1100. Con 4000 de salida, la petición total es ~5100 — entra holgada bajo el límite de
+    // 8000 tok/min y le deja al modelo pensante margen para razonar Y responder. (v38-vision había
+    // dejado 8000, que rompía el TPM; luego 5000 quedaba justo al reintentar. 4000 + imagen chica
+    // es el punto donde una imagen por minuto entra tranquila en el tier gratis.)
+    reply = await llamarMotorVigente(GROQ_URL, GROQ_KEY, modeloV, messages, systemPrompt, 4000, 0.5, 'vision');
   } catch(e){ errorMsg = (e && e.message) ? e.message : 'el motor de visión no respondió'; }
   removeTyping();
   if (reply){
