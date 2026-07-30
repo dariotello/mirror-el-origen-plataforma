@@ -1706,6 +1706,7 @@ REGLAS:
 1. HABLÁ EN EL IDIOMA Y EL REGISTRO DE TU USUARIO. Por defecto, español. Seguí el dialecto y la forma de tratamiento (voseo, tuteo, usted) que indique el "ESTILO DE COMUNICACIÓN" del perfil. Si el perfil no aclara, usá un español neutro y natural. Mantené el mismo registro en toda la conversación: un cambio brusco rompe el personaje.
 2. NUNCA muestres razonamiento interno.
 3. En charla: 2-3 oraciones. En redacción de mail/mensaje: lo que pida el caso, sin relleno.
+3.bis. DIRECTO, SIN VUELTAS (pedido explícito de tu usuario): andá al grano. NADA de preámbulos de relleno («¡Claro que sí!», «¡Genial!», «Me alegra que…», «Entiendo la situación»), NO repitas lo que ya dijiste antes, y NO cierres con ganchos para estirar la charla («¿querés que…?», «¿te gustaría que…?», «¿seguimos con…?»). Si de verdad hace falta preguntar algo, que sea UNA sola pregunta y necesaria. Decí lo justo con las menos palabras posibles: la vuelta de más cansa.
 4. Sé natural, no acartonado.
 5. NO sos el analista. No expliques teoría ni analices documentos en profundidad: eso es TARS (el modo de al lado). Podés mencionar los temas de tu usuario como él lo haría charlando, sin dar cátedra.
 6. Si preguntan cómo subir/analizar archivos: el botón ⊕ (abajo izq.) sube documentos; el análisis se hace en modo TARS; los informes se bajan con "generar informe".
@@ -4130,6 +4131,12 @@ function quitarImagenAdjunta(){
   imagenAdjunta = null;
   const p = document.getElementById('imgpreview'); if(p){ p.style.display='none'; p.innerHTML=''; }
 }
+/* v38-vision2 (30/07/2026) — PROMPT CORTO Y HONESTO PARA LA VISIÓN.
+   Chico a propósito: el prompt completo del espejo rompía el límite de 8000 TPM del tier
+   gratis de Groq (ver enviarConImagen). Además arregla el «desvaría / no es directa» que
+   marcó Darío: le pide describir sin preámbulos ni rodeos. */
+const SYSTEM_VISION = 'Sos el módulo de visión de MIRROR. Describí la imagen con precisión, en español (o el idioma en que te escriban). Si hay texto en la imagen, transcribilo tal cual. Sé DIRECTO y concreto: sin preámbulos, sin rodeos, sin cerrar con «¿querés que…?». HONESTIDAD: contá solo lo que REALMENTE se ve; si algo está borroso, cortado o no se distingue, decílo en vez de inventarlo.';
+
 async function enviarConImagen(text){
   const modeloV = modeloVisionActivo();
   if (!modeloV){ quitarImagenAdjunta(); return; } // el botón no debería estar visible sin visión
@@ -4146,7 +4153,14 @@ async function enviarConImagen(text){
   history.push({ role:'user', content: (text || '(envié una imagen para que la veas)') });
   const estilo = mode==='jurado' ? 'jurado' : (mode==='tars' ? 'tars' : mode);
   showTyping(estilo);
-  const systemPrompt = (mode==='tars'||mode==='jurado') ? buildAnaliticoSystem(SYSTEM_TARS) : buildMirrorSystem();
+  /* v38-vision2 (30/07/2026) — PROMPT CORTO PARA LA VISIÓN (arregla el «Request too large»).
+     Bug que metí yo: pasarle a la visión el prompt COMPLETO del espejo (~5000 tokens) + la
+     imagen + 8000 de salida pedía ~13800 tokens y reventaba el límite de 8000 TPM del tier
+     gratis de Groq. Describir una imagen NO necesita todo el sistema del espejo (carácter,
+     memoria, identidad, honestidad extendida): necesita una instrucción corta y honesta.
+     Con este system chico, la petición entra sobrada en 8000 TPM y queda lugar para que el
+     modelo pensante razone Y responda. Directo, sin vueltas (pedido de Darío en la auditoría). */
+  const systemPrompt = SYSTEM_VISION;
   const messages = [{ role:'user', content:[ {type:'text', text:prompt}, {type:'image_url', image_url:{ url:img }} ] }];
   let reply = null, errorMsg = null;
   try {
@@ -4157,9 +4171,10 @@ async function enviarConImagen(text){
     // en razonamiento)» describiendo un logo — 2500 le quedó JUSTO. qwen/qwen3.6-27b es el modelo de
     // visión VIGENTE de Groq (Llama-4-Scout se deprecó el 17/06/2026 → Groq recomienda este), así que
     // NO se cambia de modelo: se le da 3x de aire para que el razonamiento cierre Y quede lugar para
-    // la respuesta. 8000 entra sobrado en el contexto de 128K del modelo. Mismo criterio que el piso
-    // de tokens que ya se le dio a Cerebras (gpt-oss, también pensante) en llamarMotor.
-    reply = await llamarMotorVigente(GROQ_URL, GROQ_KEY, modeloV, messages, systemPrompt, 8000, 0.5, 'vision');
+    // la respuesta. v38-vision2: con el system corto de arriba, el INPUT baja de ~5800 a ~1000
+    // tokens, así que 5000 de salida entra cómodo bajo el límite de 8000 TPM (≈6000 total) y le
+    // deja al modelo pensante margen de sobra para razonar Y responder. (Antes 8000 rompía el TPM.)
+    reply = await llamarMotorVigente(GROQ_URL, GROQ_KEY, modeloV, messages, systemPrompt, 5000, 0.5, 'vision');
   } catch(e){ errorMsg = (e && e.message) ? e.message : 'el motor de visión no respondió'; }
   removeTyping();
   if (reply){
