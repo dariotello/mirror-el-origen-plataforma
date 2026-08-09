@@ -1431,6 +1431,9 @@ function recortar_(s, max) {
          la bandeja (documento, web, imagen, hablá-y-actúo) y en la barra quedan solo el campo,
          el micrófono y enviar. Los onclick y los ids que usa el JS quedan intactos. -->
     <div class="toolstray oculto" id="toolsTray" role="menu" aria-label="Herramientas">
+      <!-- v38-barra2 (9/08): el 📷 foto (visión) pasó de la barra al «+», como pidió Darío. Conserva
+           id="imgbtn" para que aplicarCapacidades siga prendiéndolo/apagándolo según haya visión. -->
+      <label class="ttool" id="imgbtn" for="imginput" role="menuitem" onclick="cerrarTools()" style="display:none"><span aria-hidden="true">📷</span> foto</label>
       <label class="ttool" for="finput" role="menuitem" onclick="cerrarTools()"><span aria-hidden="true">⊕</span> documento</label>
       <button class="ttool" id="wbtn" onclick="cerrarTools();sendWeb();return false;" role="menuitem"><span aria-hidden="true">🌐</span> web</button>
       <button class="ttool" id="imggen-btn" onclick="cerrarTools();generarImagen();return false;" role="menuitem"><span aria-hidden="true">🎨</span> imagen</button>
@@ -1439,7 +1442,6 @@ function recortar_(s, max) {
     <div class="iwrap">
       <button class="toolsbtn" id="toolsBtn" onclick="toggleTools()" title="Documento, web, imagen, voz-acción" aria-label="Más herramientas" aria-expanded="false">+</button>
       <input type="file" id="finput" accept=".pdf,.docx,.txt,.md,.xlsx,.xls,.csv,.tsv,.mp3,.wav,.m4a,.ogg,.webm,.mp4,.mpeg,.mpga,.flac" style="display:none" onchange="handleFile(this)">
-      <label class="flabel" for="imginput" id="imgbtn" title="Adjuntar una imagen para que tu MIRROR la vea" style="display:none" aria-label="Adjuntar una imagen">📷</label>
       <input type="file" id="imginput" accept="image/*" style="display:none" onchange="handleImagen(this)">
       <textarea id="inp" placeholder="Escribí acá..." rows="1" onkeydown="hkey(event)" oninput="aresize(this)"></textarea>
       <button class="micbtn" id="micbtn" onclick="toggleMic()" title="Dictar por voz (es-AR)" aria-label="Dictar por voz">🎙</button>
@@ -1460,6 +1462,7 @@ function recortar_(s, max) {
       <span class="fsound" id="sndBtn" onclick="toggleSound()" title="Música ambiental y firma sonora «El Origen» · on/off">🔇 sonido</span><span class="fvolwrap"><span class="fvolico" aria-hidden="true">–</span><input type="range" class="fvol" id="volSlider" min="2" max="100" step="1" value="20" oninput="setVolUsuario(this.value/100)" title="Volumen de la música" aria-label="Volumen de la música"><span class="fvolico" aria-hidden="true">+</span><span class="fvolpct" id="volPct" aria-hidden="true">20%</span></span>
       <span class="fmas" id="fmasBtn" onclick="toggleMas()" title="Mostrar más opciones" role="button" aria-expanded="false">⋯ más</span>
       <span class="fmore-group oculto" id="fmoreGroup">
+        <span data-pie="contactos" onclick="abrirAgenda()" title="Tus contactos guardados (teléfonos y mails) — viven en este dispositivo">📇 contactos</span>
         <span data-pie="compartir" onclick="abrirCompartir()" title="Compartí tu MIRROR por un link de solo lectura (sin claves ni memoria)">🔗 compartir</span>
         <span data-pie="encuestas" id="encbtn" onclick="encAbrir()" title="Crear encuestas y ver sus respuestas — sin Google, en tu Firebase">📋 encuestas</span>
         <span data-pie="presentacion" class="fpres" id="presBtn" onclick="openPres()" title="Pantalla completa para la defensa">◬ presentación</span>
@@ -1488,6 +1491,28 @@ function recortar_(s, max) {
           <button class="mbtn mbtn-perm" onclick="pieOrdenarGuardar()">guardar</button>
           <button class="mbtn mbtn-session" onclick="pieOrdenarReset()">volver al orden de fábrica</button>
           <button class="mbtn mbtn-cancel" onclick="pieOrdenarCerrar()">cerrar</button>
+        </div>
+      </div>
+    </div>
+    <!-- v38-agenda3 (9/08/2026): el PANEL DE CONTACTOS visible, portado del MIRROR (Darío: «faltó
+         la solapa contactos»). Lee y escribe la MISMA agenda local (mirror_agenda) que ya usan los
+         comandos de voz; no toca la capa ACTÚA. Vive en el dispositivo, no sale de acá. -->
+    <div class="modal-overlay" id="agenda-modal">
+      <div class="modal" style="max-width:540px;">
+        <h3>📇 Tu agenda de contactos</h3>
+        <p>Los teléfonos y mails que tu MIRROR tiene guardados. Viven en <b>este dispositivo</b>, no salen de acá. Cuando le pedís «mandale un WhatsApp a X», los saca de esta lista.</p>
+        <div class="voz-lista" id="agenda-lista"></div>
+        <div style="border-top:1px solid var(--border);margin-top:10px;padding-top:10px;">
+          <div style="font-size:11px;opacity:0.7;margin-bottom:6px;">Agregar o actualizar un contacto</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;">
+            <input type="text" id="ag-nombre" placeholder="nombre" style="flex:1 1 120px;font-size:12px;background:var(--glass);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:7px;" aria-label="Nombre del contacto">
+            <input type="text" id="ag-tel" placeholder="teléfono" style="flex:1 1 120px;font-size:12px;background:var(--glass);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:7px;" aria-label="Teléfono">
+            <input type="text" id="ag-mail" placeholder="mail (opcional)" style="flex:1 1 140px;font-size:12px;background:var(--glass);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:7px;" aria-label="Mail">
+          </div>
+        </div>
+        <div class="modal-btns" style="margin-top:0.8rem;">
+          <button class="mbtn mbtn-perm" onclick="agendaAgregarDesdePanel()">＋ guardar contacto</button>
+          <button class="mbtn mbtn-cancel" onclick="cerrarAgenda()">✕ cerrar</button>
         </div>
       </div>
     </div>
@@ -1565,7 +1590,7 @@ function recortar_(s, max) {
 // ── CATÁLOGO DE MOTORES DE IA ─────────────────────────────────────────────
 // Todos hablan el formato OpenAI (chat completions), así que el motor interno
 // es uno solo. El proxy rutea a cada proveedor con la clave que el usuario guardó.
-const PLATFORM_VERSION = 'v37';  // ← ÚNICA fuente de verdad: actualizar SOLO acá en cada deploy (regla de Darío) · salto v35→v36 el 15/07/2026 (TFI calificado 10) · salto v36→v37 el 30/07/2026 por orden de Darío tras auditoría en vivo (honestidad radical, visión, directez, pie nuevo)
+const PLATFORM_VERSION = 'v38';  // ← ÚNICA fuente de verdad: actualizar SOLO acá en cada deploy (regla de Darío) · salto v35→v36 el 15/07/2026 (TFI calificado 10) · salto v36→v37 el 30/07/2026 tras auditoría en vivo · salto v37→v38 el 9/08/2026 por orden de Darío tras 2 vueltas de auditoría en vivo (motor qwen, «+» de la barra, organizador del pie, panel de contactos, voz con desbloqueo temprano, cartel de CEREBRAS suavizado)
 window.addEventListener('load', function(){ try{ document.querySelectorAll('[data-ver]').forEach(function(e){ e.textContent = PLATFORM_VERSION; }); }catch(_){} });
 const MOTORES = {
   groq: {
@@ -2498,7 +2523,7 @@ function toggleMas(){
 /* ── v38-pieorden — EL ORGANIZADOR DEL PIE (porte del MIRROR v4.4). Cada pastilla no-audio
    tiene data-pie; acá se mueve el NODO entre «a la vista» y «⋯ más», se guarda en mirror_pie
    y se aplica al abrir. El HTML estático no cambia: sin preferencia, vale el orden de fábrica. */
-const PIE_ORDEN=['memoria','datos','documentos','informe','compartir','encuestas','presentacion','carta','cumplimiento','privacidad','llevar','borrar'];
+const PIE_ORDEN=['memoria','datos','documentos','informe','contactos','compartir','encuestas','presentacion','carta','cumplimiento','privacidad','llevar','borrar'];
 const PIE_FABRICA=['memoria','datos','documentos','informe'];
 function pieColocar(afueraSet){
   const fnote=document.querySelector('.fnote');
@@ -2554,6 +2579,50 @@ function pieOrdenarReset(){
 }
 function pieOrdenarCerrar(){ const m=document.getElementById('pieord-modal'); if(m) m.classList.remove('visible'); }
 try{ pieAplicar(); }catch(e){}
+
+/* ── v38-agenda3 (9/08/2026): el PANEL DE CONTACTOS (porte del MIRROR — Darío: «faltó la solapa
+   contactos»). Usa la MISMA agenda local (actuaAgenda/actuaAgendaGuardar) que ya usan los
+   comandos de voz; solo agrega ver/agregar/borrar a la vista. No toca la capa ACTÚA. ── */
+function agendaBorrar(clave){
+  try{ const a=actuaAgenda(); if(a[clave]!==undefined){ delete a[clave]; localStorage.setItem('mirror_agenda', JSON.stringify(a)); } renderAgenda(); }catch(e){}
+}
+function renderAgenda(){
+  const cont=document.getElementById('agenda-lista'); if(!cont) return;
+  const a=actuaAgenda(); const claves=Object.keys(a);
+  if(!claves.length){ cont.innerHTML='<div style="opacity:0.6;font-size:12px;padding:10px 2px;">Todavía no tenés contactos guardados. Agregá uno abajo, o decime «guardá el número de Laura 2995551234».</div>'; return; }
+  cont.innerHTML=claves.sort().map(function(k){
+    const v=(typeof a[k]==='string')?{tel:a[k],email:''}:a[k];
+    const nom=actuaEsc(k);
+    const tel=v.tel?'📞 '+actuaEsc(v.tel):'';
+    const mail=v.email?'✉ '+actuaEsc(v.email):'';
+    const linea=[tel,mail].filter(Boolean).join('  ·  ')||'<span style="opacity:0.5">sin datos</span>';
+    return '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 6px;border-bottom:1px solid var(--border);">'
+      +'<div><div style="font-size:13px;color:var(--text-bright);text-transform:capitalize;">'+nom+'</div>'
+      +'<div style="font-size:11px;opacity:0.75;">'+linea+'</div></div>'
+      +'<button onclick="agendaBorrar(\''+k.replace(/'/g,"\\'")+'\')" title="Borrar este contacto" aria-label="Borrar contacto" style="background:none;border:1px solid var(--border);border-radius:6px;color:var(--text-dim);cursor:pointer;font-size:12px;padding:3px 8px;">✕</button>'
+      +'</div>';
+  }).join('');
+}
+function abrirAgenda(){
+  renderAgenda();
+  const n=document.getElementById('ag-nombre'), t=document.getElementById('ag-tel'), m=document.getElementById('ag-mail');
+  if(n)n.value=''; if(t)t.value=''; if(m)m.value='';
+  const modal=document.getElementById('agenda-modal'); if(modal) modal.classList.add('visible');
+}
+function cerrarAgenda(){ const m=document.getElementById('agenda-modal'); if(m) m.classList.remove('visible'); }
+function agendaAgregarDesdePanel(){
+  const nombre=(document.getElementById('ag-nombre')||{}).value||'';
+  const tel=(document.getElementById('ag-tel')||{}).value||'';
+  const mail=(document.getElementById('ag-mail')||{}).value||'';
+  if(!nombre.trim()){ alert('Poné un nombre.'); return; }
+  const campos={};
+  if(tel.trim()){ if(!actuaNumOk(tel.trim())){ alert('Ese teléfono no me cierra — revisalo.'); return; } campos.tel=tel.trim(); }
+  if(mail.trim()){ if(!actuaMailDirOk(mail.trim())){ alert('Ese mail no me cierra — revisalo.'); return; } campos.email=mail.trim(); }
+  if(!campos.tel && !campos.email){ alert('Poné al menos un teléfono o un mail.'); return; }
+  actuaAgendaGuardar(nombre.trim(), campos);
+  document.getElementById('ag-nombre').value=''; document.getElementById('ag-tel').value=''; document.getElementById('ag-mail').value='';
+  renderAgenda();
+}
 function elegirVozActual(persona){
   persona = persona || personaActual();
   // 1) la elegida a mano para ESE personaje, si sigue instalada
@@ -4313,6 +4382,18 @@ async function buscarWebParaInforme(query){
 function mensajeError(tipo, detalle){
   if (tipo === 'otro' || !tipo) {
     const d = String(detalle || '').trim().slice(0, 300);
+    /* v38-cerebras (9/08/2026): auditoría en vivo de Darío. El cartel «Falta el secret
+       CEREBRAS_KEY en el proxy» asustaba: salía como un «algo falló y no sé qué», cuando en
+       realidad es una config CONOCIDA (el motor de respaldo sin clave cargada). Se dice claro
+       y sin alarmar, separando al USUARIO FINAL (esperá y reintentá) del que ADMINISTRA la app
+       (cargá la clave en el proxy). No es un bug de la app: el motor principal no contestó esta
+       vez (suele ser el cupo por minuto) y el respaldo todavía no está configurado. */
+    if (/Falta el secret/i.test(d)) {
+      const esResp = /CEREBRAS/i.test(d);
+      return esResp
+        ? '⚠️ El motor principal no contestó esta vez (suele ser el cupo de tokens por minuto del plan gratis) y el motor de respaldo todavía no está configurado. Esperá un momento y reintentá. Si administrás esta app y querés dejar el respaldo listo, cargá su clave en tu proxy: Settings → Variables and Secrets.'
+        : '⚠️ Falta configurar una clave en tu proxy. Si administrás esta app, cargala en Settings → Variables and Secrets; si no, avisale a quien la configuró. Mientras tanto, reintentá en un momento.';
+    }
     return d
       ? '⚠️ Algo falló y no sé bien qué. Esto es lo que contestó el motor, tal cual: «' + d + '». Reintentá en un momento; si se repite, guardá ese texto.'
       : '⚠️ No pude procesar la consulta. Reintentá en un momento.';
