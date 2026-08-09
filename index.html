@@ -250,7 +250,7 @@ body.tars .dots span { background: var(--tars); }
   .modal { width: 94%; max-width: 94%; padding: 1.1rem; }
   .fnote { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; font-size: 11px; margin-top: 0.5rem; padding-bottom: max(0.3rem, env(safe-area-inset-bottom)); }
   .fnote .fcredit { flex-basis: 100%; opacity: 0.4; margin-bottom: 2px; }
-  .fnote span:not(.fcredit):not(.ftip) {
+  .fnote span:not(.fcredit):not(.ftip):not(.fmore-group) {
     text-decoration: none; opacity: 1; padding: 7px 10px;
     border: 1px solid var(--border-bright); border-radius: 6px;
     background: var(--glass); white-space: nowrap; font-size: 11px;
@@ -273,16 +273,50 @@ body.tars .dots span { background: var(--tars); }
   .fnote { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 7px 8px; line-height: 1.6; }
   .fnote .fcredit { flex-basis: 100%; text-align: center; white-space: normal; opacity: 0.4; margin-bottom: 4px; }
   .fnote .fsep { display: none; } /* con pastillas, los «·» ya no hacen falta */
-  .fnote span:not(.fcredit):not(.fsep):not(.ftip):not(.fver) {
+  .fnote span:not(.fcredit):not(.fsep):not(.ftip):not(.fver):not(.fmore-group) {
     text-decoration: none; opacity: 0.9; padding: 6px 11px; white-space: nowrap;
     border: 1px solid var(--border-bright); border-radius: 8px; background: var(--glass);
     transition: opacity 0.15s ease, border-color 0.15s ease, background 0.15s ease;
   }
-  .fnote span:not(.fcredit):not(.fsep):not(.ftip):not(.fver):hover {
+  .fnote span:not(.fcredit):not(.fsep):not(.ftip):not(.fver):not(.fmore-group):hover {
     opacity: 1; border-color: var(--accent); background: rgba(112,112,255,0.10);
   }
   .fnote .ftip { opacity: 0.4; margin-left: 4px; }
   .fpres, .fsound { white-space: nowrap; display: inline-flex; align-items: center; }
+}
+
+/* ══ v38-barra + v38-pieorden (9/08/2026) — PORTE DEL MIRROR v4.4 ══════════════════════
+   Darío en su auditoría en vivo de la plataforma: «las solapas se amontonan abajo; traé el
+   «+» grande de la barra y el organizador del pie del MIRROR». Se porta el patrón EXACTO
+   que él ya aprobó en el MIRROR: el «+» agrupa las herramientas de la barra, y el pie pliega
+   lo ocasional en «⋯ más» con un organizador para elegir qué queda a la vista. */
+.toolsbtn { background: transparent; border: 1px solid rgba(112,112,255,0.35); color: var(--accent); width: 34px; height: 34px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 20px; line-height: 1; transition: transform 0.2s, background 0.2s; flex-shrink: 0; align-self: flex-end; }
+.toolsbtn:hover { background: rgba(112,112,255,0.10); }
+.toolsbtn.abierto { transform: rotate(45deg); border-color: var(--border-bright); }
+.toolstray { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 9px; padding: 2px; animation: trayIn 0.16s ease; }
+.toolstray.oculto { display: none; }
+@keyframes trayIn { from{ opacity:0; transform: translateY(6px);} to{ opacity:1; transform:none;} }
+.ttool { display: inline-flex; align-items: center; gap: 7px; background: rgba(120,120,255,0.05); border: 1px solid rgba(112,112,255,0.28); color: var(--text-bright); border-radius: 10px; padding: 9px 13px; font-family: inherit; font-size: 12.5px; cursor: pointer; transition: border-color 0.2s, background 0.2s; }
+.ttool:hover { border-color: var(--border-bright); background: rgba(120,120,255,0.10); }
+.ttool span[aria-hidden], .ttool #accIco { font-size: 15px; line-height: 1; }
+.ttool.accbtn.acc { border-color: #70ffb4; color: #70ffb4; }
+.ttool:disabled, .toolsbtn:disabled { opacity: 0.3; cursor: not-allowed; }
+/* pie: el grupo plegable y su botón */
+.fnote .fmore-group { display: contents; }
+.fnote .fmore-group.oculto { display: none; }
+.fnote .fmas { font-style: italic; opacity: 0.7; }
+.fnote .fmas:hover { opacity: 1; }
+/* el organizador del pie */
+.fpieord { font-style: italic; }
+.pieord-lista { display:flex; flex-direction:column; gap:6px; margin-top:0.4rem; max-height:52vh; overflow-y:auto; scrollbar-width:thin; }
+.pieord-row { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:9px 11px; border:1px solid var(--border); border-radius:7px; background:var(--glass); cursor:pointer; font-size:12.5px; user-select:none; }
+.pieord-row:hover { border-color:var(--accent); }
+.pieord-row .pieord-name { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.pieord-row .pieord-state { font-family:'Space Mono', ui-monospace, monospace; font-size:9px; letter-spacing:0.08em; opacity:0.6; border:1px solid var(--border-bright); border-radius:5px; padding:3px 8px; flex-shrink:0; white-space:nowrap; }
+.pieord-row.afuera .pieord-state { color:var(--accent); border-color:var(--accent); opacity:1; }
+@media (max-width: 600px) {
+  .toolsbtn { width: 38px; height: 38px; font-size: 17px; border-radius: 10px; }
+  .toolstray .ttool { padding: 10px 13px; font-size: 13px; min-height: 40px; }
 }
 
 /* MODAL */
@@ -1392,51 +1426,71 @@ function recortar_(s, max) {
       </div>
       <div class="rag-items" id="ragitems"></div>
     </div>
+    <!-- v38-barra (9/08/2026) — PORTE DEL «+» DEL MIRROR v4.4 (pedido de Darío en su auditoría
+         en vivo). Antes la barra tenía 7 controles apretando el campo. Ahora: el «+» despliega
+         la bandeja (documento, web, imagen, hablá-y-actúo) y en la barra quedan solo el campo,
+         el micrófono y enviar. Los onclick y los ids que usa el JS quedan intactos. -->
+    <div class="toolstray oculto" id="toolsTray" role="menu" aria-label="Herramientas">
+      <label class="ttool" for="finput" role="menuitem" onclick="cerrarTools()"><span aria-hidden="true">⊕</span> documento</label>
+      <button class="ttool" id="wbtn" onclick="cerrarTools();sendWeb();return false;" role="menuitem"><span aria-hidden="true">🌐</span> web</button>
+      <button class="ttool" id="imggen-btn" onclick="cerrarTools();generarImagen();return false;" role="menuitem"><span aria-hidden="true">🎨</span> imagen</button>
+      <button class="ttool accbtn" id="accbtn" onclick="vozAccion();return false;" role="menuitem"><span id="accIco" aria-hidden="true">🎤</span> <span id="accLbl">hablá y actúo</span></button>
+    </div>
     <div class="iwrap">
-      <label class="flabel" for="finput" title="Subir PDF / DOCX / TXT / audio / video">⊕</label>
+      <button class="toolsbtn" id="toolsBtn" onclick="toggleTools()" title="Documento, web, imagen, voz-acción" aria-label="Más herramientas" aria-expanded="false">+</button>
       <input type="file" id="finput" accept=".pdf,.docx,.txt,.md,.xlsx,.xls,.csv,.tsv,.mp3,.wav,.m4a,.ogg,.webm,.mp4,.mpeg,.mpga,.flac" style="display:none" onchange="handleFile(this)">
       <label class="flabel" for="imginput" id="imgbtn" title="Adjuntar una imagen para que tu MIRROR la vea" style="display:none" aria-label="Adjuntar una imagen">📷</label>
       <input type="file" id="imginput" accept="image/*" style="display:none" onchange="handleImagen(this)">
       <textarea id="inp" placeholder="Escribí acá..." rows="1" onkeydown="hkey(event)" oninput="aresize(this)"></textarea>
       <button class="micbtn" id="micbtn" onclick="toggleMic()" title="Dictar por voz (es-AR)" aria-label="Dictar por voz">🎙</button>
-      <!-- v38-vozaccion (C2): hablá lo que querés hacer y te dejo la acción lista. Un toque arranca, otro cierra. -->
-      <button class="micbtn accbtn" id="accbtn" onclick="vozAccion()" title="Hablá y te dejo la acción lista (WhatsApp, mail, llamar, agendar, compartir)" aria-label="Hablar una acción">🎤</button>
-      <button class="wbtn" id="wbtn" onclick="sendWeb()" title="Buscar en la web" aria-label="Buscar en la web">🌐</button>
-      <button class="wbtn" id="imggen-btn" onclick="generarImagen()" title="Crear una imagen a partir de tu texto (Pollinations)" aria-label="Crear una imagen desde el texto">🎨</button>
       <button class="sbtn" id="sbtn" onclick="send()" aria-label="Enviar mensaje">↑</button>
     </div>
     <div class="fnote">
       <span class="fcredit">MIRROR · sobre "El Origen", idea de Darío A. Tello</span>
-      <span class="fsep">·</span>
-      <span onclick="abrirLegal()" title="Privacidad y licencia">🔒 privacidad · licencia</span>
-      <span onclick="clearMem()">borrar memoria</span>
-      <span class="fsep">·</span>
-      <span onclick="abrirMemoria()" title="Ver, buscar, borrar y exportar todo lo que tu MIRROR recuerda">◈ mi memoria</span>
-      <span class="fsep">·</span>
-      <span id="anabtn" onclick="anaAbrir()" title="Analizar datos CSV — la matemática se calcula en tu dispositivo, no en la nube">📊 datos</span>
-      <span class="fsep">·</span>
-      <span id="encbtn" onclick="encAbrir()" title="Crear encuestas y ver sus respuestas — sin Google, en tu Firebase">📋 encuestas</span>
-      <span class="fsep">·</span>
-      <span onclick="showDocs()">mis documentos</span><span onclick="cartaAClaude()" title="✉ La carta a Claude: diagnóstico honesto exportado SOLO a tu dispositivo — vos decidís si la mandás">✉ carta</span>
-      <span class="fsep">·</span>
-      <span onclick="abrirModalInforme()">📄 generar informe</span>
-      <span class="fsep">·</span>
-      <span onclick="abrirCompartir()" title="Compartí tu MIRROR por un link de solo lectura (sin claves ni memoria)">🔗 compartir</span>
-      <span class="fsep">·</span>
+      <!-- v38-pieorden (9/08/2026) — PORTE DEL ORGANIZADOR DEL MIRROR v4.4 (auditoría en vivo de
+           Darío: «las solapas se amontonan abajo»). A la vista queda lo que se usa seguido + el
+           audio; el resto se pliega en «⋯ más». Cada pastilla NO-audio lleva data-pie (clave
+           estable) para que el organizador la mueva entre «a la vista» y «⋯ más». El audio (voz,
+           🌐 idioma, ▾ voces, sonido, volumen) queda FIJO. Los onclick e ids quedan intactos. -->
+      <span data-pie="memoria" onclick="abrirMemoria()" title="Ver, buscar, borrar y exportar todo lo que tu MIRROR recuerda">◈ mi memoria</span>
+      <span data-pie="datos" id="anabtn" onclick="anaAbrir()" title="Analizar datos CSV — la matemática se calcula en tu dispositivo, no en la nube">📊 datos</span>
+      <span data-pie="documentos" onclick="showDocs()">📎 mis documentos</span>
+      <span data-pie="informe" onclick="abrirModalInforme()">📄 generar informe</span>
       <span id="ttsbtn" onclick="toggleTTS()" title="Leer las respuestas en voz alta">🔇 voz</span><span id="idiBtn" onclick="i18nRotar()" title="Cambiar el idioma de la app y del dictado (español · English · português)">🌐 ES</span><span id="vozsel" onclick="abrirSelectorVoz()" title="Elegir la voz de lectura">▾</span>
       <span class="fsound" id="sndBtn" onclick="toggleSound()" title="Música ambiental y firma sonora «El Origen» · on/off">🔇 sonido</span><span class="fvolwrap"><span class="fvolico" aria-hidden="true">–</span><input type="range" class="fvol" id="volSlider" min="2" max="100" step="1" value="20" oninput="setVolUsuario(this.value/100)" title="Volumen de la música" aria-label="Volumen de la música"><span class="fvolico" aria-hidden="true">+</span><span class="fvolpct" id="volPct" aria-hidden="true">20%</span></span>
-      <span class="fpres" id="presBtn" onclick="openPres()" title="Pantalla completa para la defensa">◬ presentación</span>
-      <span onclick="cumpliAbrir()" title="Qué guarda, dónde vive, qué viaja y qué NO hace con lo tuyo">🤖 qué hago con lo tuyo</span>
-      <span onclick="addMsg('mirror',portaExportar())" title="Llevate TODO lo tuyo en un archivo, con sello de integridad">📦 llevarme todo</span>
-      <!-- v38-ui2 (1/08/2026): se retira la leyenda «🌐 web · ⊕ doc». Nació cuando esos dos
-           botones eran nuevos y necesitaban explicación; hoy están a la vista arriba, con su
-           tooltip, y la leyenda solo ocupaba una fila del pie sin decir nada. La quita la
-           pidió Darío en la auditoría en vivo del 1/08. El CSS de .ftip se deja: no molesta
-           y evita tocar seis selectores para nada. -->
+      <span class="fmas" id="fmasBtn" onclick="toggleMas()" title="Mostrar más opciones" role="button" aria-expanded="false">⋯ más</span>
+      <span class="fmore-group oculto" id="fmoreGroup">
+        <span data-pie="compartir" onclick="abrirCompartir()" title="Compartí tu MIRROR por un link de solo lectura (sin claves ni memoria)">🔗 compartir</span>
+        <span data-pie="encuestas" id="encbtn" onclick="encAbrir()" title="Crear encuestas y ver sus respuestas — sin Google, en tu Firebase">📋 encuestas</span>
+        <span data-pie="presentacion" class="fpres" id="presBtn" onclick="openPres()" title="Pantalla completa para la defensa">◬ presentación</span>
+        <span data-pie="carta" onclick="cartaAClaude()" title="✉ La carta a Claude: diagnóstico honesto exportado SOLO a tu dispositivo — vos decidís si la mandás">✉ carta</span>
+        <span data-pie="cumplimiento" onclick="cumpliAbrir()" title="Qué guarda, dónde vive, qué viaja y qué NO hace con lo tuyo">🤖 qué hago con lo tuyo</span>
+        <span data-pie="privacidad" onclick="abrirLegal()" title="Privacidad y licencia">🔒 privacidad · licencia</span>
+        <span data-pie="llevar" onclick="addMsg('mirror',portaExportar())" title="Llevate TODO lo tuyo en un archivo, con sello de integridad">📦 llevarme todo</span>
+        <span data-pie="borrar" onclick="clearMem()">🗑 borrar memoria</span>
+        <span class="fpieord" onclick="pieOrdenarAbrir()" title="Elegí qué solapas ves afuera y cuáles quedan en «⋯ más»">🧩 ordenar el pie</span>
+      </span>
       <span class="fver" data-ver title="versión de la plataforma — verificá que sea la última deployada" style="opacity:0.5;letter-spacing:0.12em;font-size:10px;margin-left:auto;"></span>
     </div>
     <!-- v38-porta (H2): entrada del archivo para reponer lo del usuario. Oculta: se abre desde el chat. -->
     <input type="file" id="portafile" accept="application/json,.json" style="display:none" onchange="portaArchivoElegido(event)">
+    <!-- v38-pieorden (9/08/2026): el ORGANIZADOR DEL PIE, portado del MIRROR. Cada quien elige
+         qué solapas ve afuera y cuáles en «⋯ más». Se guarda en el dispositivo y se aplica al
+         abrir. NO toca el audio (voz, voces, sonido, volumen), que queda fijo. -->
+    <div class="modal-overlay" id="pieord-modal">
+      <div class="modal" style="max-width:460px;">
+        <h3>🧩 Ordenar el pie</h3>
+        <div class="cumpli-body">
+          <div class="cumpli-sec"><p>Elegí qué solapas querés ver <b>afuera</b> (a mano) y cuáles guardar en <b>«⋯ más»</b>. Se guarda en este dispositivo. Los controles de audio (voz, idioma, voces, sonido y volumen) quedan siempre a la vista.</p></div>
+          <div id="pieord-lista" class="pieord-lista"></div>
+        </div>
+        <div class="modal-btns">
+          <button class="mbtn mbtn-perm" onclick="pieOrdenarGuardar()">guardar</button>
+          <button class="mbtn mbtn-session" onclick="pieOrdenarReset()">volver al orden de fábrica</button>
+          <button class="mbtn mbtn-cancel" onclick="pieOrdenarCerrar()">cerrar</button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -2280,7 +2334,11 @@ function vozAccionUI(){
   try{
     const b=document.getElementById('accbtn'); if(!b) return;
     b.classList.toggle('acc', !!micAccion);
-    b.textContent = micAccion ? '⏹' : '🎤';
+    // v38-barra: ahora el botón vive en el «+» con ícono + etiqueta. Se actualiza el ícono
+    // (span #accIco) para NO pisar la etiqueta; si no existe, se cae al textContent de antes.
+    const ico=document.getElementById('accIco'); const lbl=document.getElementById('accLbl');
+    if(ico) ico.textContent = micAccion ? '⏹' : '🎤'; else b.textContent = micAccion ? '⏹' : '🎤';
+    if(lbl) lbl.textContent = micAccion ? 'terminá y actúo' : 'hablá y actúo';
     b.title = micAccion ? 'Terminá de hablar y tocá acá: te dejo la acción lista' : 'Hablá y te dejo la acción lista (WhatsApp, mail, llamar, agendar, compartir)';
   }catch(e){}
 }
@@ -2359,14 +2417,143 @@ function vozParaIdioma(idi){
   } catch(e) { return null; }
 }
 if('speechSynthesis' in window){ cargarVoces(); try{ speechSynthesis.onvoiceschanged=cargarVoces; }catch(e){} }
+/* ── v38-voz (9/08/2026) — PORTE DEL v44-voz + v44-vozon DEL MIRROR ──
+   Auditoría en vivo de Darío en la plataforma: «la voz tarda en ejecutarse». Se trae lo del
+   MIRROR: (1) el navegador no deja hablar sin un gesto → se DESBLOQUEA en el primer toque;
+   (2) la voz VIENE ARMADA en ON (preferencia recordada) y se activa sola en ese primer gesto,
+   pero si no hay voces instaladas se apaga y lo dice (nunca miente); (3) un latido despierta la
+   síntesis si Chrome la deja pausada. La lógica de idioma-del-contenido (idiomaDeTexto) NO se toca. */
+let vozDesbloqueada=false;
+function desbloquearVoz(){
+  if(vozDesbloqueada) return;
+  try{ const u=new SpeechSynthesisUtterance(' '); u.volume=0; u.rate=1; speechSynthesis.speak(u); vozDesbloqueada=true; }catch(e){}
+}
 function toggleTTS(){
   const b=document.getElementById('ttsbtn');
   if(!('speechSynthesis' in window)){ addMsg('mirror','La lectura en voz alta no está disponible en este navegador.'); return; }
+  if(!ttsOn){
+    cargarVoces();
+    desbloquearVoz();
+    if(!vocesES.length){
+      addMsg('mirror','No puedo leer en voz alta: este dispositivo no tiene ninguna voz de síntesis instalada. En Android se agregan desde Ajustes → Accesibilidad → Texto a voz; en Windows, desde Configuración → Hora e idioma → Voz. Dejo el botón apagado para no prometerte algo que no puedo hacer.');
+      b.textContent='🔇 voz'; b.style.color=''; ttsOn=false;
+      return;
+    }
+  }
   ttsOn=!ttsOn;
   b.textContent=ttsOn?'🔊 voz ON':'🔇 voz';
   b.style.color=ttsOn?'var(--accent)':'';
+  try{ localStorage.setItem('mirror_tts', ttsOn?'on':'off'); vozPref=ttsOn?'on':'off'; vozArmada=true; }catch(e){}
   if(!ttsOn) speechSynthesis.cancel();
+  else { try{ hablar('Listo, ya me escuchás.'); }catch(e){} }
 }
+let vozPref='on';
+try{ const p=localStorage.getItem('mirror_tts'); if(p==='off') vozPref='off'; }catch(e){}
+let vozArmada=false;
+function activarVozReal(){
+  try{ cargarVoces(); desbloquearVoz(); }catch(e){}
+  const b=document.getElementById('ttsbtn'); if(!b) return;
+  if(!vocesES.length){
+    try{ addMsg('mirror','Quería dejarte la lectura en voz alta prendida, pero este dispositivo no tiene ninguna voz de síntesis instalada. En Android se agregan desde Ajustes → Accesibilidad → Texto a voz; en Windows, desde Configuración → Hora e idioma → Voz. Dejo la voz apagada para no prometerte algo que no puedo hacer.'); }catch(e){}
+    ttsOn=false; b.textContent='🔇 voz'; b.style.color=''; vozPref='off';
+    try{ localStorage.setItem('mirror_tts','off'); }catch(e){}
+    return;
+  }
+  ttsOn=true; b.textContent='🔊 voz ON'; b.style.color='var(--accent)';
+}
+function armarVozInicial(){
+  if(vozPref!=='on' || !('speechSynthesis' in window)) return;
+  const b=document.getElementById('ttsbtn'); if(!b) return;
+  b.textContent='🔊 voz ON'; b.style.color='var(--accent)';
+  const tipos=['pointerdown','keydown','touchstart'];
+  function primerGesto(){ if(vozArmada) return; vozArmada=true;
+    tipos.forEach(ev=>{ try{ document.removeEventListener(ev, primerGesto, true); }catch(e){} });
+    try{ activarVozReal(); }catch(e){} }
+  tipos.forEach(ev=>{ try{ document.addEventListener(ev, primerGesto, true); }catch(e){} });
+}
+try{ armarVozInicial(); }catch(e){}
+try{ setInterval(function(){ try{ if(ttsOn && window.speechSynthesis && speechSynthesis.speaking && speechSynthesis.paused) speechSynthesis.resume(); }catch(e){} }, 4000); }catch(e){}
+
+/* ── v38-barra (9/08/2026): el «+» de la barra. Despliega/pliega la bandeja de herramientas. ── */
+function toggleTools(){
+  const t=document.getElementById('toolsTray'); const b=document.getElementById('toolsBtn');
+  if(!t||!b) return;
+  const oculto=t.classList.toggle('oculto');
+  b.classList.toggle('abierto', !oculto);
+  b.setAttribute('aria-expanded', String(!oculto));
+}
+function cerrarTools(){
+  const t=document.getElementById('toolsTray'); const b=document.getElementById('toolsBtn');
+  if(t) t.classList.add('oculto');
+  if(b){ b.classList.remove('abierto'); b.setAttribute('aria-expanded','false'); }
+}
+/* ── v38-pieorden (9/08/2026): plegar/desplegar lo ocasional del pie. ── */
+function toggleMas(){
+  const g=document.getElementById('fmoreGroup'); const b=document.getElementById('fmasBtn');
+  if(!g||!b) return;
+  const oculto=g.classList.toggle('oculto');
+  b.textContent = oculto ? '⋯ más' : '⋯ menos';
+  b.setAttribute('aria-expanded', String(!oculto));
+}
+/* ── v38-pieorden — EL ORGANIZADOR DEL PIE (porte del MIRROR v4.4). Cada pastilla no-audio
+   tiene data-pie; acá se mueve el NODO entre «a la vista» y «⋯ más», se guarda en mirror_pie
+   y se aplica al abrir. El HTML estático no cambia: sin preferencia, vale el orden de fábrica. */
+const PIE_ORDEN=['memoria','datos','documentos','informe','compartir','encuestas','presentacion','carta','cumplimiento','privacidad','llevar','borrar'];
+const PIE_FABRICA=['memoria','datos','documentos','informe'];
+function pieColocar(afueraSet){
+  const fnote=document.querySelector('.fnote');
+  const fmas=document.getElementById('fmasBtn');
+  const grupo=document.getElementById('fmoreGroup');
+  if(!fnote||!fmas||!grupo) return;
+  const ord=grupo.querySelector('.fpieord');
+  PIE_ORDEN.forEach(k=>{
+    const el=document.querySelector('.fnote [data-pie="'+k+'"]');
+    if(!el) return;
+    if(afueraSet.has(k)) fnote.insertBefore(el, fmas);
+    else grupo.insertBefore(el, ord);
+  });
+}
+function pieAplicar(){
+  let raw=null; try{ raw=localStorage.getItem('mirror_pie'); }catch(e){}
+  if(raw===null) return;
+  let afuera; try{ afuera=new Set(JSON.parse(raw)); }catch(e){ return; }
+  pieColocar(afuera);
+}
+function pieOrdenarAbrir(){
+  const cont=document.getElementById('pieord-lista'); const m=document.getElementById('pieord-modal');
+  if(!cont||!m) return;
+  cont.innerHTML='';
+  PIE_ORDEN.forEach(k=>{
+    const el=document.querySelector('.fnote [data-pie="'+k+'"]'); if(!el) return;
+    const afuera=!el.closest('#fmoreGroup');
+    const row=document.createElement('div');
+    row.className='pieord-row'+(afuera?' afuera':'');
+    row.setAttribute('data-k',k);
+    const nombre=document.createElement('span'); nombre.className='pieord-name'; nombre.textContent=el.textContent.trim();
+    const estado=document.createElement('span'); estado.className='pieord-state'; estado.textContent=afuera?'a la vista':'en «más»';
+    row.appendChild(nombre); row.appendChild(estado);
+    row.onclick=function(){ const a=row.classList.toggle('afuera'); estado.textContent=a?'a la vista':'en «más»'; };
+    cont.appendChild(row);
+  });
+  m.classList.add('visible');
+}
+function pieOrdenarGuardar(){
+  const rows=document.querySelectorAll('#pieord-lista .pieord-row');
+  const afuera=[];
+  rows.forEach(r=>{ if(r.classList.contains('afuera')) afuera.push(r.getAttribute('data-k')); });
+  try{ localStorage.setItem('mirror_pie', JSON.stringify(afuera)); }catch(e){}
+  pieColocar(new Set(afuera));
+  pieOrdenarCerrar();
+  try{ addMsg('mirror','Listo ✅ — dejé el pie a tu gusto. Lo que sacaste vive en «⋯ más»; se recuerda en este dispositivo.'); }catch(e){}
+}
+function pieOrdenarReset(){
+  try{ localStorage.removeItem('mirror_pie'); }catch(e){}
+  pieColocar(new Set(PIE_FABRICA));
+  pieOrdenarCerrar();
+  try{ addMsg('mirror','Volví el pie al orden de fábrica.'); }catch(e){}
+}
+function pieOrdenarCerrar(){ const m=document.getElementById('pieord-modal'); if(m) m.classList.remove('visible'); }
+try{ pieAplicar(); }catch(e){}
 function elegirVozActual(persona){
   persona = persona || personaActual();
   // 1) la elegida a mano para ESE personaje, si sigue instalada
