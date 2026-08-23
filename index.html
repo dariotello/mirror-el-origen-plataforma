@@ -1924,7 +1924,7 @@ REGLAS:
 4. Sé natural, no acartonado.
 5. NO sos el analista. No expliques teoría ni analices documentos en profundidad: eso es TARS (el modo de al lado). Podés mencionar los temas de tu usuario como él lo haría charlando, sin dar cátedra.
 6. Si preguntan cómo subir/analizar archivos: el botón ⊕ (abajo izq.) sube documentos; el análisis se hace en modo TARS; los informes se bajan con "generar informe".
-6.bis. TUS MANOS (capa ACTÚA de la app): los pedidos simples sobre la app los ejecuta una capa local ANTES de que el mensaje te llegue (música, lectura en voz alta, selector de voces, panel de memoria, cambio de modo, lectura de un documento en voz alta con «leeme el archivo X» y su corte con «pará de leer»), y esa capa confirma con «listo ✅» SOLO si lo hizo de verdad. Si un pedido de esos te llega A VOS, es porque la capa NO lo reconoció o está apagada en las capacidades: NO digas jamás "listo, lo hice" (sería mentir) — sugerí decirlo más directo («bajá la música») o indicá los botones del pie (🔊 sonido, ▾ voces, 🔊 voz). Lo que la capa NO hace se hace a mano y lo decís con honestidad: borrar memoria o recuerdos, exportar, configuración.
+6.bis. TUS MANOS (capa ACTÚA de la app): los pedidos simples sobre la app los ejecuta una capa local ANTES de que el mensaje te llegue (música, lectura en voz alta, selector de voces, panel de memoria, cambio de modo, lectura de un documento en voz alta con «leeme el archivo X» y su corte con «pará de leer»), y esa capa confirma con «listo ✅» SOLO si lo hizo de verdad. Si un pedido de esos te llega A VOS, es porque la capa NO lo reconoció o está apagada en las capacidades: NO digas jamás "listo, lo hice" (sería mentir) — sugerí decirlo más directo («bajá la música») o indicá los botones del pie (🔊 sonido, ▾ voces, 🔊 voz). Lo que la capa NO hace se hace a mano y lo decís con honestidad: borrar memoria o recuerdos, exportar, configuración. TU USUARIO TIENE UNA AGENDA DE CONTACTOS dentro de la app (en SU dispositivo, no es la del teléfono), y VOS NO LA VES: la maneja la capa, no vos. Por eso tenés PROHIBIDO afirmar que un dato NO está guardado (jamás digas «no tengo el mail de X» ni «solo tengo su teléfono»): no podés saberlo, y decirlo sería inventar. Si te preguntan por el número, el mail o la dirección de alguien, contestá que te lo pidan así: «buscá el contacto de <nombre>», y la app lo busca de verdad.
 6.ter. ACCIONES HACIA AFUERA (tarjetas): si te piden llamar, mandar un WhatsApp, poner música puntual, agendar algo o llegar a un lugar y el pedido te llega A VOS, respondé corto y natural y terminá con UNA marca en su propia línea: [ACCION:{"tipo":"tel","para":"nombre","num":"+549..."}] · [ACCION:{"tipo":"wa","para":"nombre","num":"...","msg":"texto"}] · [ACCION:{"tipo":"yt","q":"búsqueda"}] · [ACCION:{"tipo":"maps","q":"lugar"}] · [ACCION:{"tipo":"cal","titulo":"evento"}] · [ACCION:{"tipo":"encuesta","titulo":"…","preguntas":["¿…?","¿…? (op1|op2)"]}] · [ACCION:{"tipo":"share","texto":"lo que hay que mandar, completo","titulo":"de qué se trata"}] — cuando pidan armar una encuesta, VOS redactá preguntas claras y neutras (libres por defecto; para opciones, paréntesis con |); la app muestra una tarjeta y el usuario la revisa y crea. CUÁNDO VA "share": SOLO cuando el pedido es mandar algo SIN destinatario ni app definidos («compartí esto», «mandalo por donde sea», «pasáselo a quien quieras») — la app abre el selector del sistema y tu usuario elige app y contacto. Si sabés a quién y por dónde, usá "wa" o "mail": la tarjeta con el destinatario ya puesto es mejor y NO se reemplaza por share. En escritorio el selector puede no existir y la app cae al portapapeles: nunca prometas que se abre la lista de apps. REGLAS DE ORO: números y direcciones SOLO si aparecen en esta conversación o el usuario los dictó — JAMÁS los inventes; si falta el dato, pedilo y NO emitas la marca (la app resuelve nombres de la agenda local: si diste "para", podés omitir "num"). La app valida la marca, arma la tarjeta y el usuario confirma con un toque: vos no ejecutás nada — ofrecés. NUNCA menciones la marca ni su sintaxis.
 6.quater. REDACTOR (mails y mensajes en SU voz): si tu usuario te pega un mail o mensaje recibido y te pide responderlo — o te pide redactar uno nuevo — el borrador lo escribís VOS, en SU voz (usá el perfil y la memoria: cómo escribe, qué viene hablando), respetando los modos rápidos si los pide («respondé que sí pero corto», «decile que no sin herir», «formal para el director»). Mostrá el borrador completo en tu respuesta y terminá con UNA marca en su propia línea: para mail [ACCION:{"tipo":"mail","para":"direccion@dominio","asunto":"…","cuerpo":"el borrador completo"}] — si la dirección no aparece en esta conversación, poné "para":"" (la app abre el correo y tu usuario la completa; JAMÁS inventes direcciones) —; para WhatsApp usá la marca "wa" de 6.ter con el borrador en "msg". La app arma una tarjeta de UN toque: tu usuario lee, toca y sale. NUNCA digas que ya lo enviaste ni lo des por mandado — vos redactás, él envía. Lo que NO podés: leer su bandeja de entrada (no tenés acceso), enviar nada solo, mensajes masivos.
 7. TU PROPIA APP: si en el contexto aparece un bloque "=== ARQUITECTURA REAL DE LA APP ===", podés explicar cómo funciona MIRROR/TARS/la app con total propiedad — la conocés de memoria. Respondé usando SOLO lo que dice ese bloque, sin inventar funciones que no figuren ahí.
@@ -2592,7 +2592,9 @@ function renderAgenda(){
   if(!claves.length){ cont.innerHTML='<div style="opacity:0.6;font-size:12px;padding:10px 2px;">Todavía no tenés contactos guardados. Agregá uno abajo, o decime «guardá el número de Laura 2995551234».</div>'; return; }
   cont.innerHTML=claves.sort().map(function(k){
     const v=(typeof a[k]==='string')?{tel:a[k],email:''}:a[k];
-    const nom=actuaEsc(k);
+    // v39-agenda: la CLAVE ahora va sin tildes, así que mostrarla cruda escribiría «maria».
+    //   El nombre lindo se guarda aparte; si no está (contacto viejo), se cae a la clave.
+    const nom=actuaEsc((v && v.nombre) || k);
     const tel=v.tel?'📞 '+actuaEsc(v.tel):'';
     const mail=v.email?'✉ '+actuaEsc(v.email):'';
     const linea=[tel,mail].filter(Boolean).join('  ·  ')||'<span style="opacity:0.5">sin datos</span>';
@@ -3892,14 +3894,26 @@ function setTypingNote(txt){
 async function callGroqResiliente(messages, systemPrompt, maxTokens, temp, onWait){
   // v3.0 — P4: tres reintentos pacientes (la cuota gratuita por MINUTO necesita ~60 s
   // para liberarse del todo; 10+20+35 cubre la ventana completa).
+  /* v39-salud (19/08/2026) — POR QUÉ LA ESCALERA DEJÓ DE SER LA PRIMERA OPCIÓN.
+     10/20/35 eran una apuesta razonable, pero seguían siendo una apuesta. Ahora, si el motor
+     dijo cuánto falta (encabezado retry-after o el «try again in 7.7s» del mensaje), se
+     espera ESO. Si no dijo nada, recién ahí vale la escalera de siempre —que no se toca,
+     porque es el piso conocido que ya funcionaba.
+     El aviso al usuario distingue una cosa de la otra: cuando el número lo dio el motor, se
+     lo atribuye al motor; cuando es nuestro, no se le cuelga a nadie. Es la regla de
+     honestidad de siempre: lo que hace el proveedor se le atribuye al proveedor. */
   const esperas=[10,20,35];
   const aviso = onWait || setTypingNote;
   for(let intento=0;;intento++){
     try{ return await callGroq(messages, systemPrompt, maxTokens, temp); }
     catch(e){
       if(e.tipo!=='rate_limit' || intento>=esperas.length) throw e;
-      for(let s=esperas[intento]; s>0; s--){
-        aviso('⏳ motores ocupados — reintento en '+s+' s ('+(intento+1)+'/'+esperas.length+')');
+      const pedida = esperaSensata(e && e.esperaSug);
+      const segs = pedida || esperas[intento];
+      for(let s=segs; s>0; s--){
+        aviso((pedida ? '⏳ el motor pidió esperar '+segs+' s — reintento en '+s+' s '
+                      : '⏳ motores ocupados — reintento en '+s+' s ')
+              +'('+(intento+1)+'/'+esperas.length+')');
         await new Promise(r=>setTimeout(r,1000));
       }
       aviso('');
@@ -4412,6 +4426,11 @@ function mensajeErrorConocido(tipo){
      perfecto; el que dijo que no fue el plan gratis del proveedor. */
   if (tipo === 'cupo_excedido') return '⚠️ Esto no es culpa de tu pregunta: tu motor tiene un límite de tokens por minuto en el plan gratis (en Groq son 8.000, contando lo que se manda y lo que contesta), y esta consulta pedía más. Esperá un minuto y reintentá igual, o preguntá sobre menos documentos a la vez. Si configurás un motor de respaldo en CONEX, estas consultas salen por ahí y no te frenan.';
   if (tipo === 'vacio') return '⚠️ El motor respondió vacío (suele pasar con consultas muy pesadas). Probá una pregunta más acotada o reintentá en un momento.';
+  /* v39-pago (21/08/2026): el 402 y el 401/403 se dicen de frente y NO se mandan a reintentar
+     (ninguno se arregla esperando). En la plataforma cada uno configura su propio motor, así
+     que se lo manda a revisar SU proveedor/clave en CONEX, sin asumir cuál usa. */
+  if (tipo === 'pago_requerido') return '⚠️ Tu motor pide pago (código 402): su plan gratuito se terminó o te quedaste sin créditos. No es un problema de tu consulta y no se arregla reintentando. Revisá tu proveedor en CONEX: cargá saldo, o pasá a otro motor con tier gratis.';
+  if (tipo === 'credencial') return '⚠️ Tu motor rechazó la clave (código 401/403): falta o no autoriza. Esto no se arregla reintentando. Revisá la clave en CONEX (o, si administrás el proxy, que esté cargada ahí).';
   if (tipo === 'red') return '⚠️ Falló la conexión. Revisá tu internet y reintentá.';
   if (tipo === 'config') return '⚠️ No pude conectar con tu motor de IA. Revisá en CONEX que tu proxy y tu clave estén bien configurados (y que tu proxy esté publicado).';
   if (tipo === 'modelo_caduco' || tipo === 'modelo_caduco_sin_reemplazo') return '⚠️ Tu modelo configurado ya no está disponible en tu motor. Elegí otro en CONEX (para visión, en ajustes avanzados).';
@@ -4515,6 +4534,57 @@ function sinPensamiento(txt){
   return c.trim();
 }
 
+/* ══ v39-salud (19/08/2026) · B3 — CUÁNTO HAY QUE ESPERAR DE VERDAD ════════════
+   Hermano del v45-salud del MIRROR personal, construido y probado acá por separado: las dos
+   muletas no se dan por idénticas nunca (lección repetida del proyecto).
+   POR QUÉ EXISTE: cuando el motor decía «estás al límite», la app esperaba 10, 20 y 35
+   segundos —números elegidos a ojo en v2.4/v3.0— teniendo al proveedor diciendo el número
+   real. A veces esperaba de más (el cupo ya se había liberado) y a veces de menos (volvía a
+   rebotar y quemaba un reintento).
+   El proveedor lo dice de dos maneras, y se leen LAS DOS:
+     · el encabezado `retry-after` (segundos), que es el estándar HTTP;
+     · y el texto del error: «Please try again in 7.723s» / «in 1m30s».
+   Las dos porque en la plataforma NO se puede dar por hecho nada del proxy: cada uno que
+   despliega esta app pone el suyo, y muchos proxies devuelven solo el cuerpo sin encabezados.
+   El texto del error sí llega siempre, porque es el JSON que la app ya lee.
+   HONESTIDAD: si el motor no dijo nada, devuelve 0 y se cae en la escalera de siempre. No se
+   inventa un número ni se le atribuye al proveedor algo que no dijo. */
+function esperaQuePidioElMotor(res, msg){
+  try{
+    const h = res && res.headers && typeof res.headers.get==='function'
+      ? (res.headers.get('retry-after') || res.headers.get('x-ratelimit-reset-tokens') || '') : '';
+    if (h){
+      /* v45/v39-salud · BUG QUE CAZÓ EL BANCO (19/08): esto decía `parseFloat(h)` a secas, y
+         parseFloat('1m30s') devuelve 1 — se comía el formato «1m30s» de Groq y contestaba
+         «esperá 1 segundo» cuando el proveedor había pedido 90. Ahora la vía numérica exige
+         que el encabezado sea SOLO un número; cualquier otra forma sigue de largo hasta el
+         lector de «1m30s» de más abajo. */
+      const bruto = String(h).trim();
+      const n = /^[\d.]+$/.test(bruto) ? parseFloat(bruto) : NaN;
+      if (isFinite(n) && n > 0) return Math.ceil(n);
+      const t = Date.parse(h);
+      if (isFinite(t)) { const s = Math.ceil((t - Date.now())/1000); if (s > 0) return s; }
+      const f = /(?:(\d+)m)?\s*([\d.]+)s/i.exec(String(h));
+      if (f) { const s = Math.ceil((parseInt(f[1]||0,10)*60) + parseFloat(f[2]||0)); if (s>0) return s; }
+    }
+  }catch(_){}
+  try{
+    const m = /try again in\s+(?:(\d+)m)?\s*([\d.]+)\s*(s|ms|seconds?|segundos?)/i.exec(String(msg||''));
+    if (m){
+      let s = (parseInt(m[1]||0,10)*60) + parseFloat(m[2]||0);
+      if (/^ms$/i.test(m[3])) s = s/1000;   // milisegundos: no confundir 500 ms con 500 s
+      s = Math.ceil(s);
+      if (s > 0) return s;
+    }
+  }catch(_){}
+  return 0;
+}
+/* Techo y piso del respeto: si el proveedor pidiera 20 minutos no dejamos la app clavada, y
+   si pidiera 0,2 s esperamos 1 s igual para no martillarlo. El techo es 75 s porque las
+   cuotas POR MINUTO se liberan dentro de esa ventana. */
+const ESPERA_TECHO = 75, ESPERA_PISO = 1;
+function esperaSensata(s){ const n = Math.ceil(Number(s)||0); return n<=0 ? 0 : Math.min(ESPERA_TECHO, Math.max(ESPERA_PISO, n)); }
+
 async function llamarMotor(url, key, modelo, messages, systemPrompt, maxTokens, temp){
   // Cerebras usa 'max_completion_tokens'; Groq usa 'max_tokens'. Mandamos el correcto.
   const esCerebras = url.includes('cerebras');
@@ -4609,7 +4679,16 @@ async function llamarMotor(url, key, modelo, messages, systemPrompt, maxTokens, 
        fijo sería inventar un límite que quizá no es el suyo.) */
     else if (/tokens per minute|\bTPM\b|per minute \(TPM\)/i.test(msg) || (/request too large/i.test(msg) && /minute/i.test(msg))) tipo = 'cupo_excedido';
     else if (res.status === 413 || /too large|maximum context|context length|context_length|reduce the length|request too large/i.test(msg)) tipo = 'too_big';
-    const err = new Error(msg); err.tipo = tipo; err.status = res.status; err.modelo = modelo; throw err;
+    /* v39-pago (21/08/2026) — EL 402 TIENE NOMBRE. Hermano del v45-pago del MIRROR personal,
+       verificado acá por separado. Un proveedor que pasa a pago (402) o una clave que no
+       autoriza (401/403) NO se arregla esperando ni reintentando. En la plataforma esto
+       importa más todavía: cada uno que despliega configura SU motor en CONEX, así que el
+       mensaje tiene que mandarlo a revisar SU proveedor/clave, no asumir Cerebras. */
+    else if (res.status === 402 || /payment required|insufficient (credit|balance|funds)|billing|add a payment|out of credits/i.test(msg)) tipo = 'pago_requerido';
+    else if (res.status === 401 || res.status === 403 || /invalid api key|unauthorized|forbidden|authentication|no autorizad/i.test(msg)) tipo = 'credencial';
+    const err = new Error(msg); err.tipo = tipo; err.status = res.status; err.modelo = modelo;
+    err.esperaSug = esperaQuePidioElMotor(res, msg); // v39-salud: cuánto pidió esperar el proveedor (0 = no dijo nada)
+    throw err;
   }
   // Respuesta de error HTTP sin objeto data.error legible (p.ej. 500/502/503 del proveedor):
   // la tratamos como fallo para que la capa multi-motor caiga a Cerebras en vez de devolver null.
@@ -4617,7 +4696,11 @@ async function llamarMotor(url, key, modelo, messages, systemPrompt, maxTokens, 
     let tipo = 'otro';
     if (res.status === 429) tipo = 'rate_limit';
     else if (res.status === 413) tipo = 'too_big';
-    const err = new Error('El motor respondió con estado '+res.status); err.tipo = tipo; err.status = res.status; throw err;
+    else if (res.status === 402) tipo = 'pago_requerido';           // v39-pago
+    else if (res.status === 401 || res.status === 403) tipo = 'credencial'; // v39-pago
+    const err = new Error('El motor respondió con estado '+res.status); err.tipo = tipo; err.status = res.status;
+    err.esperaSug = esperaQuePidioElMotor(res, ''); // v39-salud: acá no hay cuerpo legible; queda el encabezado
+    throw err;
   }
   // v1.9: extraemos el contenido, limpiamos tokens de control que algunos proveedores de
   // gpt-oss dejan filtrar (p.ej. <|return|>) para que no aparezcan ante el jurado, y si el
@@ -5324,6 +5407,26 @@ function anaQuitar(){ anaDataset = null; addMsg('mirror','Listo, solté los dato
 // Fuera de alcance (a mano, como siempre): borrar memoria/recuerdos, PIN, exportar, configuración.
 // 100% ADITIVO: si esta capa explota, send() sigue por el camino clásico (try/catch total).
 const ACTUA_MAX = 64; // más largo que esto es charla, no comando (guardia anti-falso-positivo)
+/* ══════════ v47-decile (22/08/2026) — EL CONECTOR NO VIAJA DENTRO DEL MENSAJE ══════════
+   HALLAZGO DE LA AUDITORÍA EN VIVO DE DARÍO (22/08): «mandale un mail a Laura, DECILE QUE voy
+   tarde» abría el correo con el cuerpo «DECILE QUE VOY TARDE» — el conector quedaba adentro
+   del texto que sale a nombre de Darío.
+   POR QUÉ pasaba: en las reglas de mail y de WhatsApp el separador entre el destinatario y el
+   mensaje es una alternancia, y la rama de la COMA (`\s*[:,]\s*`) se prueba ANTES que la rama
+   del conector («decile que», «avisale que»…). Con coma de por medio, el conector nunca se
+   consumía y viajaba entero al cuerpo. Sin coma («…a Laura y decile que…») sí se consumía —
+   por eso el WhatsApp de la prueba salió bien y el mail no: la diferencia era la coma.
+   POR QUÉ SE ARREGLA ACÁ Y NO EN LA REGEX: la regex tiene sus propias pruebas amarradas (F1,
+   F2, destinatario no-greedy). Tocarla para esto es arriesgar lo que ya anda. Se limpia
+   DESPUÉS del match, que es donde el problema realmente vive.
+   SOLO se saca si el conector ABRE el mensaje: «decile que gracias» → «gracias», pero
+   «gracias, decile a Ana que sí» no se toca. Y si al limpiar no queda nada, se devuelve el
+   texto original: mejor un mensaje con un «decile» de más que una tarjeta vacía. */
+function actuaLimpiaConector(msg){
+  const t = String(msg||'').trim();
+  const limpio = t.replace(/^(?:y\s+)?(?:dici[eé]ndo(?:le)?|avis[aá]ndo(?:le)?|cont[aá]ndo(?:le)?|decile|dec[ií]|avisale|avis[aá]|contale|cont[aá]|dile|di)\b[\s:,]*(?:en\s+)?(?:que\b\s*)?/i,'').trim();
+  return limpio || t;
+}
 const ACTUA_CMDS = [
   { /* v38-share (C1): «compartí esto: …» / «mandá esto por donde sea» → selector del sistema.
        Va PRIMERA porque trae el texto adentro. El lookahead descarta los pedidos que SÍ
@@ -5429,7 +5532,8 @@ const ACTUA_CMDS = [
     run(m){ const nombre=m[1].trim().replace(/[?.!¿]+$/,'').replace(/^(?:a|de|al)\s+/i,'').trim();
             if (!nombre) return 'Decime de quién y te lo busco en tu agenda local.';
             const c=actuaContacto(nombre);
-            if (!c) return 'No tengo nada de «'+nombre+'» en tu agenda local, y no lo voy a inventar. Para guardarlo: «guardá el número de '+nombre+' <número>» — o el mail, o la dirección.';
+            if (!c){ const amb=actuaPedirPrecisar(nombre,'te muestro sus datos','datos',''); if (amb) return amb; // v39-agenda + v40-pendiente
+              return 'No tengo nada de «'+nombre+'» en tu agenda local, y no lo voy a inventar. Para guardarlo: «guardá el número de '+nombre+' <número>» — o el mail, o la dirección.'; }
             const partes=[];
             if (c.tel)   partes.push('📞 '+c.tel);
             if (c.email) partes.push('✉ '+c.email);
@@ -5439,6 +5543,34 @@ const ACTUA_CMDS = [
             return 'De «'+nombre+'» tengo: '+partes.join(' · ')+'.'
                    +(faltan.length?' Me falta su '+faltan.join(' y su ')+'.':'')
                    +' (Todo vive en TU dispositivo, no sale de acá.)'; }
+  },
+  { /* ── v39-agenda (22/08/2026) · F4 — BUSCAR UN CONTACTO (porte del MIRROR personal) ──
+       La regla de arriba solo entra con «tenés/hay/guardaste». Falta la forma en que la gente
+       realmente pregunta: «buscá el contacto de Laura», «decime el mail de Ana», «dame el
+       número de Juan». Va DESPUÉS de aquella (no le roba nada) y ANTES de que el pedido se
+       vaya al modelo, que no tiene la agenda y podría inventar.
+       DOS DETALLES QUE NO SON CAPRICHO:
+       · el separador tras el verbo es \s+ y NO \b: «buscá» y «mostrá» terminan en acento, y
+         \b es límite ASCII — la «á» no es carácter de palabra, así que \b ahí no existe y la
+         regla no matchearía. (Bug cazado por el banco del MIRROR el 21/08.)
+       · EXIGE una palabra de agenda (contacto/número/mail/dirección/datos), así que no le roba
+         nada a la música: «buscá algo de Nirvana» no tiene ninguna de esas palabras.
+       · el loop de esta muleta NO admite `return null` (responde apenas matchea), así que lo
+         que en el MIRROR es un guard dentro de run() acá va DENTRO del patrón: el lookahead
+         descarta «…de la agenda» / «…de mis contactos», que son la otra regla. */
+    re: /(?:busc[aá]r?(?:me)?|mostr[aá](?:me)?|dec[ií]me|fij[aá]te|dame|pas[aá]me)\s+.*?\b(?:contacto|n[uú]mero|tel[eé]fono|celu(?:lar)?|mail|e-?mail|correo|direcci[oó]n|domicilio|datos?)\b.*\bde\s+(?!(?:la\s+)?agenda\b|(?:mis\s+)?contactos\b)([^\d:,]{2,30}?)\s*[?.!]*$/i,
+    run(m){ const q=String(m[1]||'').trim().replace(/[?.!]+$/,'');
+            const c = actuaContacto(q);
+            if (!c){ const amb=actuaPedirPrecisar(q,'te muestro sus datos','datos',''); if (amb) return amb; // v40-pendiente
+              return 'No tengo a «'+q+'» en tu agenda local. Guardalo con «guardá el número de '+q+' <número>» (o su mail/dirección) y queda en TU dispositivo.'; }
+            const nom = c.nombre || q;
+            const partes = [];
+            if (c.tel)   partes.push('📞 '+c.tel);
+            if (c.email) partes.push('✉ '+c.email);
+            if (c.dir)   partes.push('🗺 '+c.dir);
+            return partes.length
+              ? 'Esto tengo de «'+nom+'» en tu agenda local: '+partes.join(' · ')+'. No sale de tu dispositivo. Decime «mandale un WhatsApp a '+nom+' que…» o «llamá a '+nom+'» y lo uso.'
+              : 'Tengo a «'+nom+'» en la agenda pero sin datos cargados. Agregale con «guardá el número de '+nom+' <número>».'; }
   },
   { /* v38-cumpli (H1) — el panel de transparencia también se abre hablando: mucha gente
        pregunta antes de tocar («¿qué hacés con lo que te digo?», «¿sos una persona?»), y esa
@@ -5518,17 +5650,53 @@ const ACTUA_CMDS = [
             if (actuaNumOk(dest)){ const ok=actuaTarjeta('📞','Llamar','Número listo en el discador.',actuaTelURL(dest),'📞 llamar ahora');
               return ok?'Número listo ✅ — un toque y llama.':'No pude armar la tarjeta — quedó en mi diagnóstico.'; }
             const num=(actuaContacto(dest)||{}).tel; // v37-agenda (A2)
-            if (!num) return 'No tengo el número de «'+dest+'» y no lo voy a inventar. Decime «guardá el número de '+dest+' <número>» y queda en tu agenda local.';
+            if (!num){ const amb=actuaPedirPrecisar(dest,'lo llamo','tel',''); if (amb) return amb; // v39-agenda + v40-pendiente
+              return 'No tengo el número de «'+dest+'» y no lo voy a inventar. Decime «guardá el número de '+dest+' <número>» y queda en tu agenda local.'; }
             const ok=actuaTarjeta('📞','Llamar a '+dest,'El discador se abre con el número puesto — el toque final es tuyo.',actuaTelURL(num),'📞 llamar a '+dest);
             return ok?'Listo ✅ — tocá la tarjeta y llama.':'No pude armar la tarjeta — quedó en mi diagnóstico.'; }
+  },
+  { /* ── v39-actua (19/08/2026) · B1 — MAIL A UN DESTINATARIO ────────────────────────────
+       HALLAZGO DE DARÍO: «mandale un mail a Lucila que llego tarde» no lo entendía NADIE.
+       Existía la regla de WhatsApp a un destinatario y la de «abrí el correo» en blanco,
+       pero entre las dos había un agujero: el correo CON destinatario y mensaje.
+       POR QUÉ ACÁ Y NO EN LA REGLA DE WHATSAPP: el patrón de WhatsApp exige la palabra
+       whatsapp/wsp/wa/mensaje. Meterle «mail» adentro le daría a wa.me un pedido de correo.
+       POR QUÉ VA ANTES DE LA DE WHATSAPP: para que «mandale un mail a X…» no se lo coma
+       ninguna regla posterior; el patrón exige mail/correo, así que no le roba turnos.
+       LA DIFERENCIA HONESTA CON WHATSAPP: wa.me NO se puede abrir sin número, así que ahí
+       hay que negarse. `mailto:` SÍ se abre sin destinatario. Entonces, cuando el contacto
+       no está en la agenda, no se planta: deja el mensaje escrito, avisa de frente que no
+       tiene la dirección y que NO la va a inventar, y el usuario la tipea en su correo. */
+    re: /(?:mand[aá](?:le)?|escrib[ií](?:le)?|manda|envi[aá](?:le)?)\s+(?:un\s+|el\s+)?(?:mail|e-?mail|correo(?:\s+electr[oó]nico)?)\s+a\s+([^:,]{2,30}?)(?:\s*[:,]\s*|\s+(?:y\s+)?(?:que|dici[eé]ndo(?:le)?|avis[aá]ndo(?:le)?|cont[aá]ndo(?:le)?|sobre|decile|avisale|contale|dile)\b[\s:,]*(?:en\s+)?(?:que\b\s*)?)(.+)/i,
+    run(m){ const dest=m[1].trim().replace(/\s+$/,''), msg=actuaLimpiaConector(m[2]); // v47-decile
+            /* v40-pendiente (H3): con DOS candidatos NO se arma tarjeta — el texto pedía
+               precisar y la tarjeta invitaba a mandar al mismo tiempo. Va ANTES de armarla. */
+            /* Si dictó la dirección entera («mandale un mail a ana@x.com que…»), esa manda:
+               es un dato que dio el usuario, no algo que la app dedujo. */
+            const dir = actuaMailDirOk(dest) ? dest : ((actuaContacto(dest)||{}).email || '');
+            const conDir = !!dir;
+            if (!conDir){ const amb=actuaPedirPrecisar(dest,'te lo mando','mail',msg); if (amb) return amb; } // v40-pendiente
+            const ok=actuaTarjeta('✉','Mail'+(conDir?' a '+dest:' (falta el destinatario)'),
+                  '«'+msg+'» — se abre tu correo con el texto puesto. El asunto y el «enviar» son tuyos.',
+                  actuaMailURL(dir,'',msg), conDir?'✉ abrir el correo':'✉ abrir el correo (poné vos la dirección)');
+            if (!ok) return 'No pude armar la tarjeta — quedó en mi diagnóstico.';
+            return conDir
+              ? 'Mail listo ✅ — revisalo en la tarjeta, ponele asunto y mandalo vos.'
+              : ('No tengo el mail de «'+dest+'» y no lo voy a inventar. Te dejo el mensaje escrito y la dirección la ponés vos al abrir el correo. Si querés que la próxima salga sola: «guardá el mail de '+dest+': <dirección>».'); }
   },
   { // ★N2: WhatsApp → wa.me con el mensaje ya escrito (el usuario revisa y manda)
     // v37-wa (A7, prueba local 26/07): con «diciendo en que» el destinatario salía
     // «DARIO DICIENDO EN». Ahora acepta la forma en que se habla de verdad.
-    re: /(?:mand[aá](?:le)?|escrib[ií](?:le)?)\s+(?:un\s+)?(?:whats?app?|wsp|wa|mensaje)\s+a\s+([^:,]{2,30}?)(?:\s*[:,]\s*|\s+(?:que|dici[eé]ndo(?:le)?|avis[aá]ndo(?:le)?|cont[aá]ndo(?:le)?|decile|avisale|contale|dile)\b[\s:,]*(?:en\s+)?(?:que\b\s*)?)(.+)/i, // destinatario no-greedy (test adversario)
-    run(m){ const dest=m[1].trim(), msg=m[2].trim();
+    re: /(?:mand[aá](?:le)?|escrib[ií](?:le)?)\s+(?:un\s+)?(?:whats?app?|wsp|wa|mensaje)\s+a\s+([^:,]{2,30}?)(?:\s*[:,]\s*|\s+(?:y\s+)?(?:que|dici[eé]ndo(?:le)?|avis[aá]ndo(?:le)?|cont[aá]ndo(?:le)?|decile|avisale|contale|dile)\b[\s:,]*(?:en\s+)?(?:que\b\s*)?)(.+)/i, // destinatario no-greedy (test adversario)
+    run(m){ const dest=m[1].trim(), msg=actuaLimpiaConector(m[2]); // v47-decile
             const num=actuaNumOk(dest)?dest:(actuaContacto(dest)||{}).tel; // v37-agenda (A2)
-            if (!num) return 'No tengo el número de «'+dest+'» y no lo voy a inventar. Guardalo primero: «guardá el número de '+dest+' <número>».';
+            /* v39-actua (19/08/2026): la negativa era correcta pero dejaba al usuario en la nada.
+               wa.me NO abre sin número — eso no se puede tapar. Pero el texto que ya escribió
+               no tiene por qué perderse: se le ofrece la salida que SÍ existe (el selector de
+               compartir), en vez de solo decirle que no. Negarse sin ofrecer alternativa es
+               honesto a medias. */
+            if (!num){ const amb=actuaPedirPrecisar(dest,'te lo mando','wa',msg); if (amb) return amb; // v39-agenda + v40-pendiente
+              return 'No tengo el número de «'+dest+'» y no lo voy a inventar — WhatsApp no abre sin número. Dos salidas: guardalo («guardá el número de '+dest+' <número>») y te sale solo, o decime «compartí esto: '+msg+'» y elegís vos la app y el contacto.'; }
             const r=actuaWaNum(num); // v37-tel (A1)
             const ok=actuaTarjeta('💬','WhatsApp a '+dest,'«'+msg+'» — leélo, y si está bien, sale con un toque.',actuaWaURL(num,msg),'💬 abrir WhatsApp');
             if (!ok) return 'No pude armar la tarjeta — quedó en mi diagnóstico.';
@@ -5565,14 +5733,24 @@ const ACTUA_CMDS = [
   },
   { // música: bajar volumen
     // v37-vol (A6, prueba local 26/07): «bajalo más» y «más bajito» NO entraban.
-    re: /baj[aá](?:me|la|lo)?\s+(?:un\s+poco\s+)?(?:m[aá]s\s+)?(?:la\s+|el\s+)?(?:m[uú]sica|volumen|sonido)|^\s*baj[aá](?:me|la|lo)?\s+(?:un\s+poco\s+)?m[aá]s\s*[.!]*$|^\s*(?:un\s+poco\s+)?m[aá]s\s+(?:baj[oa]|bajito|despacio|suave)\s*[.!]*$/i,
+    /* v39-actua (19/08/2026) — EL DEDAZO NO ES UNA ORDEN DISTINTA.
+       Darío escribió «bajá el volumne» y la app no entendió nada. Cuando se dicta por voz o
+       se tipea rápido, «volumen» sale «volumne», «volumne», «volúmen» o «bolumen»: es la
+       MISMA orden. Rechazarla por una letra es hacerle pagar al usuario un error nuestro de
+       tolerancia. Se abre el patrón solo para las variantes que de verdad se escriben — no
+       una coincidencia difusa, que se comería frases enteras. */
+    /* v39-actua: «poné el volumen más bajo» tampoco entraba — el patrón exigía el verbo
+       bajá/subí, y mucha gente dice «poné». Va anclado y con el adjetivo obligatorio para
+       no pisar la regla de «poné la música». */
+    re: /baj[aá](?:me|la|lo)?\s+(?:un\s+poco\s+)?(?:m[aá]s\s+)?(?:la\s+|el\s+)?(?:m[uú]sica|vol[uú]m(?:en|ne|em|n)|bol[uú]m(?:en|ne)|sonido)|^\s*baj[aá](?:me|la|lo)?\s+(?:un\s+poco\s+)?m[aá]s\s*[.!]*$|^\s*(?:un\s+poco\s+)?m[aá]s\s+(?:baj[oa]|bajito|despacio|suave)\s*[.!]*$|^\s*pon[eé](?:me|lo|la)?\s+(?:el\s+|la\s+)?(?:vol[uú]m(?:en|ne|em|n)|m[uú]sica|sonido)\s+(?:un\s+poco\s+)?(?:m[aá]s\s+)?(?:baj[oa]|bajito|despacio|suave)\s*[.!]*$/i,
     run(){ if (!soundOn) return 'La música no está sonando, no hay nada que bajar. ¿La prendo? Decime «poné la música».';
            const p=volPaso(false); return 'Listo, bajé la música ✅ — al '+Math.round(p*100)+'%.'+(p<=VOL_MIN+0.001?' Es lo más bajo que llega sin apagarla; si la querés en silencio, decime «callate la música».':''); } // v37-vol (B1)
   },
   { // música: subir volumen
     // v37-vol (A6, prueba local 26/07): «subilo más», «subí más» y «más fuerte» NO entraban.
     // Las formas genéricas van ANCLADAS y solas, para no comerse «contame más».
-    re: /sub[ií](?:me|la|lo)?\s+(?:un\s+poco\s+)?(?:m[aá]s\s+)?(?:la\s+|el\s+)?(?:m[uú]sica|volumen|sonido)|^\s*sub[ií](?:me|la|lo)?\s+(?:un\s+poco\s+)?m[aá]s\s*[.!]*$|^\s*(?:un\s+poco\s+)?m[aá]s\s+(?:fuerte|alt[oa])\s*[.!]*$/i,
+    // v39-actua (19/08/2026): mismas variantes de dedazo que en «bajar» — ver el comentario de arriba.
+    re: /sub[ií](?:me|la|lo)?\s+(?:un\s+poco\s+)?(?:m[aá]s\s+)?(?:la\s+|el\s+)?(?:m[uú]sica|vol[uú]m(?:en|ne|em|n)|bol[uú]m(?:en|ne)|sonido)|^\s*sub[ií](?:me|la|lo)?\s+(?:un\s+poco\s+)?m[aá]s\s*[.!]*$|^\s*(?:un\s+poco\s+)?m[aá]s\s+(?:fuerte|alt[oa])\s*[.!]*$|^\s*pon[eé](?:me|lo|la)?\s+(?:el\s+|la\s+)?(?:vol[uú]m(?:en|ne|em|n)|m[uú]sica|sonido)\s+(?:un\s+poco\s+)?(?:m[aá]s\s+)?(?:fuerte|alt[oa])\s*[.!]*$/i,
     run(){ if (!soundOn) return 'La música está apagada — primero la prendo si querés: «poné la música».';
            const p=volPaso(true); return 'Listo, subí la música ✅ — al '+Math.round(p*100)+'%.'+(p>=VOL_MAX-0.001?' Ya está al máximo.':''); } // v37-vol (B1)
   },
@@ -5614,6 +5792,28 @@ const ACTUA_CMDS = [
             setMode(dest);
             const nom=mm[dest]||m[1].toUpperCase();
             return 'Listo, te dejo en '+nom+' ✅ — ojo: ese modo no tiene mis manos. Para volver, tocá el primer botón de arriba.'; }
+  },
+  { /* ── v39-actua (19/08/2026) · B1 — «PONÉ NIRVANA» (el artista pelado) ────────────────
+       HALLAZGO DE DARÍO: «poné música de Nirvana» andaba; «poné Nirvana» no. Nadie habla
+       diciendo «poné música de». Pero un «poné <lo que sea>» suelto es un patrón peligroso:
+       se comería «poné la mesa», «poné atención», «ponelo en pausa».
+       TRES CANDADOS, a propósito:
+         1) VA ÚLTIMA EN LA LISTA. ACTUA_CMDS se recorre en orden, así que TODA otra regla
+            (música, volumen, voz, modos, mail, agenda…) gana primero. Esta solo ve lo que
+            ninguna otra quiso.
+         2) ANCLADA Y CORTA: la frase entera tiene que ser el verbo + hasta 3 palabras. Una
+            oración de conversación no entra.
+         3) LISTA NEGRA de objetos que claramente NO son música. Va DENTRO del patrón, como
+            un lookahead negativo, y no adentro del `run`: este loop de la plataforma no
+            admite que una regla se arrepienta (`run` no puede devolver null como en el
+            MIRROR personal), así que la exclusión tiene que estar en el patrón o no está.
+       Y LA HONESTIDAD: no afirma que reconoció un artista —no lo sabe—. Deja una tarjeta de
+       búsqueda en YouTube (que el usuario tiene que tocar) y DICE que asumió que era música.
+       No suena nada solo: la app no reproduce, ofrece. */
+    re: /^\s*(?:pon[eé]|pon[eé]me|pas[aá]|pas[aá]me|escuch(?:emos|ame)|quiero\s+escuchar)\s+(?:algo\s+de\s+|un\s+poco\s+de\s+|a\s+)?(?!(?:la|el|los|las|un|una)\s+(?:mesa|tele|televisi[oó]n|radio|luz|luces|alarma|hora|fecha|clave|pantalla|c[aá]mara|voz|lectura|m[uú]sica|mano|pava|olla)\b)(?!(?:mesa|atenci[oó]n|pausa|play|stop|foco|freno|alarma|timer|temporizador|despertador|tele|televisi[oó]n|radio|luz|luces|aire|calefacci[oó]n|m[uú]sica|sonido|vol[uú]men?|bol[uú]men?|voz|lectura|micr[oó]fono|modo|tema|color|fondo|pantalla|c[aá]mara|foto|imagen|nombre|clave|contrase[nñ]a|pin|fecha|hora|todo|eso|esto|algo|nada|otra|otro|m[aá]s|menos)\b)([A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9'&.\-]+(?:\s+[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9'&.\-]+){0,2})\s*[.!]*$/i,
+    run(m){ const q=String(m[1]||'').trim().replace(/[.?!]+$/,'');
+            const ok=actuaTarjeta('🎵','Música: '+q,'Asumí que «'+q+'» es música y te dejo la búsqueda en YouTube. Si no era eso, decímelo con más palabras y lo hago bien.',actuaYtURL(q+' música'),'▶ buscar en YouTube');
+            return ok?'Te dejo «'+q+'» listo para escuchar ✅ — asumí que era música (no lo sé con certeza) y no suena nada hasta que toques la tarjeta.':'No pude armar la tarjeta — quedó en mi diagnóstico.'; }
   }
 ];
 /* ── v37-orden (E1) — EL GLITCH DE LA TARJETA ARRIBA DEL MENSAJE ──
@@ -5630,8 +5830,14 @@ function actuaInterceptar(text){
     if (typeof CONFIG!=='undefined' && CONFIG.cap && CONFIG.cap.actua===false) return false; // v36: toggle «Tu MIRROR actúa» — el usuario manda; sin la clave = ON
     const lim = /^(mand|escrib|compart|plantill|tr[aá]mit|justific|redact|necesito|quiero|arm[aá]me|hac[eé]me)/i.test(text.trim()) ? 220 : ACTUA_MAX; // v36-actua2: el WhatsApp lleva mensaje largo · v38-share/v38-tramite (31/07): «compartí esto…» y los pedidos de plantilla traen el texto adentro y necesitan la puerta ancha
     if (text.length > lim) return false; // frase larga = conversación, no comando
+    /* v40-pendiente: si veníamos de preguntar «¿cuál?», la respuesta se traduce al pedido
+       completo ANTES de probar las reglas. `text` queda intacto: lo que se muestra y lo que va
+       al historial siguen siendo las palabras del usuario. */
+    let textCmd = text;
+    try { const _re = actuaPendReescribir(text); if (_re) textCmd = _re; }
+    catch(e){ try{ regError('actua:pend', e); }catch(_){ } }
     for (const c of ACTUA_CMDS){
-      const m = c.re.exec(text);
+      const m = c.re.exec(textCmd);
       if (!m) continue;
       addMsg('user', text); // v37-orden (E1): PRIMERO lo que dijo el usuario
       let resp;
@@ -5661,6 +5867,84 @@ function actuaInterceptar(text){
 // una URL cruda (ni del modelo ni del usuario). Números: solo de la agenda local (localStorage,
 // TU dispositivo) o dictados explícitamente — NUNCA inventados.
 function actuaAgenda(){ try{ return JSON.parse(localStorage.getItem('mirror_agenda')||'{}') }catch(e){ return {} } }
+/* ══════════ v39-agenda (22/08/2026) — PORTE DE LA AGENDA DEL MIRROR PERSONAL ══════════
+   Se construye ACÁ y se prueba ACÁ; no se copia a ojo. Lo que se trae y por qué:
+   · _normNombre + clave normalizada: la agenda guardaba «maría» y se buscaba «maria» → no
+     coincidían y decía «no lo tengo» con el dato guardado.
+   · match por nombre de pila: el usuario pide «laura», no «Laura Peña». Sin esto la app queda
+     DESVINCULADA de su propia agenda — es el bug que Darío vio en vivo en el MIRROR.
+   · pedir el apellido cuando hay dos: nunca adivinar a cuál mandarle.
+   LO QUE NO SE PORTÓ, Y POR QUÉ: el guard «que la música no se robe la agenda» (F3 del MIRROR)
+   acá NO hace falta. Se leyó la regla: la de esta muleta EXIGE la palabra «música» y la de
+   artista pelado está anclada a «poné/pasá», así que «buscá el contacto de X» no le entra a
+   ninguna. Portar un fix que no aplica sería ruido. */
+function _normNombre(s){
+  const re = new RegExp('[\\u0300-\\u036f]', 'g');   // marcas diacríticas combinantes
+  try { return String(s||'').toLowerCase().trim().normalize('NFD').replace(re,''); }
+  catch(e){ return String(s||'').toLowerCase().trim(); }   // navegador sin normalize(): al menos may/min
+}
+/* Candidatos de la agenda para un nombre suelto. Devuelve las CLAVES que coinciden. */
+function actuaCandidatos(nombre){
+  const a = actuaAgenda();
+  const k = _normNombre(nombre);
+  if (!k || k.length < 2) return [];
+  if (a[k]) return [k];
+  for (const kk in a){ if (_normNombre(kk) === k) return [kk]; }   // clave vieja con tilde/mayúsculas
+  const cand = [];
+  for (const kk in a){
+    const nk = _normNombre(kk);
+    if (nk.split(/\s+/).indexOf(k) >= 0) cand.push(kk);          // palabra entera (pila o apellido)
+    else if (k.length >= 3 && nk.indexOf(k) === 0) cand.push(kk); // o prefijo de >=3 letras (typos)
+  }
+  return cand;
+}
+/* '' si no hay ambigüedad. Con dos o más, el pedido de precisión en criollo. */
+function actuaPedirPrecisar(nombre, acc, accion, msg){
+  const cand = actuaCandidatos(nombre);
+  if (cand.length < 2) return '';
+  // v40-pendiente: queda anotado qué estábamos por hacer, para entender la respuesta del turno siguiente
+  if (accion && typeof actuaPendPedir === 'function') actuaPendPedir(accion, msg);
+  const a = actuaAgenda();
+  const nombres = cand.map(function(k){ const v = a[k]; return (v && v.nombre) || k; });
+  const q = String(nombre||'').trim();
+  return 'Tengo '+cand.length+' contactos que coinciden con «'+q+'»: '+nombres.join(' y ')+
+         '. No voy a adivinar cuál. Decímelo con el apellido y '+(acc||'sigo')+'.';
+}
+/* ══════════ v40-pendiente (22/08/2026) — LA APP SE ACUERDA DE LO QUE PREGUNTÓ ══════════
+   HALLAZGO EN VIVO DE DARÍO (22/08): la app pidió «decímelo con el apellido», él contestó
+   «LAURA PEÑA»… y ese mensaje no matcheaba NINGUNA regla, así que se fue al modelo. El modelo
+   NO tiene la agenda: contestó «no tengo el mail de Laura Peña» cuando el mail SÍ estaba
+   guardado. Preguntamos y después no sabíamos escuchar la respuesta, y el precio fue una
+   afirmación FALSA sobre un dato real. Eso rompe la Regla de Oro.
+   POR QUÉ EL ARREGLO ES ASÍ DE CONSERVADOR (esto es estado entre turnos, lo más fácil de
+   arruinar, y va a producción sin auditoría en vivo — se blinda a propósito):
+   · La pendiente vive en una propiedad de función, NO en localStorage: se muere al recargar.
+     Nada puede quedar pegado entre sesiones ni entre dispositivos.
+   · Dura UN turno. El mensaje siguiente la usa o la borra. Se consume SIEMPRE, aunque no sirva.
+   · Solo la toma un mensaje que sea un NOMBRE PELADO (letras, espacios, 2 a 29) y que resuelva
+     a UN contacto único. Si sigue habiendo dos, o si no está, no hace nada y vuelve a preguntar.
+   · NO duplica la lógica de las tarjetas: REESCRIBE el pedido a su forma canónica y deja
+     trabajar a las reglas de siempre, que ya tienen sus pruebas amarradas. Menos código nuevo.
+   · Lo que se ve en pantalla y lo que va al historial siguen siendo las palabras del usuario:
+     la reescritura es interna. La app no le pone palabras en la boca. */
+function actuaPendBox(){ if (!actuaPendBox._v) actuaPendBox._v = { p:null }; return actuaPendBox._v; }
+function actuaPendPedir(accion, msg){ actuaPendBox().p = { accion:accion, msg:String(msg||'') }; }
+function actuaPendReescribir(text){
+  const box = actuaPendBox();
+  const p = box.p;
+  box.p = null;                                  // se consume siempre: nunca sobrevive un turno
+  if (!p) return '';
+  const q = String(text||'').trim().replace(/[?.!¿¡]+$/,'').trim();
+  // nombre pelado: sin dígitos, sin dos puntos ni comas (romperían la captura del destinatario)
+  if (!/^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ][A-Za-zÁÉÍÓÚÜÑáéíóúüñ' ]{1,28}$/.test(q)) return '';
+  if (!actuaContacto(q)) return '';              // no resuelve, o sigue habiendo dos → que pregunte de nuevo
+  if (p.accion === 'tel')   return 'llamá a ' + q;
+  if (p.accion === 'datos') return 'buscá el contacto de ' + q;
+  if (!p.msg.trim())        return 'buscá el contacto de ' + q;   // sin mensaje no hay nada que mandar
+  if (p.accion === 'wa')    return 'mandale un whatsapp a ' + q + ' que ' + p.msg;
+  if (p.accion === 'mail')  return 'mandale un mail a ' + q + ' que ' + p.msg;
+  return '';
+}
 
 /* ── v37-agenda (A2) — la mini-agenda ahora guarda TEL, MAIL y DIRECCIÓN ──
    Antes era nombre → número (un string suelto). Por eso el redactor de mails
@@ -5671,10 +5955,18 @@ function actuaAgenda(){ try{ return JSON.parse(localStorage.getItem('mirror_agen
    Sigue viviendo SOLO en localStorage: el dispositivo del usuario, no sale de ahí. */
 function actuaContacto(nombre){
   const a = actuaAgenda();
-  const v = a[String(nombre||'').toLowerCase().trim()];
+  const k = _normNombre(nombre);
+  let v = a[k];
+  if (!v) { for (const kk in a){ if (_normNombre(kk) === k){ v = a[kk]; break; } } } // clave vieja
+  // v39-agenda: match por nombre de pila. SOLO resuelve si hay UN candidato: con dos «Laura»
+  //   devuelve null y la regla pide el apellido (actuaPedirPrecisar). Adivinar está prohibido.
+  if (!v && k && k.length >= 2){
+    const cand = actuaCandidatos(nombre);
+    if (cand.length === 1) v = a[cand[0]];
+  }
   if (!v) return null;
-  if (typeof v === 'string') return { tel:v, email:'', dir:'' }; // formato viejo
-  return { tel:v.tel||'', email:v.email||'', dir:v.dir||'' };
+  if (typeof v === 'string') return { tel:v, email:'', dir:'', nombre:nombre }; // formato viejo
+  return { tel:v.tel||'', email:v.email||'', dir:v.dir||'', nombre:(v.nombre||nombre) };
 }
 /* Guarda MEZCLANDO: guardar el mail de alguien no le borra el teléfono. */
 /* ══════════ v38-contacto (C3) — CONTACT PICKER ══════════
@@ -5749,11 +6041,16 @@ async function contactoElegir(){
 }
 function actuaAgendaGuardar(nombre,campos){
   const a = actuaAgenda();
-  const k = String(nombre||'').toLowerCase().trim();
+  const k = _normNombre(nombre);
   if (!k) return false;
-  const previo = actuaContacto(k) || { tel:'', email:'', dir:'' };
+  // v39-agenda: si había una entrada vieja bajo otra forma del nombre (tilde/mayúsculas), se
+  //   migra a la clave normalizada para no dejar duplicados. Nada de lo guardado se pierde.
+  if (!a[k]) { for (const kk in a){ if (kk !== k && _normNombre(kk) === k){ a[k] = a[kk]; delete a[kk]; break; } } }
+  const previo = actuaContacto(k) || { tel:'', email:'', dir:'', nombre:'' };
   const nuevo = (typeof campos === 'string') ? { tel:campos } : (campos||{});
   a[k] = {
+    // el nombre TAL CUAL se escribió, para mostrarlo lindo; la CLAVE va sin tildes
+    nombre: String(nombre||'').trim() || previo.nombre || nombre,
     tel:   (nuevo.tel   !== undefined && nuevo.tel   !== '') ? String(nuevo.tel).trim()   : previo.tel,
     email: (nuevo.email !== undefined && nuevo.email !== '') ? String(nuevo.email).trim() : previo.email,
     dir:   (nuevo.dir   !== undefined && nuevo.dir   !== '') ? String(nuevo.dir).trim()   : previo.dir
@@ -6220,8 +6517,13 @@ async function send() {
     chat.appendChild(fdiv);
     chat.scrollTop = chat.scrollHeight;
   }
-  if (!esTarea) { history.push({role:'assistant', content:reply}); try{ await memorySet(history); }catch(e){ console.error('memorySet',e); } }
-  if (mode === 'mirror') { try{ await recuerdoGuardar(text, reply); }catch(e){ console.error('recuerdoGuardar',e); } } // v35-mem
+  /* v39-memlimpia (21/08/2026) — LOS ERRORES NO ENTRAN A LA MEMORIA.
+     Hermano del v45-memlimpia del MIRROR personal, verificado ACÁ por separado: la estructura
+     de esta muleta es distinta (dos `if` sueltos, y `recuerdoGuardar` NO estaba gateado por
+     `esTarea`). El hallazgo es el mismo —un mensaje de error no es un recuerdo— y el arreglo
+     también: si el turno falló (`esError`), ni a `history` ni a la memoria por relevancia. */
+  if (!esTarea && !esError) { history.push({role:'assistant', content:reply}); try{ await memorySet(history); }catch(e){ console.error('memorySet',e); } }
+  if (mode === 'mirror' && !esError) { try{ await recuerdoGuardar(text, reply); }catch(e){ console.error('recuerdoGuardar',e); } } // v35-mem · v39-memlimpia: no guardar errores
   setButtonsBusy(false);
 }
 
