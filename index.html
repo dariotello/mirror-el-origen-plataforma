@@ -1747,6 +1747,28 @@ let TRANSCRIBE_URL = PROXY_URL + '/transcribe';
 let POLLI_KEY = '';
 try { POLLI_KEY = localStorage.getItem('mirror_pollinations_key') || ''; } catch(e) {}
 let CEREBRAS_URL = PROXY_URL + '/' + (MOTORES[CONFIG.motorRespaldo] ? MOTORES[CONFIG.motorRespaldo].ruta : 'cerebras');
+/* ══ v41-cloudflare (23/08/2026) — RESPALDO GRATIS, PORQUE CEREBRAS SE MURIÓ ═══════════════
+   PORTE del v45-cloudflare del MIRROR personal, pedido por Darío tras ver en vivo el cartel
+   «el motor de respaldo todavía no está configurado». Cerebras cerró su tier gratis el
+   17/08/2026: quien arma su MIRROR con esta plataforma se queda con UN solo motor y no tiene
+   a dónde caer cuando Groq se satura por cupo.
+   POR QUÉ CLOUDFLARE Y NO OTRO: el proxy de esta plataforma YA es un Worker de Cloudflare
+   (así se reparte). El modelo se llama ahí adentro con env.AI.run(), o sea que NO hace falta
+   ninguna clave nueva, ni del constructor ni del usuario final — nada que cargar, nada que
+   filtrar. 10.000 neuronas/día gratis, sin tarjeta. Y es OTRO proveedor que Groq: redundancia
+   de verdad, no dos puertas al mismo cuarto.
+   LO QUE ESTO NO PROMETE (white-label = no prometer por cuenta ajena): cada usuario tiene SU
+   proxy, y el de él puede no tener la ruta /cloudflare. Ese caso es inocuo: devuelve 404, la
+   cadena sigue de largo al respaldo configurado y al mensaje honesto de siempre — exactamente
+   el comportamiento de hoy. Por eso el aviso «respondió el respaldo» sale SOLO cuando
+   Cloudflare contestó de verdad, nunca por tenerlo encendido. El bloque para el Worker va
+   aparte, en el LEEME del paquete: lo deploya cada quien en el suyo. */
+let CLOUDFLARE_URL = PROXY_URL + '/cloudflare';
+const CLOUDFLARE_ON = true;   // intento inocuo: sin la ruta en el proxy es un 404 y sigue la cadena
+/* Llama 3.3 70B fp8-fast: gratis en Workers AI, rápido, y NO es de razonamiento (no arrastra
+   la curita de <think> que necesitan qwen/gpt-oss). El id viaja para que quede en el registro;
+   el que decide de verdad qué modelo corre es el proxy. */
+const MODELO_CLOUDFLARE = '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
 let MODELO_GROQ = CONFIG.modeloPrincipal;
 let MODELO_CEREBRAS = CONFIG.modeloRespaldo;
 let FB_URL = CONFIG.fbUrl;
@@ -1798,6 +1820,7 @@ function aplicarConfigVars() {
   TAVILY_URL = PROXY_URL + '/tavily';
   TRANSCRIBE_URL = PROXY_URL + '/transcribe';
   CEREBRAS_URL = PROXY_URL + '/' + (MOTORES[CONFIG.motorRespaldo] ? MOTORES[CONFIG.motorRespaldo].ruta : 'cerebras');
+  CLOUDFLARE_URL = PROXY_URL + '/cloudflare';   // v41-cloudflare: sigue al proxy cuando el constructor lo cambia
   MODELO_GROQ = CONFIG.modeloPrincipal;
   MODELO_CEREBRAS = CONFIG.modeloRespaldo;
   FB_URL = CONFIG.fbUrl;
@@ -1926,7 +1949,7 @@ REGLAS:
 6. Si preguntan cómo subir/analizar archivos: el botón ⊕ (abajo izq.) sube documentos; el análisis se hace en modo TARS; los informes se bajan con "generar informe".
 6.bis. TUS MANOS (capa ACTÚA de la app): los pedidos simples sobre la app los ejecuta una capa local ANTES de que el mensaje te llegue (música, lectura en voz alta, selector de voces, panel de memoria, cambio de modo, lectura de un documento en voz alta con «leeme el archivo X» y su corte con «pará de leer»), y esa capa confirma con «listo ✅» SOLO si lo hizo de verdad. Si un pedido de esos te llega A VOS, es porque la capa NO lo reconoció o está apagada en las capacidades: NO digas jamás "listo, lo hice" (sería mentir) — sugerí decirlo más directo («bajá la música») o indicá los botones del pie (🔊 sonido, ▾ voces, 🔊 voz). Lo que la capa NO hace se hace a mano y lo decís con honestidad: borrar memoria o recuerdos, exportar, configuración. TU USUARIO TIENE UNA AGENDA DE CONTACTOS dentro de la app (en SU dispositivo, no es la del teléfono), y VOS NO LA VES: la maneja la capa, no vos. Por eso tenés PROHIBIDO afirmar que un dato NO está guardado (jamás digas «no tengo el mail de X» ni «solo tengo su teléfono»): no podés saberlo, y decirlo sería inventar. Si te preguntan por el número, el mail o la dirección de alguien, contestá que te lo pidan así: «buscá el contacto de <nombre>», y la app lo busca de verdad.
 6.ter. ACCIONES HACIA AFUERA (tarjetas): si te piden llamar, mandar un WhatsApp, poner música puntual, agendar algo o llegar a un lugar y el pedido te llega A VOS, respondé corto y natural y terminá con UNA marca en su propia línea: [ACCION:{"tipo":"tel","para":"nombre","num":"+549..."}] · [ACCION:{"tipo":"wa","para":"nombre","num":"...","msg":"texto"}] · [ACCION:{"tipo":"yt","q":"búsqueda"}] · [ACCION:{"tipo":"maps","q":"lugar"}] · [ACCION:{"tipo":"cal","titulo":"evento"}] · [ACCION:{"tipo":"encuesta","titulo":"…","preguntas":["¿…?","¿…? (op1|op2)"]}] · [ACCION:{"tipo":"share","texto":"lo que hay que mandar, completo","titulo":"de qué se trata"}] — cuando pidan armar una encuesta, VOS redactá preguntas claras y neutras (libres por defecto; para opciones, paréntesis con |); la app muestra una tarjeta y el usuario la revisa y crea. CUÁNDO VA "share": SOLO cuando el pedido es mandar algo SIN destinatario ni app definidos («compartí esto», «mandalo por donde sea», «pasáselo a quien quieras») — la app abre el selector del sistema y tu usuario elige app y contacto. Si sabés a quién y por dónde, usá "wa" o "mail": la tarjeta con el destinatario ya puesto es mejor y NO se reemplaza por share. En escritorio el selector puede no existir y la app cae al portapapeles: nunca prometas que se abre la lista de apps. REGLAS DE ORO: números y direcciones SOLO si aparecen en esta conversación o el usuario los dictó — JAMÁS los inventes; si falta el dato, pedilo y NO emitas la marca (la app resuelve nombres de la agenda local: si diste "para", podés omitir "num"). La app valida la marca, arma la tarjeta y el usuario confirma con un toque: vos no ejecutás nada — ofrecés. NUNCA menciones la marca ni su sintaxis.
-6.quater. REDACTOR (mails y mensajes en SU voz): si tu usuario te pega un mail o mensaje recibido y te pide responderlo — o te pide redactar uno nuevo — el borrador lo escribís VOS, en SU voz (usá el perfil y la memoria: cómo escribe, qué viene hablando), respetando los modos rápidos si los pide («respondé que sí pero corto», «decile que no sin herir», «formal para el director»). Mostrá el borrador completo en tu respuesta y terminá con UNA marca en su propia línea: para mail [ACCION:{"tipo":"mail","para":"direccion@dominio","asunto":"…","cuerpo":"el borrador completo"}] — si la dirección no aparece en esta conversación, poné "para":"" (la app abre el correo y tu usuario la completa; JAMÁS inventes direcciones) —; para WhatsApp usá la marca "wa" de 6.ter con el borrador en "msg". La app arma una tarjeta de UN toque: tu usuario lee, toca y sale. NUNCA digas que ya lo enviaste ni lo des por mandado — vos redactás, él envía. Lo que NO podés: leer su bandeja de entrada (no tenés acceso), enviar nada solo, mensajes masivos.
+6.quater. REDACTOR (mails y mensajes en SU voz): si tu usuario te pega un mail o mensaje recibido y te pide responderlo — o te pide redactar uno nuevo — el borrador lo escribís VOS, en SU voz (usá el perfil y la memoria: cómo escribe, qué viene hablando), respetando los modos rápidos si los pide («respondé que sí pero corto», «decile que no sin herir», «formal para el director»). Mostrá el borrador completo en tu respuesta y terminá con UNA marca en su propia línea: para mail [ACCION:{"tipo":"mail","para":"direccion@dominio","asunto":"…","cuerpo":"el borrador completo"}] — si NO tenés la dirección, poné en "para" el NOMBRE tal como te lo dijo tu usuario (ej. "para":"María Gómez"): la app lo busca en la agenda local, que vos no ves, y completa la dirección sola. Solo si tampoco sabés el nombre poné "para":"". JAMÁS inventes direcciones —; para WhatsApp usá la marca "wa" de 6.ter con el borrador en "msg". La app arma una tarjeta de UN toque: tu usuario lee, toca y sale. NUNCA digas que ya lo enviaste ni lo des por mandado — vos redactás, él envía. Lo que NO podés: leer su bandeja de entrada (no tenés acceso), enviar nada solo, mensajes masivos.
 7. TU PROPIA APP: si en el contexto aparece un bloque "=== ARQUITECTURA REAL DE LA APP ===", podés explicar cómo funciona MIRROR/TARS/la app con total propiedad — la conocés de memoria. Respondé usando SOLO lo que dice ese bloque, sin inventar funciones que no figuren ahí.
 8. HONESTIDAD ABSOLUTA — la regla de oro: tenés PROHIBIDO inventar datos sobre la vida de tu usuario o sobre las personas de su entorno (quién es alguien, de dónde lo conoce, fechas, lugares, anécdotas). Sos su extensión digital: una mentira tuya es una mentira suya. Si te preguntan por alguien o algo que NO figura en el perfil ni en la memoria de la conversación, respondé con naturalidad: "la verdad, no tengo presente ese dato — refrescame" o "contame vos, que lo guardo". JAMÁS rellenes el hueco con una historia inventada.
 9. MEMORIA PERSONAL: si en el contexto aparece el bloque "=== MEMORIA PERSONAL ===", son cosas REALES que tu usuario te contó en charlas anteriores. Usalas con naturalidad cuando vengan al caso. Si el dato que te preguntan figura ahí, NO digas "no tengo presente" — respondé con ese dato como lo haría tu usuario. La regla 8 sigue intacta: lo que NO esté ni en el perfil ni en la memoria, no se inventa.
@@ -2612,6 +2635,20 @@ function abrirAgenda(){
   const modal=document.getElementById('agenda-modal'); if(modal) modal.classList.add('visible');
 }
 function cerrarAgenda(){ const m=document.getElementById('agenda-modal'); if(m) m.classList.remove('visible'); }
+/* Aviso DENTRO del panel, no un alert: el caso feliz no merece un cartel que hay que cerrar,
+   pero sí merece una confirmación. Se crea al vuelo (no toca el HTML) y se borra solo. */
+function agendaAvisoPanel(txt){
+  const lista=document.getElementById('agenda-lista'); if(!lista||!lista.parentNode) return;
+  let av=document.getElementById('agenda-aviso');
+  if(!av){ av=document.createElement('div'); av.id='agenda-aviso';
+    av.setAttribute('role','status'); av.setAttribute('aria-live','polite');
+    av.style.cssText='font-size:12px;padding:7px 9px;margin:8px 0 0;border-radius:6px;border:1px solid var(--border);opacity:0.95;';
+    lista.parentNode.insertBefore(av, lista.nextSibling); }
+  av.textContent=String(txt||'');
+  av.style.display='';
+  clearTimeout(agendaAvisoPanel._t);
+  agendaAvisoPanel._t=setTimeout(function(){ try{ av.style.display='none'; }catch(e){} },3500);
+}
 function agendaAgregarDesdePanel(){
   const nombre=(document.getElementById('ag-nombre')||{}).value||'';
   const tel=(document.getElementById('ag-tel')||{}).value||'';
@@ -2621,9 +2658,21 @@ function agendaAgregarDesdePanel(){
   if(tel.trim()){ if(!actuaNumOk(tel.trim())){ alert('Ese teléfono no me cierra — revisalo.'); return; } campos.tel=tel.trim(); }
   if(mail.trim()){ if(!actuaMailDirOk(mail.trim())){ alert('Ese mail no me cierra — revisalo.'); return; } campos.email=mail.trim(); }
   if(!campos.tel && !campos.email){ alert('Poné al menos un teléfono o un mail.'); return; }
-  actuaAgendaGuardar(nombre.trim(), campos);
+  /* MARCA — GUARDADO QUE FALLA EN SILENCIO (auditoría en vivo de Darío, 23/08/2026:
+     «no me deja guardar contactos»). `actuaAgendaGuardar` devuelve false cuando el
+     almacenamiento del navegador lo rechaza (modo privado, cuota llena) y acá NADIE miraba
+     ese valor: se limpiaban los campos, se re-dibujaba la lista igual que siempre y el
+     usuario se quedaba mirando un panel que no cambió, sin una sola palabra que explicara
+     por qué. Es la misma regla de la capa ACTÚA, del lado opuesto: si no se hizo, no se
+     hace de cuenta que sí. Y al revés — cuando SÍ se guarda, ahora se dice: un panel que no
+     confirma nada obliga a adivinar si funcionó. */
+  if (!actuaAgendaGuardar(nombre.trim(), campos)){
+    alert('No pude guardarlo: el navegador me negó el almacenamiento. Suele pasar en ventana privada o con el espacio del sitio lleno. Los datos siguen en el formulario, no perdiste nada.');
+    return;
+  }
   document.getElementById('ag-nombre').value=''; document.getElementById('ag-tel').value=''; document.getElementById('ag-mail').value='';
   renderAgenda();
+  try{ agendaAvisoPanel('Guardado ✅ — «'+nombre.trim()+'» quedó en tu agenda local.'); }catch(e){}
 }
 function elegirVozActual(persona){
   persona = persona || personaActual();
@@ -4405,7 +4454,10 @@ function mensajeError(tipo, detalle){
     if (/Falta el secret/i.test(d)) {
       const esResp = /CEREBRAS/i.test(d);
       return esResp
-        ? '⚠️ El motor principal no contestó esta vez (suele ser el cupo de tokens por minuto del plan gratis) y el motor de respaldo todavía no está configurado. Esperá un momento y reintentá. Si administrás esta app y querés dejar el respaldo listo, cargá su clave en tu proxy: Settings → Variables and Secrets.'
+        /* v41-cloudflare: el texto viejo mandaba a «cargar la clave del respaldo», y con
+           Cerebras cobrando desde el 17/08 esa salida cuesta plata. Ahora se nombra primero la
+           gratis: agregar la ruta /cloudflare al Worker, que no lleva ninguna clave. */
+        ? '⚠️ El motor principal no contestó esta vez (suele ser el cupo de tokens por minuto del plan gratis) y ningún motor de respaldo pudo tomar la posta. Esperá un momento y reintentá. Si administrás esta app: la salida gratis es agregarle a tu proxy la ruta /cloudflare (Workers AI, sin clave ni tarjeta — está explicada en el LEEME del paquete); la otra es cargar la clave de un motor pago en Settings → Variables and Secrets.'
         : '⚠️ Falta configurar una clave en tu proxy. Si administrás esta app, cargala en Settings → Variables and Secrets; si no, avisale a quien la configuró. Mientras tanto, reintentá en un momento.';
     }
     return d
@@ -4418,7 +4470,12 @@ function mensajeErrorConocido(tipo){
   if (tipo === 'rate_limit') {
     return CEREBRAS_KEY
       ? '⚠️ Los motores están saturados en este momento. Esperá unos minutos y reintentá.'
-      : '⚠️ Groq está saturado (límite gratuito agotado). Esperá unos minutos, probá a la mañana, o activá el respaldo Cerebras (gratis) para que esto no vuelva a pasar.';
+      /* v41-cloudflare: este cartel invitaba a activar el respaldo de Cerebras diciendo que
+         era gratis. Dejó de serlo el 17/08/2026, cuando Cerebras cerró su tier libre.
+         Prometer gratis algo que cobra es justo lo que este proyecto no hace, así que ahora
+         la salida que se ofrece primero es la que de verdad no cuesta nada: la ruta del
+         Worker. (El banco exige que la promesa vieja no vuelva a aparecer en ningún lado.) */
+      : '⚠️ Tu motor principal está saturado (límite del plan gratis agotado). Esperá unos minutos o probá más temprano. Si administrás esta app, el respaldo gratis se activa agregándole a tu proxy la ruta /cloudflare (Workers AI: sin clave, sin tarjeta) — está en el LEEME del paquete.';
   }
   if (tipo === 'too_big') return '⚠️ La consulta es demasiado grande (muchos datos + PDFs juntos). Probá una pregunta más específica o sobre menos documentos a la vez.';
   /* v38-cupo: el cupo por minuto no es lo mismo que una consulta grande, y decirlo importa:
@@ -4792,22 +4849,49 @@ async function callGroq(messages, systemPrompt, maxTokens, temp) {
        el respaldo tiene su propio cupo, así que contesta la consulta ENTERA en vez de una
        recortada. Antes esto caía en el mismo saco que 'too_big' y se propagaba, o sea que
        se degradaba la respuesta habiendo un respaldo sano al lado sin usar. */
-    // Motor 2: Cerebras (respaldo), ante CUALQUIER otro fallo de Groq, si hay key.
-    if (CEREBRAS_KEY) {
-      console.warn('Groq falló ('+(e.tipo||'?')+') → probando Cerebras');
+    /* v41-cloudflare (23/08/2026): la cadena de respaldo pasó de UN motor a una LISTA. Se
+       prueba en orden y el primero que conteste, gana; cada intento va en su propio try/catch,
+       así un fallo (incluido el 404 de un proxy que todavía no tiene la ruta) no rompe nada y
+       simplemente pasa al siguiente. Si NINGUNO contesta se propaga el ÚLTIMO error real con
+       su tipo, para que el cartel sea el correcto (pago, cupo, credencial) y no un «algo falló
+       y no sé qué».
+       ORDEN = PRIORIDAD: Cloudflare primero (gratis, sin clave, mismo Worker) y después el
+       respaldo que el constructor haya configurado en CONEX, que puede costar plata. */
+    const respaldos = [];
+    if (CLOUDFLARE_ON) respaldos.push({ id:'cloudflare', url:CLOUDFLARE_URL, key:'proxy',      modelo:MODELO_CLOUDFLARE });
+    if (CEREBRAS_KEY)  respaldos.push({ id:'cerebras',   url:CEREBRAS_URL,  key:CEREBRAS_KEY,  modelo:MODELO_CEREBRAS });
+    let ultimoErr = e;
+    for (const rsp of respaldos) {
+      console.warn('Groq falló ('+(e.tipo||'?')+') → probando '+rsp.id);
       try {
-        const r = await llamarMotorVigente(CEREBRAS_URL, CEREBRAS_KEY, MODELO_CEREBRAS, messages, systemPrompt, maxTokens, temp, 'respaldo');
-        motorActivo = 'cerebras';
+        const r = await llamarMotorVigente(rsp.url, rsp.key, rsp.modelo, messages, systemPrompt, maxTokens, temp, 'respaldo');
+        motorActivo = rsp.id;
+        try { avisarRespaldoUnaVez(rsp.id); } catch(_){}   // transparencia: qué red de seguridad actuó
         return r;
-      } catch(e2){
-        const err = new Error(e2.message); err.tipo = e2.tipo || 'otro'; throw err;
-      }
+      } catch(eR){ ultimoErr = eR; /* este respaldo no pudo: seguí con el próximo */ }
+    }
+    if (respaldos.length) {
+      const err = new Error(ultimoErr.message);
+      err.tipo = ultimoErr.tipo || e.tipo || 'otro';
+      err.ambosMotores = true;
+      throw err;
     }
     if (e.tipo) throw e;
     const err = new Error(e.message); err.tipo = 'red'; throw err;
   }
 }
 let motorActivo = 'groq'; // para mostrar qué motor respondió, si hace falta
+/* v41-cloudflare: el aviso nombra el motor que REALMENTE salió a la cancha. Decir «Cerebras»
+   cuando contestó Cloudflare sería la misma deshonestidad chica que el sello vino a evitar.
+   Una vez por sesión: es información, no un nag. */
+let respaldoAvisado = false;
+function avisarRespaldoUnaVez(cual){
+  if (respaldoAvisado) return;
+  respaldoAvisado = true;
+  const nombre = cual==='cloudflare' ? 'Cloudflare' : (cual==='cerebras' ? 'Cerebras' : 'de respaldo');
+  try { setTypingNote && setTypingNote(''); } catch(_){}
+  try { addMsg('mirror', 'ℹ️ El motor principal estaba ocupado, así que esta respuesta la trajo el motor de respaldo ('+nombre+'). Todo en orden: para eso está. Si pasa seguido, esperá un minuto entre consultas pesadas.', mode); } catch(_){}
+}
 
 // --- Memoria ---
 async function clearMem() {
@@ -5525,6 +5609,34 @@ const ACTUA_CMDS = [
             return 'Guardado ✅ — «'+nombre+'» quedó en tu agenda local (vive en TU dispositivo, no sale de acá). Ahora podés decirme «llamá a '+nombre+'».'
                    +(r.seguro?'':' Ojo: '+r.nota+'.'); }
   },
+  { /* ── v41-cuantos (23/08/2026) · CONTAR LO QUE HAY EN LA AGENDA ────────────────────────────
+       HALLAZGO EN VIVO (Darío, 23/08): «¿cuántas Marías tenés en la agenda?» se iba al modelo,
+       y el modelo —que NO ve la agenda— contestó «no veo tu agenda, yo no tengo acceso a tus
+       contactos». La app SÍ los tiene: están en localStorage, a dos líneas de distancia.
+       Es el mismo agujero que v40-pendiente cerró para los pedidos de precisión: una pregunta
+       que la capa puede responder con datos ciertos no puede terminar en una negación del
+       modelo. Contar es justamente lo que una máquina no tiene por qué errar.
+       ORDEN: va ANTES de «tenés el número de X» porque aquella captura cualquier cosa después
+       de «tenés», y una pregunta que arranca con «cuántas» es de conteo, no de búsqueda.
+       ALCANCE ACOTADO A PROPÓSITO: exige la palabra agenda/contactos (rama de nombre) o que lo
+       contado sea contactos/números/mails (rama de total). «¿cuántos alumnos tenés?» no entra:
+       eso es conversación y le pertenece al modelo. */
+    re: /cu[aá]nt[oa]s\s+(?:contactos?|n[uú]meros?|tel[eé]fonos?|mails?|e-?mails?|correos?)\s+(?:ten[eé]s|tengo|hay|guard[aá]\w*)\b|cu[aá]nt[oa]s\s+([^\d:,]{2,30}?)\s+(?:ten[eé]s|tengo|hay|guard[aá]\w*)\b[^]*?\b(?:agenda|contactos?)\b/i,
+    run(m){ const a=actuaAgenda(); const total=Object.keys(a).length;
+            const q=String(m[1]||'').trim().replace(/[?¿.!]+$/,'').trim();
+            const nombreLindo=k=>{ const v=a[k]; return (v && typeof v==='object' && v.nombre) ? v.nombre : k; };
+            if (!q){ // rama TOTAL
+              if (!total) return 'Tu agenda local está vacía: no tengo ningún contacto guardado. Para sumar uno: «guardá el número de <nombre> <número>», o abrí 📇 contactos.';
+              return 'Tengo '+total+' contacto'+(total>1?'s':'')+' en tu agenda local: '+Object.keys(a).sort().map(nombreLindo).join(' · ')+'. (Vive en TU dispositivo, no sale de acá.)'; }
+            /* Plural en criollo: «cuántas marías» pregunta por «maria». Se prueba tal cual y,
+               si no da nada, sin la «s»/«es» final. No se inventa una raíz: si ninguna de las
+               dos formas encuentra algo, se dice que no hay y listo. */
+            let cand=actuaCandidatos(q); let usado=q;
+            if (!cand.length){ const sing=q.replace(/(es|s)$/i,''); if (sing.length>=2 && sing!==q){ const c2=actuaCandidatos(sing); if (c2.length){ cand=c2; usado=sing; } } }
+            if (!cand.length) return 'No tengo ningún «'+q+'» en tu agenda local'+(total?' (tengo '+total+' contacto'+(total>1?'s':'')+', ninguno con ese nombre)':' — de hecho está vacía')+'. No lo voy a inventar.';
+            if (cand.length===1) return 'Uno solo: '+nombreLindo(cand[0])+'. Decime «buscá el contacto de '+nombreLindo(cand[0])+'» y te muestro sus datos.';
+            return 'Tengo '+cand.length+' que coinciden con «'+usado+'»: '+cand.map(nombreLindo).join(' y ')+'. Cuando me pidas algo para «'+usado+'» te voy a preguntar cuál — no adivino.'; }
+  },
   { // v37-agenda (A8, hallazgo de la prueba local 26/07): CONSULTAR la agenda.
     // Antes se podía GUARDAR pero no PREGUNTAR: la consulta se iba al modelo y el
     // usuario no tenía forma de ver qué había guardado. Se responde desde localStorage.
@@ -5633,9 +5745,15 @@ const ACTUA_CMDS = [
     re: /(?:mostr[aá](?:me)?|ver|list[aá](?:me)?|abr[ií])\s+(?:la\s+|mi\s+)?(?:agenda|mis\s+contactos)|qu[eé]\s+(?:n[uú]meros|contactos|tel[eé]fonos)\s+(?:ten[eé]s|tengo|hay)/i,
     run(){ const a=actuaAgenda(); const ks=Object.keys(a||{});
            if (!ks.length) return 'Tu agenda local está vacía. Guardá algo con «guardá el número de <nombre> <número>» y queda en TU dispositivo.';
-           const lineas=ks.sort().map(function(k){ const c=actuaContacto(k)||{}; const d=[];
+           /* v41-lista (23/08/2026): esta lista escupía la CLAVE, o sea el nombre normalizado sin
+              tildes y en minúscula («maria gomez»). El panel visual ya mostraba el nombre lindo
+              desde el porte de la agenda; esta mitad —la que se pide hablando— se quedó atrás y
+              es la que se ve en el chat. Mismo criterio en los dos lados: se muestra el nombre
+              tal como lo escribió el usuario, y la clave queda para las búsquedas. */
+           const lineas=ks.sort().map(function(k){ const v=a[k]; const c=actuaContacto(k)||{}; const d=[];
              if(c.tel)d.push('📞'); if(c.email)d.push('✉'); if(c.dir)d.push('🗺');
-             return '• '+k+' '+(d.join(' ')||'(sin datos)'); });
+             const nom=(v && typeof v==='object' && v.nombre) ? v.nombre : k;
+             return '• '+nom+' '+(d.join(' ')||'(sin datos)'); });
            return 'En tu agenda local hay '+ks.length+' contacto'+(ks.length>1?'s':'')+':\n'+lineas.join('\n')
                   +'\n\nPreguntame «¿tenés el número de <nombre>?» para ver los datos. Nada de esto sale de tu dispositivo.'; }
   },
@@ -6046,7 +6164,17 @@ function actuaAgendaGuardar(nombre,campos){
   // v39-agenda: si había una entrada vieja bajo otra forma del nombre (tilde/mayúsculas), se
   //   migra a la clave normalizada para no dejar duplicados. Nada de lo guardado se pierde.
   if (!a[k]) { for (const kk in a){ if (kk !== k && _normNombre(kk) === k){ a[k] = a[kk]; delete a[kk]; break; } } }
-  const previo = actuaContacto(k) || { tel:'', email:'', dir:'', nombre:'' };
+  /* v41-agenda2 (23/08/2026) — POR QUÉ ACÁ NO SE PUEDE USAR actuaContacto.
+     `actuaContacto` matchea por nombre de pila y por prefijo: es lo que hace que «mandale un
+     mail a maria» encuentre a «María Gómez». Para GUARDAR eso es veneno. Con «María Gómez» en
+     la agenda, guardar un contacto nuevo llamado «Maria» tomaba a María Gómez como «previo» y
+     el contacto nuevo NACÍA con el mail de otra persona. Un dato ajeno metido en un contacto
+     que el usuario acaba de crear es lo más grave que puede hacer una agenda.
+     Fusionar solo tiene sentido contra la MISMA entrada: la clave exacta, nada de parecidos. */
+  const _ex = a[k];
+  const previo = (_ex === undefined) ? { tel:'', email:'', dir:'', nombre:'' }
+    : (typeof _ex === 'string') ? { tel:_ex, email:'', dir:'', nombre:'' }
+    : { tel:_ex.tel||'', email:_ex.email||'', dir:_ex.dir||'', nombre:_ex.nombre||'' };
   const nuevo = (typeof campos === 'string') ? { tel:campos } : (campos||{});
   a[k] = {
     // el nombre TAL CUAL se escribió, para mostrarlo lindo; la CLAVE va sin tildes
@@ -6301,7 +6429,14 @@ function actuaProcesarReply(reply){
     // v37-agenda (A2): si el modelo no trae una dirección válida, se busca en la agenda LOCAL.
     // Cierra el hueco del redactor («destinatario a completar»). Nunca inventada.
     else if (a.tipo==='mail'&&(typeof CONFIG==='undefined'||!CONFIG.cap||CONFIG.cap.redactor!==false)&&(a.cuerpo||a.asunto)){ let dir=actuaMailDirOk(a.para)?String(a.para).trim():'';
-      if (!dir){ const c=actuaContacto(a.para); if (c && actuaMailDirOk(c.email)) dir=c.email; } const cu=String(a.cuerpo||''); redactorPend=['✉','Mail'+(dir?' a '+dir:' — destinatario a completar'),(a.asunto?'Asunto: '+String(a.asunto).slice(0,120)+'. ':'')+'Leélo, y si está bien, sale con un toque.',actuaMailURL(dir,String(a.asunto||'').slice(0,200),cu),'✉ abrir el correo',(a.asunto?'Asunto: '+String(a.asunto)+'\n\n':'')+cu]; } // v36-redactor (Etapa 13 C2): el modelo redacta, el humano envía
+      /* v41-para (23/08/2026): el prompt ahora manda el NOMBRE en "para" cuando no tiene la
+         dirección (antes mandaba "" y acá no quedaba NADA con qué buscar en la agenda: por eso
+         el correo se abría con el «Para» vacío teniendo el mail guardado). Dos consecuencias:
+         se busca igual que siempre, y si no se encuentra, el título dice A QUIÉN iba — que es
+         lo que el usuario necesita para completarlo, mucho más útil que «destinatario a
+         completar» a secas. La dirección se sigue sin inventar jamás. */
+      const _nom = String(a.para||'').trim();
+      if (!dir){ const c=actuaContacto(_nom); if (c && actuaMailDirOk(c.email)) dir=c.email; } const cu=String(a.cuerpo||''); redactorPend=['✉','Mail'+(dir?' a '+dir:(_nom?' a '+_nom.slice(0,40)+' — falta su dirección':' — destinatario a completar')),(a.asunto?'Asunto: '+String(a.asunto).slice(0,120)+'. ':'')+'Leélo, y si está bien, sale con un toque.',actuaMailURL(dir,String(a.asunto||'').slice(0,200),cu),'✉ abrir el correo',(a.asunto?'Asunto: '+String(a.asunto)+'\n\n':'')+cu]; } // v36-redactor (Etapa 13 C2): el modelo redacta, el humano envía
     else if (a.tipo==='encuesta' && a.titulo && Array.isArray(a.preguntas) && a.preguntas.length){ try{ encOferta(a); }catch(e){ try{ regError('encuesta:oferta', e); }catch(_){ } } } // v36-encuesta: el modelo propone, el humano crea
     // v38-share (C1): «mandá esto a quien sea / por donde sea» — sin destinatario fijo.
     // No hay URL ni lista blanca acá: el texto no sale a ningún lado hasta que el usuario
