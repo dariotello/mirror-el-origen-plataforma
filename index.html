@@ -940,7 +940,7 @@ export default {
     <div style="border:1px solid rgba(74,222,128,0.22);border-radius:12px;padding:1.2rem 1.3rem;margin-bottom:1.3rem;background:rgba(74,222,128,0.04);">
       <div style="font-family:'Cormorant Garamond', Georgia, 'Times New Roman', serif;font-size:24px;color:#bdf0cf;margin-bottom:0.8rem;">✓ Gratis — y alcanza <em style="color:#4ade80;font-style:italic;">de sobra</em></div>
       <ul style="font-size:13px;line-height:1.8;color:#c4dcc8;padding-left:1.15rem;margin:0;">
-        <li><b style="color:#e8e8ff;">Motor Groq:</b> rápido y potente, sin tarjeta. <b style="color:#e8e8ff;">Cerebras (respaldo):</b> gratis hasta el 17/08/2026. Desde esa fecha Cerebras exige agregar una tarjeta para regalarte US$5 de crédito inicial; agotados, es pago por uso.</li>
+        <li><b style="color:#e8e8ff;">Motor Groq:</b> rápido y potente, gratis y sin tarjeta. <b style="color:#e8e8ff;">Respaldo Cloudflare:</b> 10.000 neuronas por día, también sin tarjeta, y va por tu mismo proxy (no hace falta ninguna clave nueva). <b style="color:#e8e8ff;">Cerebras</b> ya NO entra acá: desde el 17/08/2026 pide tarjeta para darte US$5 de crédito y después es pago por uso.</li>
         <li><b style="color:#e8e8ff;">Toda la app:</b> chat, memoria, documentos, transcripción de audio y video (Whisper), lectura en voz alta, dictado por voz, búsqueda web (Tavily tiene cuota gratis) y la fachada cinematográfica.</li>
         <li><b style="color:#e8e8ff;">Tu memoria</b> (Firebase, plan gratis) y <b style="color:#e8e8ff;">tu proxy</b> (Cloudflare Worker, plan gratis).</li>
       </ul>
@@ -1611,7 +1611,9 @@ const MOTORES = {
     modeloVision: 'qwen/qwen3.6-27b'
   },
   cerebras: {
-    nombre: 'Cerebras', tipo: 'gratuito', ruta: 'cerebras',
+    // v41-cerebras: dejó de ser 'gratuito' el 17/08/2026. El sello verde «Gratis» sobre un
+    // motor que pide tarjeta es la clase de promesa por cuenta ajena que este proyecto no hace.
+    nombre: 'Cerebras', tipo: 'tarjeta', ruta: 'cerebras',
     desc: 'Ideal como respaldo del principal. Gratis hasta el 17/08/2026. Desde esa fecha Cerebras exige agregar una tarjeta para regalarte US$5 de crédito inicial; agotados, es pago por uso.',
     comoClave: 'Entrá a cloud.cerebras.ai → creá cuenta → API Keys.',
     modelos: ['gpt-oss-120b', 'llama-3.3-70b']
@@ -8752,7 +8754,12 @@ function duckMusic(){
   // ── COSTO HONESTO POR MOTOR (sin números que caduquen: modelo de costo + link al pricing real) ──
   const PRICING = {
     groq:       { free:true,  txt:'✓ Gratis, sin tarjeta. Alcanza de sobra para volar.' },
-    cerebras:   { free:true,  txt:'✓ Gratis, sin tarjeta. Ideal como respaldo del principal.' },
+    /* v41-cerebras (23/08/2026) — LA TARJETA SE CONTRADECÍA A SÍ MISMA (hallazgo de Darío en
+       vivo). Arriba la descripción decía «Gratis hasta el 17/08/2026; desde esa fecha exige
+       tarjeta», y acá abajo, en la misma tarjeta, seguía el sello verde «✓ Gratis, sin
+       tarjeta». Quien elige un motor mira el sello, no el párrafo: se estaba eligiendo un
+       motor «gratis» que pide tarjeta. Groq NO se toca — ese sí sigue gratis y sin tarjeta. */
+    cerebras:   { free:false, txt:'💳 Ya no es gratis: desde el 17/08/2026 pide tarjeta para darte US$5 de crédito; agotados, pagás por uso. El respaldo gratis hoy es Cloudflare (ver abajo). ', url:'https://www.cerebras.ai/pricing' },
     openai:     { free:false, txt:'💳 Pagás por uso, sin abono mensual. ', url:'https://openai.com/api/pricing/' },
     openrouter: { free:false, txt:'💳 Pagás por uso/crédito, sin abono. Una sola clave → cientos de modelos (Claude, GPT-4o…). ', url:'https://openrouter.ai/models' },
     deepseek:   { free:false, txt:'💳 Pagás por uso, muy económico. ', url:'https://api-docs.deepseek.com/quick_start/pricing' },
@@ -8771,8 +8778,12 @@ function duckMusic(){
       const card = document.createElement('div');
       card.className = 'cons-mcard' + (k===motorSel?' sel':'');
       card.onclick = ()=>{ motorSel=k; renderMotores(); };
+      /* v41-cerebras: tres estados, no dos. «Premium» no describe a Cerebras (te regala US$5)
+         y «Gratis» es directamente falso. El sello dice lo único que importa antes de elegir:
+         si te va a pedir la tarjeta o no. */
+      const _sello = m.tipo==='gratuito' ? 'Gratis' : (m.tipo==='tarjeta' ? 'Pide tarjeta' : 'Premium');
       card.innerHTML = '<div class="mt">'+m.nombre+'<span class="badge '+(m.tipo==='gratuito'?'free':'prem')+'">'+
-        (m.tipo==='gratuito'?'Gratis':'Premium')+'</span></div><div class="md">'+m.desc+'</div>'+costoLinea(k);
+        _sello+'</span></div><div class="md">'+m.desc+'</div>'+costoLinea(k);
       cont.appendChild(card);
     });
     const sel = document.getElementById('c-modelo'); sel.innerHTML='';
