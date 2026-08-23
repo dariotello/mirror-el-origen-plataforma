@@ -1735,7 +1735,19 @@ window.addEventListener('load', function(){
 
 // ── VARIABLES QUE USA EL RESTO DEL CÓDIGO (derivadas de CONFIG) ───────────
 // SEGURIDAD: las claves de IA NUNCA viven acá. Van como secrets en tu proxy.
-let PROXY_URL = CONFIG.proxyUrl;
+/* ══ v41-barra (23/08/2026) — LA BARRA FINAL QUE ROMPÍA LAS RUTAS ═════════════════════════
+   HALLAZGO EN VIVO (Darío, 23/08): su constructor tenía guardado el proxy CON barra final —
+   «https://piloto-mirror-api.fisica-dat.workers.dev/»— y las rutas se arman concatenando:
+   PROXY_URL + '/cloudflare' quedaba «…workers.dev//cloudflare». El Worker recibe entonces
+   `url.pathname === '//cloudflare'`, que NO matchea el `'/cloudflare'` que compara adentro,
+   y devuelve 404. O sea: el respaldo no podía andar ni subiendo la ruta.
+   El campo del constructor solo hacía .trim(); pegar la dirección con la barra —que es como
+   la copia cualquiera del panel de Cloudflare— alcanzaba para romperlo.
+   Se normaliza en los TRES lugares donde entra: al arrancar, al aplicar la config y al
+   guardarla desde el constructor. Una dirección sin barra final funciona igual que antes: la
+   normalización no le saca nada a quien ya la tenía bien. */
+function proxyLimpio(u){ return String(u||'').trim().replace(/\/+$/,''); }
+let PROXY_URL = proxyLimpio(CONFIG.proxyUrl);
 const GROQ_KEY = '';
 const TAVILY_KEY = '';
 const CEREBRAS_KEY = 'proxy';
@@ -1815,7 +1827,7 @@ async function pinOk(tipeado, huella, claroLegado){
 
 // Recalcula las variables derivadas tras guardar config nueva.
 function aplicarConfigVars() {
-  PROXY_URL = CONFIG.proxyUrl;
+  PROXY_URL = proxyLimpio(CONFIG.proxyUrl);   // v41-barra
   GROQ_URL = PROXY_URL + '/' + (MOTORES[CONFIG.motorPrincipal] ? MOTORES[CONFIG.motorPrincipal].ruta : 'groq');
   TAVILY_URL = PROXY_URL + '/tavily';
   TRANSCRIBE_URL = PROXY_URL + '/transcribe';
@@ -4442,6 +4454,30 @@ async function buscarWebParaInforme(query){
    «No pude procesar la consulta» y ahí se terminaba: ni el usuario ni el que da soporte
    podían saber qué pasó. Ahora, si no se sabe, se dice y se muestra el original — que es la
    única forma de que después se pueda arreglar. Las llamadas viejas siguen andando igual. */
+/* v41-diag (23/08/2026) — QUÉ PASÓ CON CADA RESPALDO, EN CRIOLLO.
+   Lo llena callGroq y lo lee el cartel de error. Vive en memoria de sesión nomás: es
+   diagnóstico del momento, no algo que haya que guardar en ningún lado. */
+let diagRespaldos = [];
+function diagRespaldoUno(d){
+  const nom = d.id==='cloudflare' ? 'Cloudflare' : (d.id==='cerebras' ? 'el respaldo configurado' : d.id);
+  /* El 404 es EL caso que había que nombrar: significa que esa ruta no existe en el proxy, y
+     es lo único que el administrador puede arreglar en dos minutos. Decir «error 404» no le
+     sirve a nadie; decir «esa ruta no está en tu proxy» sí. */
+  if (d.status === 404 || /\b404\b/.test(d.msg)) return nom + ': esa ruta no está en tu proxy';
+  if (/Falta el secret/i.test(d.msg))            return nom + ': falta su clave en el proxy';
+  if (d.tipo === 'pago_requerido')               return nom + ': pide pago';
+  if (d.tipo === 'credencial')                   return nom + ': la clave no autoriza';
+  if (d.tipo === 'rate_limit')                   return nom + ': también saturado';
+  if (d.tipo === 'cupo_excedido')                return nom + ': cupo por minuto excedido';
+  if (d.tipo === 'config' || d.tipo === 'red')   return nom + ': no llegué a contestarlo';
+  return nom + ': ' + (d.tipo || 'falló');
+}
+function diagRespaldosTexto(){
+  try {
+    if (!diagRespaldos || !diagRespaldos.length) return '';
+    return ' Lo que probé: ' + diagRespaldos.map(diagRespaldoUno).join(' · ') + '.';
+  } catch(e){ return ''; }
+}
 function mensajeError(tipo, detalle){
   if (tipo === 'otro' || !tipo) {
     const d = String(detalle || '').trim().slice(0, 300);
@@ -4457,7 +4493,7 @@ function mensajeError(tipo, detalle){
         /* v41-cloudflare: el texto viejo mandaba a «cargar la clave del respaldo», y con
            Cerebras cobrando desde el 17/08 esa salida cuesta plata. Ahora se nombra primero la
            gratis: agregar la ruta /cloudflare al Worker, que no lleva ninguna clave. */
-        ? '⚠️ El motor principal no contestó esta vez (suele ser el cupo de tokens por minuto del plan gratis) y ningún motor de respaldo pudo tomar la posta. Esperá un momento y reintentá. Si administrás esta app: la salida gratis es agregarle a tu proxy la ruta /cloudflare (Workers AI, sin clave ni tarjeta — está explicada en el LEEME del paquete); la otra es cargar la clave de un motor pago en Settings → Variables and Secrets.'
+        ? '⚠️ El motor principal no contestó esta vez (suele ser el cupo de tokens por minuto del plan gratis) y ningún motor de respaldo pudo tomar la posta.' + diagRespaldosTexto() + ' Esperá un momento y reintentá. Si administrás esta app: la salida gratis es agregarle a tu proxy la ruta /cloudflare (Workers AI, sin clave ni tarjeta — está explicada en el LEEME del paquete); la otra es cargar la clave de un motor pago en Settings → Variables and Secrets.'
         : '⚠️ Falta configurar una clave en tu proxy. Si administrás esta app, cargala en Settings → Variables and Secrets; si no, avisale a quien la configuró. Mientras tanto, reintentá en un momento.';
     }
     return d
@@ -4475,7 +4511,7 @@ function mensajeErrorConocido(tipo){
          Prometer gratis algo que cobra es justo lo que este proyecto no hace, así que ahora
          la salida que se ofrece primero es la que de verdad no cuesta nada: la ruta del
          Worker. (El banco exige que la promesa vieja no vuelva a aparecer en ningún lado.) */
-      : '⚠️ Tu motor principal está saturado (límite del plan gratis agotado). Esperá unos minutos o probá más temprano. Si administrás esta app, el respaldo gratis se activa agregándole a tu proxy la ruta /cloudflare (Workers AI: sin clave, sin tarjeta) — está en el LEEME del paquete.';
+      : '⚠️ Tu motor principal está saturado (límite del plan gratis agotado).' + diagRespaldosTexto() + ' Esperá unos minutos o probá más temprano. Si administrás esta app, el respaldo gratis se activa agregándole a tu proxy la ruta /cloudflare (Workers AI: sin clave, sin tarjeta) — está en el LEEME del paquete.';
   }
   if (tipo === 'too_big') return '⚠️ La consulta es demasiado grande (muchos datos + PDFs juntos). Probá una pregunta más específica o sobre menos documentos a la vez.';
   /* v38-cupo: el cupo por minuto no es lo mismo que una consulta grande, y decirlo importa:
@@ -4861,14 +4897,26 @@ async function callGroq(messages, systemPrompt, maxTokens, temp) {
     if (CLOUDFLARE_ON) respaldos.push({ id:'cloudflare', url:CLOUDFLARE_URL, key:'proxy',      modelo:MODELO_CLOUDFLARE });
     if (CEREBRAS_KEY)  respaldos.push({ id:'cerebras',   url:CEREBRAS_URL,  key:CEREBRAS_KEY,  modelo:MODELO_CEREBRAS });
     let ultimoErr = e;
+    /* v41-diag (23/08/2026): antes el fallo de cada respaldo se tragaba en silencio y el
+       usuario solo veía el error del ÚLTIMO. Con dos respaldos eso es información perdida:
+       no había forma de saber si Cloudflare devolvió 404 (la ruta no está en ese proxy) o si
+       falló por otra cosa, salvo abriendo la consola del navegador. Ahora cada intento queda
+       anotado y el cartel lo dice en criollo. Misma regla de siempre: si no se pudo, decir
+       por qué. */
+    diagRespaldos = [];
     for (const rsp of respaldos) {
       console.warn('Groq falló ('+(e.tipo||'?')+') → probando '+rsp.id);
       try {
         const r = await llamarMotorVigente(rsp.url, rsp.key, rsp.modelo, messages, systemPrompt, maxTokens, temp, 'respaldo');
         motorActivo = rsp.id;
         try { avisarRespaldoUnaVez(rsp.id); } catch(_){}   // transparencia: qué red de seguridad actuó
+        diagRespaldos = [];   // salió bien: no hay nada que explicar
         return r;
-      } catch(eR){ ultimoErr = eR; /* este respaldo no pudo: seguí con el próximo */ }
+      } catch(eR){
+        ultimoErr = eR;
+        diagRespaldos.push({ id: rsp.id, tipo: (eR && eR.tipo) || 'otro', status: (eR && eR.status) || 0, msg: String((eR && eR.message) || '') });
+        try { regError('motor:'+rsp.id, eR); } catch(_){}   // queda en «¿qué te falló hoy?»
+      }
     }
     if (respaldos.length) {
       const err = new Error(ultimoErr.message);
@@ -8821,7 +8869,10 @@ function duckMusic(){
     CONFIG.cap = Object.assign({}, capState);
     CONFIG.caracter = Object.assign({}, carState); // v35-car
     CONFIG.colorTema = colorSel;
-    CONFIG.proxyUrl = v('c-proxy'); CONFIG.fbUrl = v('c-fb');
+    // v41-barra: se guarda SIN barra final — las rutas se arman concatenando y «…dev//groq»
+    // no matchea el pathname que compara el Worker. Se limpia acá, no solo al leer, para que
+    // lo que quede guardado sea lo correcto y no haya que arreglarlo en cada lectura.
+    CONFIG.proxyUrl = proxyLimpio(v('c-proxy')); CONFIG.fbUrl = v('c-fb');
     CONFIG.paisCod = v('c-pais').replace(/[^\d]/g,''); // v37-tel (A1)
     // v37-sec (V36-1c): del campo PIN sale una HUELLA, nunca el PIN.
     // Campo vacío = "no lo cambio": se conserva la huella que ya estaba guardada.
