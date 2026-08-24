@@ -2769,13 +2769,45 @@ function hablar(texto){
       if (alt) vFinal = alt;
     }
   } catch(e){}
-  for(const t of trozos){
-    const u=new SpeechSynthesisUtterance(t);
-    if(vFinal){ u.voice=vFinal; u.lang=vFinal.lang; } else { u.lang=(typeof i18nRecLang==='function')?i18nRecLang():'es-AR'; } // v36-i18n · v37-voz (V36-8b)
-    u.rate=matiz.rate; u.pitch=matiz.pitch;
-    speechSynthesis.speak(u); // la cola del navegador las lee en orden
-  }
+  /* ══ v42-vozfluida (24/08/2026) — EL AUDIO SE ENTRECORTABA («se pierde por momentos») ══════════
+     HALLAZGO EN VIVO DE DARÍO: la voz no se oía rota por el volumen — se cortaba sola, a
+     pedazos, en respuestas largas.
+     LA CAUSA ESTABA ESCRITA ACÁ AL LADO, EN ESTE MISMO ARCHIVO. La lectura de documentos
+     (`leerDocTanda`, unas líneas más abajo) ya lo había aprendido y lo dejó por escrito:
+     «encolar miles de utterances cuelga el sintetizador», y por eso lee por tandas
+     encadenadas con `onend`. El chat, en cambio, seguía haciendo lo otro: un `speak()` por
+     cada trozo, TODOS de una, y el navegador se atragantaba con la cola y se saltaba pedazos.
+     Un hallazgo que ya estaba resuelto a treinta líneas de distancia y no se había portado
+     — la trampa de paridad de siempre, pero adentro del mismo archivo.
+     AHORA: se habla UN trozo por vez y el siguiente arranca cuando el anterior terminó.
+     · `onerror` encadena igual que `onend`: si un trozo falla, la lectura NO se queda muda.
+     · El id de tanda corta la cola vieja cuando llega una respuesta nueva — sin eso, el
+       `speechSynthesis.cancel()` del arranque dispara el `onend` del trozo en curso y la
+       lectura anterior seguiría avanzando por debajo de la nueva.
+     LO QUE NO SE HIZO, Y POR QUÉ: no se metió el truco de `pause()/resume()` cada 10 s que
+     circula para este bug. Con trozos de menos de 250 caracteres ninguno llega al límite de
+     duración que ese truco ataca, y mete un microcorte propio. Si con esto todavía se
+     entrecorta, es la voz: las de red (Google) sintetizan cada trozo por internet. */
+  hablarCola._id = (hablarCola._id || 0) + 1;
+  hablarCola(trozos, vFinal, matiz, hablarCola._id);
   if (typeof duckMusic === 'function') duckMusic(); // v3.0: la música cede el paso a la voz
+}
+/* Habla la lista de a un trozo, encadenando por onend. Ver el comentario de hablar(). */
+function hablarCola(trozos, voz, matiz, id){
+  if (hablarCola._id !== id) return;        // llegó una lectura nueva: esta tanda se abandona
+  if (!trozos || !trozos.length) return;
+  const u = new SpeechSynthesisUtterance(trozos[0]);
+  if (voz){ u.voice = voz; u.lang = voz.lang; }
+  else { u.lang = (typeof i18nRecLang === 'function') ? i18nRecLang() : 'es-AR'; } // v36-i18n · v37-voz (V36-8b)
+  u.rate = matiz.rate; u.pitch = matiz.pitch;
+  let yaSiguio = false;
+  const seguir = function(){
+    if (yaSiguio) return; yaSiguio = true;   // onend y onerror no pueden disparar dos veces
+    setTimeout(function(){ hablarCola(trozos.slice(1), voz, matiz, id); }, 10);
+  };
+  u.onend = seguir;
+  u.onerror = seguir;
+  try { speechSynthesis.speak(u); } catch(e){ seguir(); } // si speak() explota, la lectura sigue
 }
 // v2.5 — Esc calla la lectura en voz alta al instante (no toca nada más).
 document.addEventListener('keydown',ev=>{ if(ev.key==='Escape' && window.speechSynthesis && speechSynthesis.speaking) speechSynthesis.cancel(); });
@@ -4683,6 +4715,14 @@ function esperaSensata(s){ const n = Math.ceil(Number(s)||0); return n<=0 ? 0 : 
 async function llamarMotor(url, key, modelo, messages, systemPrompt, maxTokens, temp){
   // Cerebras usa 'max_completion_tokens'; Groq usa 'max_tokens'. Mandamos el correcto.
   const esCerebras = url.includes('cerebras');
+  /* v42-stream (24/08/2026) — EL RESPALDO NO PUEDE APAGARLE EL STREAMING AL PRINCIPAL.
+     La ruta /cloudflare contesta de una sola vez (Workers AI no devuelve SSE en formato
+     OpenAI, y traducirlo sería reescribir el stream adentro del proxy). Sin esta línea, la
+     primera vez que Groq se satura y contesta el respaldo, el intento de streaming falla,
+     `STREAM_OK` se apaga PARA TODA LA SESIÓN y el principal pierde la fluidez aunque él sí
+     sepa hacer streaming. Un respaldo que degrada al titular no es un respaldo.
+     Se lo excluye del intento igual que a Cerebras, por el mismo motivo. */
+  const esRespaldoSinStream = esCerebras || url.includes('/cloudflare');
   /* v38-motor: la curita de razonamiento se decidía por PROVEEDOR. Alcanzaba mientras
      gpt-oss viviera solo en Cerebras. Ahora gpt-oss está en el catálogo de Groq (el
      blindaje de caducidad puede caer ahí), así que la condición correcta es por MODELO. */
@@ -4715,7 +4755,7 @@ async function llamarMotor(url, key, modelo, messages, systemPrompt, maxTokens, 
   }
   // v35-stream (Etapa 7): primero intentamos SSE (solo motor principal no-Cerebras y si la
   // sesión no demostró ser incompatible). Fallo o vacío → cae al camino clásico de siempre.
-  if (!esCerebras && STREAM_OK && mode !== 'jurado'){ // v36-stream-gate (Etapa 0 Ciclo 2, decisión Darío 09/07): el veredicto del jurado cae ENTERO, con peso de sentencia; MIRROR y TARS piensan en vivo
+  if (!esRespaldoSinStream && STREAM_OK && mode !== 'jurado'){ // v36-stream-gate (Etapa 0 Ciclo 2, decisión Darío 09/07): el veredicto del jurado cae ENTERO, con peso de sentencia; MIRROR y TARS piensan en vivo
     try {
       let c = await llamarMotorStream(url, key, body);
       // v38-think: MISMO limpiador que el camino clásico, y ahora es literalmente el mismo
@@ -5737,7 +5777,7 @@ const ACTUA_CMDS = [
   { /* v38-cumpli (H1) — el panel de transparencia también se abre hablando: mucha gente
        pregunta antes de tocar («¿qué hacés con lo que te digo?», «¿sos una persona?»), y esa
        pregunta merece el inventario delante, no un párrafo lindo. */
-    re: /qu[eé]\s+(?:hac[eé]s|guard[aá]s|sab[eé]s)\s+(?:con\s+)?(?:lo\s+m[ií]o|mis\s+datos|con\s+lo\s+que\s+te\s+(?:digo|cuento))|d[oó]nde\s+(?:se\s+)?(?:guard|va)[a-z]*\s+(?:mis\s+datos|lo\s+m[ií]o)|(?:sos|eres)\s+(?:una?\s+)?(?:ia|inteligencia\s+artificial|robot|humano|persona)\s*[?¿]?|privacidad|qu[eé]\s+datos\s+(?:ten[eé]s|guard[aá]s)/i,
+    re: /qu[eé]\s+(?:hac[eé]s|guard[aá]s|sab[eé]s)\s+(?:con\s+)?(?:lo\s+m[ií]o|mis\s+datos|con\s+lo\s+que\s+te\s+(?:digo|cuento))|d[oó]nde\s+(?:se\s+)?(?:guard|va)[a-z]*\s+(?:mis\s+datos|lo\s+m[ií]o)|(?:sos|eres)\s+(?:una?\s+)?(?:ia|inteligencia\s+artificial|robot|humano|persona)\s*[?¿]?|privacidad|qu[eé]\s+datos\s+(?:ten[eé]s|guard[aá]s)(?!.*\b(?:agenda|contactos?)\b)/i, /* v42-agenda4 (24/08/2026): «¿qué datos tenés EN LA AGENDA?» es agenda, no privacidad */
     run(){
       try{ cumpliAbrir(); }catch(e){ return 'Quise abrirte el panel y falló — quedó en mi diagnóstico.'; }
       return 'Te abrí el panel con todo: qué guardo, dónde vive, qué viaja cuando escribís y qué NO hago. '
@@ -5792,7 +5832,20 @@ const ACTUA_CMDS = [
     }
   },
   { // v37-agenda (A8): ver la agenda completa
-    re: /(?:mostr[aá](?:me)?|ver|list[aá](?:me)?|abr[ií])\s+(?:la\s+|mi\s+)?(?:agenda|mis\s+contactos)|qu[eé]\s+(?:n[uú]meros|contactos|tel[eé]fonos)\s+(?:ten[eé]s|tengo|hay)/i,
+    /* v42-agenda4 (24/08/2026) — «¿QUÉ DATOS TENÉS EN LA AGENDA?» ABRÍA EL PANEL DE PRIVACIDAD.
+       Hallazgo en vivo de Darío. La regla de transparencia (v38-cumpli) termina con
+       `qué datos tenés|guardás`, que es correcto para «¿qué datos tenés míos?» — pero se
+       comía «¿qué datos tenés EN LA AGENDA?», que es una pregunta por los contactos y no
+       por la privacidad. Se arregla de los dos lados, que es lo prolijo:
+       · aquella regla ahora NO entra si el pedido menciona agenda o contactos (lookahead);
+       · y esta suma una rama para «qué datos tenés … agenda/contactos» — que EXIGE la
+         palabra de agenda, para no llevarse puesto el «¿qué datos tenés míos?» de aquella.
+         (Lo cazó el banco: la primera versión era más ancha y solo funcionaba porque esta
+         regla va después en el array. Depender del orden es exactamente lo que este
+         comentario dice que no hay que hacer.)
+       Misma familia que el guard F3 del MIRROR: cuando dos reglas se pisan, la que pierde
+       tiene que decir por qué se corre, no dejarlo al orden del array. */
+    re: /(?:mostr[aá](?:me)?|ver|list[aá](?:me)?|abr[ií])\s+(?:la\s+|mi\s+)?(?:agenda|mis\s+contactos)|qu[eé]\s+(?:n[uú]meros|contactos|tel[eé]fonos)\s+(?:ten[eé]s|tengo|hay)|qu[eé]\s+datos\s+(?:ten[eé]s|tengo|hay)\b[^]*?\b(?:agenda|contactos?)\b/i,
     run(){ const a=actuaAgenda(); const ks=Object.keys(a||{});
            if (!ks.length) return 'Tu agenda local está vacía. Guardá algo con «guardá el número de <nombre> <número>» y queda en TU dispositivo.';
            /* v41-lista (23/08/2026): esta lista escupía la CLAVE, o sea el nombre normalizado sin
