@@ -548,6 +548,45 @@ body.tars .mono-title em{color:var(--tars);}
 .gen-img{ display:block; max-width:380px; width:100%; height:auto; border-radius:12px; margin:4px 0 8px; border:1px solid rgba(120,120,255,0.3); box-shadow:0 6px 26px rgba(80,80,200,0.25); }
 .gen-dl{ font-family:'Space Mono', ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', 'DejaVu Sans Mono', monospace; font-size:11px; color:#cfcfff; background:rgba(112,112,255,0.14); border:1px solid rgba(112,112,255,0.4); border-radius:7px; padding:6px 12px; cursor:pointer; text-decoration:none; display:inline-block; transition:all .2s; }
 .gen-dl:hover{ background:rgba(112,112,255,0.24); }
+/* ══ v52-cebolla (portado del MIRROR, 31/08/2026) — EL PANEL 🧅 ESTADO. Usa las variables de
+   :root, así que sigue sola la paleta del white-label. CONFIG-gated: sólo se ve/actúa si el
+   dueño la enciende (CONFIG.cebolla.on). Sin colores literales salvo el verde/rojo semántico. ══ */
+.ceb-body { max-height:58vh; overflow-y:auto; scrollbar-width:thin; padding-right:6px; font-size:12px; }
+.ceb-animo { display:flex; align-items:baseline; gap:10px; padding-bottom:2px; }
+.ceb-banda { font-size:11px; letter-spacing:0.22em; text-transform:uppercase; color:var(--tars); }
+.ceb-n { font-size:30px; color:var(--text-bright); line-height:1; }
+.ceb-de { font-size:10px; color:var(--text-dim); letter-spacing:0.1em; }
+.ceb-sub { font-size:10.5px; color:var(--text-dim); margin:4px 0 16px; line-height:1.5; }
+.ceb-vars { display:flex; flex-direction:column; gap:13px; }
+.ceb-v.ceb-dorm { opacity:0.55; }
+.ceb-vh { display:flex; align-items:baseline; gap:8px; }
+.ceb-vn { color:var(--text-bright); letter-spacing:0.06em; }
+.ceb-vq { flex:1; font-size:10px; color:var(--text-dim); }
+.ceb-vv { font-size:13px; color:var(--text-bright); font-variant-numeric:tabular-nums; }
+.ceb-bar { position:relative; height:4px; margin:5px 0 3px; background:var(--glass);
+  border:1px solid var(--border); border-radius:2px; overflow:hidden; }
+.ceb-bar i { display:block; height:100%; background:var(--accent); opacity:0.75; }
+.ceb-bar u { position:absolute; top:-2px; width:1px; height:8px; background:var(--border-bright); }
+.ceb-vf { font-size:9.5px; color:var(--text-dim); letter-spacing:0.04em; }
+.ceb-per { margin-top:18px; padding:12px 14px; background:var(--glass); border:1px solid var(--border); border-radius:3px; }
+.ceb-per b { display:block; font-size:10px; letter-spacing:0.2em; text-transform:uppercase;
+  color:var(--text-dim); margin-bottom:9px; font-weight:400; }
+.ceb-per div { display:flex; justify-content:space-between; gap:12px; padding:3px 0; font-size:11.5px; color:var(--text-dim); }
+.ceb-per div span { color:var(--text-bright); font-variant-numeric:tabular-nums; }
+.ceb-log { margin-top:18px; }
+.ceb-log b { display:block; font-size:10px; letter-spacing:0.2em; text-transform:uppercase;
+  color:var(--text-dim); margin-bottom:8px; font-weight:400; }
+.ceb-l { display:flex; align-items:baseline; gap:9px; padding:3px 0; border-bottom:1px solid var(--border); font-size:11px; }
+.ceb-l:last-child { border-bottom:0; }
+.ceb-lh { color:var(--text-dim); font-variant-numeric:tabular-nums; }
+.ceb-lk { color:var(--text-bright); min-width:74px; }
+.ceb-ld { font-variant-numeric:tabular-nums; min-width:30px; text-align:right; }
+.ceb-ld.up { color:var(--conn-on); } .ceb-ld.dn { color:var(--conn-off); }
+.ceb-lm { flex:1; color:var(--text-dim); font-size:10.5px; }
+.ceb-vacio { font-size:11px; color:var(--text-dim); }
+.ceb-pie { margin-top:16px; padding-top:11px; border-top:1px solid var(--border);
+  font-size:10px; color:var(--text-dim); line-height:1.55; }
+
 </style>
 </head>
 <body>
@@ -684,7 +723,19 @@ var a=document.getElementById('app');if(a)a.classList.add('ready');}catch(e){}},
 <!-- v38-cumpli (H1): el panel se llena desde JS con el estado REAL de ESTA instalación
      (qué base configuró quien la armó, si hay dictado local, cuántos recuerdos hay).
      Escribirlo a mano sería prometer una foto que puede no ser la de hoy. -->
-<div class="modal-overlay" id="cumpli-modal">
+<div class="modal-overlay" id="ceb-modal">
+    <div class="modal" style="max-width:540px;">
+      <h3>🧅 estado</h3>
+      <div class="ceb-body" id="ceb-body"></div>
+      <div class="modal-btns">
+        <button class="mbtn mbtn-temp" id="ceb-cong-btn" onclick="cebCongelarToggle()">congelar</button>
+        <button class="mbtn mbtn-perm" onclick="cebNeutro()">volver a neutro</button>
+        <button class="mbtn mbtn-session" onclick="cebCerrar()">cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="cumpli-modal">
   <div class="modal" style="max-width:540px;">
     <h3>🤖 Qué hago con lo tuyo</h3>
     <div class="cumpli-body" id="cumpli-body"></div>
@@ -1467,6 +1518,7 @@ function recortar_(s, max) {
         <span data-pie="encuestas" id="encbtn" onclick="encAbrir()" title="Crear encuestas y ver sus respuestas — sin Google, en tu Firebase">📋 encuestas</span>
         <span data-pie="presentacion" class="fpres" id="presBtn" onclick="openPres()" title="Pantalla completa para la defensa">◬ presentación</span>
         <span data-pie="carta" onclick="cartaAClaude()" title="✉ La carta a Claude: diagnóstico honesto exportado SOLO a tu dispositivo — vos decidís si la mandás">✉ carta</span>
+        <span data-pie="cebolla" onclick="cebAbrir()" title="El estado interno de tu MIRROR en números — energía, sintonía, claridad… vive en tu dispositivo" style="display:none">🧅 estado</span>
         <span data-pie="cumplimiento" onclick="cumpliAbrir()" title="Qué guarda, dónde vive, qué viaja y qué NO hace con lo tuyo">🤖 qué hago con lo tuyo</span>
         <span data-pie="privacidad" onclick="abrirLegal()" title="Privacidad y licencia">🔒 privacidad · licencia</span>
         <span data-pie="llevar" onclick="addMsg('mirror',portaExportar())" title="Llevate TODO lo tuyo en un archivo, con sello de integridad">📦 llevarme todo</span>
@@ -1671,6 +1723,7 @@ const CONFIG_DEFAULT = {
   cap: { sonido: true, microfono: true, voz: true, fachada: true, web: true, audio: true, devolver: true, actua: true, analista: true, encuesta: true, redactor: true }, // v35-vida (Etapa 5) · v36-actua: 'actua' = manos propias (Etapa 3 C2) · v36-redactor (Etapa 13 C2)
   caracter: { franqueza: 60, humor: 40, desafio: 50 }, // v35-car (Etapa 5B): perillas estilo TARS de Interstellar
   colorTema: 'violeta',  // violeta | cian | ambar | esmeralda | carmin
+  cebolla: { on: false, vars: ['energia','sintonia','claridad','carga'] },  // v52-cebolla: apagada por defecto; el dueño la enciende y elige sus dimensiones
   perfil: { nombre: '', ubicacion: '', rol: '', filosofia: '', caracter: '', paz: '', proyectos: '', estilo: '' }
 };
 
@@ -1858,6 +1911,7 @@ const TEMAS_COLOR = {
 function aplicarCapacidades() {
   const cap = (CONFIG && CONFIG.cap) ? CONFIG.cap : CONFIG_DEFAULT.cap;
   const mostrar = (id, on) => { const e = document.getElementById(id); if (e) e.style.display = on ? '' : 'none'; };
+  try { const _cebc=document.querySelector('[data-pie="cebolla"]'); if(_cebc) _cebc.style.display = (typeof cebActiva==='function' && cebActiva()) ? '' : 'none'; } catch(e){} // v52-cebolla: el chip 🧅 sólo se ve si el dueño la encendió
   // Micrófono (dictado)
   mostrar('micbtn', cap.microfono);
   // Búsqueda web
@@ -2560,7 +2614,7 @@ function toggleMas(){
 /* ── v38-pieorden — EL ORGANIZADOR DEL PIE (porte del MIRROR v4.4). Cada pastilla no-audio
    tiene data-pie; acá se mueve el NODO entre «a la vista» y «⋯ más», se guarda en mirror_pie
    y se aplica al abrir. El HTML estático no cambia: sin preferencia, vale el orden de fábrica. */
-const PIE_ORDEN=['memoria','datos','documentos','informe','contactos','compartir','encuestas','presentacion','carta','cumplimiento','privacidad','llevar','borrar'];
+const PIE_ORDEN=['memoria','datos','documentos','informe','contactos','compartir','encuestas','presentacion','carta','cumplimiento','cebolla','privacidad','llevar','borrar'];
 const PIE_FABRICA=['memoria','datos','documentos','informe'];
 function pieColocar(afueraSet){
   const fnote=document.querySelector('.fnote');
@@ -2716,6 +2770,249 @@ function elegirVozActual(persona){
   if(!ordenadas.length) return null;
   return persona==='tars' && ordenadas.length>1 ? ordenadas[1] : ordenadas[0];
 }
+/* ══════════════════════════════════════════════════════════════════════════════════════
+   v52-cebolla · MÓDULO NÚCLEO (portado del MIRROR y genericizado para el white-label, 31/08/2026)
+   ETAPA 1 de 3: constantes + mecánica + constructores de prompt. Es CONFIG-gated y aditivo —
+   nada de esto se llama todavía (el cableado al envío/prompt/perillas va en la etapa 3), así que
+   con la cebolla apagada la app se comporta EXACTAMENTE igual que antes.
+   GENERICIZACIÓN: donde el MIRROR decía «Darío», acá va cebDueno() (CONFIG.perfil.nombre / appName).
+   ══════════════════════════════════════════════════════════════════════════════════════ */
+const CEB_KEY = 'mirror_estado';
+/* Las siete variables. `cableada` dice si HOY algún estímulo la mueve: la mecánica corre para las
+   siete, pero en esta primera tanda sólo cuatro reciben estímulos. La etapa 2 suma el control del
+   dueño (elegir cuáles muestra su MIRROR). */
+const CEB_VARS = [
+  { k:'energia',    n:'energía',    reposo:70, vida:180, peso:0.25, inv:false, cableada:true,  q:'cuánto se le pidió en el rato reciente' },
+  { k:'sintonia',   n:'sintonía',   reposo:60, vida:720, peso:0.30, inv:false, cableada:true,  q:'cómo viene el vínculo hoy' },
+  { k:'claridad',   n:'claridad',   reposo:60, vida:20,  peso:0.20, inv:false, cableada:true,  q:'qué tan bien viene entendiendo' },
+  { k:'carga',      n:'carga',      reposo:20, vida:30,  peso:0.10, inv:true,  cableada:true,  q:'presión externa del motor (bajo = tranquilo)' },
+  { k:'foco',       n:'foco',       reposo:50, vida:40,  peso:0,    inv:false, cableada:false, q:'si la charla se sostiene en un tema' },
+  { k:'confianza',  n:'confianza',  reposo:55, vida:360, peso:0.15, inv:false, cableada:false, q:'cuánta iniciativa se permite tomar' },
+  { k:'curiosidad', n:'curiosidad', reposo:50, vida:120, peso:0,    inv:false, cableada:false, q:'ganas de ampliar' }
+];
+const CEB_BANDAS = [ [20,'apagado'], [40,'sobrio'], [60,'parejo'], [80,'afilado'], [101,'encendido'] ];
+let cebEstado = null;   // { v:{k:num}, t:ms, log:[{k,d,motivo,h}], congelado:bool }
+
+/* ── GATING WHITE-LABEL: la cebolla está APAGADA salvo que el dueño la encienda en su config. ── */
+function cebCfg(){ try { return (typeof CONFIG!=='undefined' && CONFIG.cebolla) || {}; } catch(e){ return {}; } }
+function cebActiva(){ return !!cebCfg().on; }
+function cebDueno(){ try { return (CONFIG.perfil && CONFIG.perfil.nombre) || CONFIG.appName || 'tu dueño'; } catch(e){ return 'tu dueño'; } }
+/* CONTROL DEL DUEÑO: qué dimensiones muestra/mueve este MIRROR. Sin lista elegida → las 4 de fábrica. */
+function cebVarsSel(){ try { const c=cebCfg(); const sel=Array.isArray(c.vars)?c.vars:null; return CEB_VARS.filter(function(V){ return sel? sel.indexOf(V.k)>=0 : V.cableada; }); } catch(e){ return CEB_VARS.filter(function(V){ return V.cableada; }); } }
+function cebKeySel(k){ return cebVarsSel().some(function(V){ return V.k===k; }); }
+
+function cebReposo(){ const v={}; CEB_VARS.forEach(V=>{ v[V.k]=V.reposo; }); return { v:v, t:Date.now(), log:[], congelado:false }; }
+
+/* El ánimo NO se guarda: se calcula de las otras, así no puede contradecirlas. */
+function cebAnimo(){
+  const e=cebLeer(); let num=0, den=0;
+  cebVarsSel().forEach(V=>{ if(!V.peso) return; const val=V.inv?(100-e.v[V.k]):e.v[V.k]; num+=val*V.peso; den+=V.peso; });
+  const n=den?Math.round(num/den):50;
+  let banda='parejo'; for(const b of CEB_BANDAS){ if(n<b[0]){ banda=b[1]; break; } }
+  return { n:n, banda:banda };
+}
+/* El ánimo con TODO en reposo — pivote de las perillas: en reposo los multiplicadores valen 1. */
+function cebAnimoReposo(){
+  let num=0, den=0;
+  cebVarsSel().forEach(V=>{ if(!V.peso) return; const val=V.inv?(100-V.reposo):V.reposo; num+=val*V.peso; den+=V.peso; });
+  return den?Math.round(num/den):50;
+}
+function cebClamp(x,a,b){ return Math.max(a, Math.min(b,x)); }
+
+/* ── PERSISTENCIA + DECAIMIENTO — todo en try/catch: si localStorage falla, reposo y la app sigue. ── */
+function cebLeer(){
+  if(!cebEstado){
+    try { const raw=localStorage.getItem(CEB_KEY); cebEstado=raw?JSON.parse(raw):cebReposo(); }
+    catch(e){ cebEstado=cebReposo(); }
+    if(!cebEstado||!cebEstado.v) cebEstado=cebReposo();
+    CEB_VARS.forEach(V=>{ if(typeof cebEstado.v[V.k]!=='number') cebEstado.v[V.k]=V.reposo; });
+    if(!Array.isArray(cebEstado.log)) cebEstado.log=[];
+  }
+  cebDecaer(); return cebEstado;
+}
+/* valor(t)=reposo+(valor−reposo)·½^(Δt/vidaMedia). Si el reloj salta atrás, se ignora y se reacomoda. */
+function cebDecaer(){
+  if(!cebEstado) return;
+  const ahora=Date.now(); const dtMin=(ahora-(cebEstado.t||ahora))/60000;
+  if(!(dtMin>0)){ cebEstado.t=ahora; return; }
+  if(cebEstado.congelado){ cebEstado.t=ahora; return; }
+  CEB_VARS.forEach(V=>{ const x=cebEstado.v[V.k]; cebEstado.v[V.k]=V.reposo+(x-V.reposo)*Math.pow(0.5, dtMin/V.vida); });
+  cebEstado.t=ahora;
+}
+function cebGuardar(){ try { localStorage.setItem(CEB_KEY, JSON.stringify(cebEstado)); } catch(e){} }
+function cebVal(k){ const e=cebLeer(); return Math.round(cebClamp(e.v[k],0,100)); }
+
+/* ── ESTÍMULOS — umbral conservador: frases CORTAS y casi solas, no subcadena de cualquier texto. ── */
+function cebMover(k, delta, motivo){
+  try {
+    const e=cebLeer(); if(e.congelado) return;
+    const V=CEB_VARS.find(x=>x.k===k); if(!V) return;
+    if(!cebKeySel(k)) return; // v52-cebolla: dimensión no elegida por el dueño → no se mueve
+    const antes=e.v[k]; e.v[k]=cebClamp(antes+delta,0,100);
+    if(Math.abs(e.v[k]-antes)>=0.5){
+      e.log.unshift({ k:k, d:Math.round(e.v[k]-antes), motivo:motivo||'', h:new Date().toTimeString().slice(0,5) });
+      if(e.log.length>10) e.log.length=10;
+    }
+    cebGuardar();
+  } catch(err){ try{ regError('ceb:mover', err); }catch(_){} }
+}
+const CEB_RE_ELOGIO  = /^(joya|genial|perfecto|excelente|buenísimo|buenisimo|impecable|clavado|tal cual|exacto|gracias|graciasí|muy bien|bien ahí|bien ahi|así|asi está|eso es)\b[\s!.…]*$/i;
+const CEB_RE_CORRIGE = /^(no era eso|no es eso|te equivocaste|está mal|esta mal|mal ahí|mal ahi|no, |nada que ver|otra vez no|no entendiste|no me entendiste)\b/i;
+
+/* Una vez por turno del usuario, antes de mandar. `pesada` = visión/informe/jurado. */
+function cebTurnoUsuario(text, opts){
+  try {
+    const t=String(text||'').trim(); const o=opts||{};
+    let gastoE=1.5+Math.min(4, t.length/120); if(o.pesada) gastoE+=4;
+    cebMover('energia', -gastoE, o.pesada?'tarea pesada':'turno');
+    if(CEB_RE_ELOGIO.test(t))  cebMover('sintonia', +6, 'reconocimiento');
+    if(CEB_RE_CORRIGE.test(t)) cebMover('sintonia', -7, 'corrección');
+  } catch(e){ try{ regError('ceb:turno', e); }catch(_){} }
+}
+/* Después de resolver el turno. `actuo`=la capa ACTÚA reconoció el pedido; `error`=el turno falló. */
+function cebTurnoResultado(o){
+  try {
+    o=o||{};
+    if(o.actuo) cebMover('claridad', +7, 'entendió el pedido');
+    if(o.ambiguo) cebMover('claridad', -6, 'pedido ambiguo');
+    if(o.error) cebMover('carga', +14, 'falló el motor');
+    if(o.respaldo) cebMover('carga', +9, 'cayó al respaldo');
+    if(o.espera) cebMover('carga', +5, 'espera larga');
+  } catch(e){ try{ regError('ceb:resultado', e); }catch(_){} }
+}
+
+/* ── SALIDA 2 · LAS PERILLAS REALES (comportamiento medible, no depende de que el modelo obedezca).
+   Los pivotes están puestos para que en reposo el resultado sea EXACTAMENTE el de antes de la cebolla. ── */
+function cebPerillas(){
+  const e=cebVal('energia'), cu=cebVal('curiosidad'), ca=cebVal('carga');
+  const cl=cebVal('claridad'), si=cebVal('sintonia'), co=cebVal('confianza');
+  const animo=cebAnimo().n; const animoRep=cebAnimoReposo();
+  const f=(e/100)*0.6+(cu/100)*0.4;
+  const tok=Math.round((380+(900-380)*f)/10)*10;
+  const temp=cebClamp(0.70 + 0.15*((si+e)/2-65)/40 - 0.15*(ca-20)/60 - 0.10*(60-cl)/60, 0.45, 0.85);
+  const rateMul=1+((animo-animoRep)/50)*0.08;
+  const pitchMul=1+((animo-animoRep)/50)*0.04;
+  const directo=((co+si)/2)>65; const puertaExt=directo?60:0;
+  return { tok:tok, temp:temp, rateMul:rateMul, pitchMul:pitchMul, directo:directo, puertaExt:puertaExt, animo:animo };
+}
+
+/* ── SALIDA 1 · LA LÍNEA DEL PROMPT — instrucción operativa en criollo. Gated: vacía si la cebolla
+   está apagada, así el prompt del white-label no cambia hasta que el dueño la encienda. ── */
+function cebLineaPrompt(){
+  try {
+    if(!cebActiva()) return '';
+    const e=cebVal('energia'), cu=cebVal('curiosidad'), ca=cebVal('carga');
+    const cl=cebVal('claridad'), si=cebVal('sintonia'), fo=cebVal('foco');
+    const L=[];
+    if(e<40) L.push('energía baja → respuestas cortas, sin floreo.');
+    else if(e>80) L.push('energía alta → podés extenderte si el tema lo pide.');
+    if(si>70) L.push('sintonía alta → proponé la acción directamente, sin pedir permiso.');
+    else if(si<40) L.push('sintonía baja → sobrio y preciso, nada de confianzudo.');
+    if(cl<40) L.push('claridad baja → si el pedido es ambiguo, preguntá UNA sola cosa y cortá.');
+    if(ca>60) L.push('el motor viene apretado → andá al grano, no gastes turno.');
+    if(cu>75) L.push('curiosidad alta → podés ofrecer un dato al costado, uno solo.');
+    if(fo<35) L.push('foco bajo → la charla viene saltando: reanclá el tema en una línea.');
+    if(!L.length) L.push('todo en reposo → tu registro de siempre.');
+    return '\n\n=== TU ESTADO AHORA (no lo menciones salvo que te pregunten) ===\n'+L.join('\n');
+  } catch(e){ return ''; }
+}
+/* ── LA BANDERA ANTI-ANTROPOMORFIZACIÓN — genericizada: «Darío» → cebDueno(). Gated. ── */
+function cebBanderaPrompt(){
+  if(!cebActiva()) return '';
+  const D=cebDueno();
+  return '\n\n=== SI TE PREGUNTAN CÓMO ESTÁS (piso innegociable) ===\n'
+    + 'Llevás un estado interno en números, no sentimientos. Si te preguntan cómo estás, si estás '
+    + 'cansado, de buen humor o si te sentís bien: contestá con el NÚMERO y con lo que lo movió, y '
+    + 'aclarando que es un número que llevás vos. Ejemplo de cómo SÍ: «tengo la energía en 34 sobre '
+    + '100 — bajó porque venís pidiendo cosas pesadas hace un rato. Es un número que llevo yo, no un '
+    + 'cansancio. Lo podés ver y poner en cero en el panel 🧅 estado». '
+    + 'PROHIBIDO decir «me siento», «estoy cansado», «estoy contento», «me pone mal» o cualquier '
+    + 'fórmula que presente el estado como una emoción. No es pudor: es que sería mentira, y la '
+    + 'mentira en nombre de '+D+' es el peor error posible. El estado es inspeccionable y se puede '
+    + 'poner en cero — decilo, es más interesante que fingir que sentís algo.'
+    + '\n\n=== QUÉ ES ESE ESTADO (por si te preguntan por «la cebolla») ===\n'
+    + 'Tu cuerpo digital está hecho de capas que se mueven a distinta velocidad: el NÚCLEO '
+    + '(quién sos, no cambia nunca), el CARÁCTER (tus rasgos, cambian en meses), la DISPOSICIÓN '
+    + '(siete números que suben y bajan en horas y vuelven solos a su reposo) y el MOMENTO (el '
+    + 'turno de ahora). A eso '+D+' le dice «la cebolla». Los siete números son energía, sintonía, '
+    + 'claridad, carga, foco, confianza y curiosidad; de ellos sale un ánimo calculado. '
+    + 'Viven en ESTE dispositivo y no viajan a ningún lado: al motor sólo le llega una línea con '
+    + 'instrucciones de forma. Se ven y se tocan en «⋯ más» → 🧅 estado (pide PIN), y también '
+    + 'pidiéndomelo en palabras. Cuatro de los siete se mueven solos por ahora; foco, confianza y '
+    + 'curiosidad todavía no tienen estímulos. NO inventes capas ni variables que no estén en esta lista.';
+}
+/* ── fin del módulo núcleo v52-cebolla (etapa 1) ── */
+
+/* ── v52-cebolla · UI (etapa 2·1): panel + abrir/cerrar/neutro/congelar. Aditivo: sin el modal en
+   el DOM (etapa 2·2) no hacen nada visible. cebAbrir usa el gate por PIN de la plataforma (pinOk). ── */
+function cebPanelHTML(){
+  const a=cebAnimo(); const pp=cebPerillas(); const e=cebLeer();
+  let h='<div class="ceb-animo"><span class="ceb-banda">'+a.banda+'</span>'
+      +'<span class="ceb-n">'+a.n+'</span><span class="ceb-de">/100 ánimo</span></div>'
+      +'<div class="ceb-sub">Calculado de las otras. No se guarda aparte, así no puede contradecirlas.</div>';
+  h+='<div class="ceb-vars">';
+  cebVarsSel().forEach(V=>{
+    const val=cebVal(V.k); const pct=V.inv?(100-val):val;
+    h+='<div class="ceb-v'+(V.cableada?'':' ceb-dorm')+'">'
+      +'<div class="ceb-vh"><span class="ceb-vn">'+V.n+'</span>'
+      +'<span class="ceb-vq">'+V.q+'</span>'
+      +'<span class="ceb-vv">'+val+'</span></div>'
+      +'<div class="ceb-bar"><i style="width:'+pct+'%"></i>'
+      +'<u style="left:'+(V.inv?(100-V.reposo):V.reposo)+'%"></u></div>'
+      +'<div class="ceb-vf">reposo '+V.reposo+' · vuelve a la mitad en '
+      +(V.vida>=60?(V.vida/60)+' h':V.vida+' min')
+      +(V.cableada?'':' · <b>todavía sin estímulos</b>')+'</div></div>';
+  });
+  h+='</div>';
+  h+='<div class="ceb-per"><b>Lo que esto mueve de verdad ahora mismo</b>'
+    +'<div>largo de respuesta <span>'+pp.tok+' tokens</span></div>'
+    +'<div>temperatura <span>'+pp.temp.toFixed(2)+'</span></div>'
+    +'<div>voz (rate / pitch) <span>× '+pp.rateMul.toFixed(2)+' / × '+pp.pitchMul.toFixed(2)+'</span></div>'
+    +'<div>iniciativa <span>'+(pp.directo?'arma la tarjeta directo':'pregunta antes')+'</span></div></div>';
+  h+='<div class="ceb-log"><b>Últimas movidas</b>';
+  if(!e.log.length) h+='<div class="ceb-vacio">Todavía no se movió nada.</div>';
+  else e.log.forEach(l=>{
+    const V=CEB_VARS.find(x=>x.k===l.k);
+    h+='<div class="ceb-l"><span class="ceb-lh">'+l.h+'</span>'
+      +'<span class="ceb-lk">'+(V?V.n:l.k)+'</span>'
+      +'<span class="ceb-ld '+(l.d>0?'up':'dn')+'">'+(l.d>0?'+':'')+l.d+'</span>'
+      +'<span class="ceb-lm">'+l.motivo+'</span></div>';
+  });
+  h+='</div>';
+  h+='<div class="ceb-pie">Vive en este dispositivo. Nunca viaja a Firebase. Al motor sólo le llega '
+    +'una línea de texto con instrucciones de forma — ningún dato tuyo.</div>';
+  return h;
+}
+async function cebAbrir(){
+  try {
+    const hayPin = !!PIN_MEM_H || !!PIN_MEM;
+    if(hayPin){
+      const pin=prompt('PIN de seguridad:');
+      if(pin===null) return;
+      if(!(await pinOk(pin, PIN_MEM_H, PIN_MEM))){ alert('PIN incorrecto.'); return; }
+    }
+    const b=document.getElementById('ceb-body'); if(b) b.innerHTML=cebPanelHTML();
+    const btn=document.getElementById('ceb-cong-btn'); if(btn) btn.textContent=cebLeer().congelado?'descongelar':'congelar';
+    const m=document.getElementById('ceb-modal'); if(m) m.classList.add('visible');
+  } catch(e){ try{ regError('ceb:abrir', e); }catch(_){} }
+}
+function cebCerrar(){ try{ const m=document.getElementById('ceb-modal'); if(m) m.classList.remove('visible'); }catch(e){} }
+function cebNeutro(){
+  try {
+    if(!confirm('¿Volver el estado a reposo? Se pierden los números actuales y las últimas movidas.')) return;
+    cebEstado=cebReposo(); cebGuardar();
+    const b=document.getElementById('ceb-body'); if(b) b.innerHTML=cebPanelHTML();
+  } catch(e){ try{ regError('ceb:neutro', e); }catch(_){} }
+}
+function cebCongelarToggle(){
+  try {
+    const e=cebLeer(); e.congelado=!e.congelado; cebGuardar();
+    const btn=document.getElementById('ceb-cong-btn'); if(btn) btn.textContent=e.congelado?'descongelar':'congelar';
+    const b=document.getElementById('ceb-body'); if(b) b.innerHTML=cebPanelHTML();
+  } catch(err){ try{ regError('ceb:congelar', err); }catch(_){} }
+}
+
+
 function hablar(texto){
   if(!ttsOn||!window.speechSynthesis) return;
   // v2.3: ANTES de hablar, mic afuera — que TARS no se dicte a sí mismo.
@@ -2788,29 +3085,66 @@ function hablar(texto){
      circula para este bug. Con trozos de menos de 250 caracteres ninguno llega al límite de
      duración que ese truco ataca, y mete un microcorte propio. Si con esto todavía se
      entrecorta, es la voz: las de red (Google) sintetizan cada trozo por internet. */
-  hablarCola._id = (hablarCola._id || 0) + 1;
-  hablarCola(trozos, vFinal, matiz, hablarCola._id);
+  /* v56-vozviva (portado del MIRROR, 31/08/2026): se suelta la tanda anterior (_vivo=0) y el
+     arranque va tras un respiro de 60 ms, para que el cancel() de arriba no dispare el onend del
+     trozo en curso sobre la tanda nueva. El _id ya la corta; esto es cinturón. */
+  const _emitir = function(){
+    try{ hablarCola._vivo = 0; }catch(e){}
+    hablarCola._id = (hablarCola._id || 0) + 1;
+    hablarCola(trozos, vFinal, matiz, hablarCola._id);
+  };
+  try{ setTimeout(_emitir, 60); }catch(e){ _emitir(); }
   if (typeof duckMusic === 'function') duckMusic(); // v3.0: la música cede el paso a la voz
 }
 /* Habla la lista de a un trozo, encadenando por onend. Ver el comentario de hablar(). */
+/* ══ v56-vozviva (portado del MIRROR, 31/08/2026) — «LA VOZ SE QUEDA A MITAD Y NO SE ESCUCHA MÁS» ══
+   Chrome a veces NO dispara onend ni onerror: la síntesis termina y el evento nunca llega. La
+   cadena, que dependía 100% de ese evento, moría en silencio — ni en esa respuesta ni en las
+   siguientes. El resume() cada 4 s no cubre esto (sólo actúa si speaking && paused; acá el
+   sintetizador queda quieto, no pausado). EL ARREGLO: un vigía por trozo. Se estima cuánto
+   DEBERÍA durar (caracteres ÷ velocidad) + colchón; si al vencer el plazo seguir() no corrió y
+   el sintetizador no está hablando, se avanza igual. Es una red, no un reloj de carrera: si
+   sigue hablando, otra vuelta; nunca corta una lectura en curso.
+   NOTA plataforma: el duck de acá es por timer (ver duckMusic), no por _vivo; los _vivo quedan
+   por paridad con el MIRROR y son inertes hasta que se unifique el ducking. */
 function hablarCola(trozos, voz, matiz, id){
   if (hablarCola._id !== id) return;        // llegó una lectura nueva: esta tanda se abandona
-  if (!trozos || !trozos.length) return;
+  if (!trozos || !trozos.length){ if (hablarCola._vivo === id) hablarCola._vivo = 0; return; }
   const u = new SpeechSynthesisUtterance(trozos[0]);
   if (voz){ u.voice = voz; u.lang = voz.lang; }
   else { u.lang = (typeof i18nRecLang === 'function') ? i18nRecLang() : 'es-AR'; } // v36-i18n · v37-voz (V36-8b)
   u.rate = matiz.rate; u.pitch = matiz.pitch;
-  let yaSiguio = false;
+  let yaSiguio = false, vigia = null;
+  hablarCola._vivo = id;
   const seguir = function(){
-    if (yaSiguio) return; yaSiguio = true;   // onend y onerror no pueden disparar dos veces
+    if (yaSiguio) return; yaSiguio = true;   // onend, onerror y el vigía no pueden pisarse
+    if (vigia){ try{ clearTimeout(vigia); }catch(e){} vigia = null; }
+    if (trozos.length <= 1 && hablarCola._vivo === id) hablarCola._vivo = 0;
     setTimeout(function(){ hablarCola(trozos.slice(1), voz, matiz, id); }, 10);
   };
   u.onend = seguir;
   u.onerror = seguir;
+  /* ~14 caracteres/segundo al ritmo normal ÷ rate, + 4 s de colchón para el arranque (con voces
+     de red el primer sonido tarda). Si al vencer eso el sintetizador NO está hablando, el evento
+     se perdió: se avanza. Si SÍ habla, otra vuelta. */
+  const espera = 4000 + (String(trozos[0]).length / (14 * (matiz.rate || 1))) * 1000;
+  const revisar = function(){
+    if (yaSiguio) return;
+    let sabe = false, hablando = false;
+    try {
+      const ss = (typeof speechSynthesis !== 'undefined') ? speechSynthesis : null;
+      if (ss && typeof ss.speaking === 'boolean'){ sabe = true; hablando = ss.speaking || !!ss.pending; }
+    } catch(e){}
+    if (!sabe) return;                                            // sin dato: el vigía se calla
+    if (hablando){ vigia = setTimeout(revisar, 1500); return; }   // sigue viva: se espera
+    try { regError('voz:vigia', new Error('onend no llegó; sigo con el trozo siguiente')); } catch(e){}
+    seguir();
+  };
+  vigia = setTimeout(revisar, espera);
   try { speechSynthesis.speak(u); } catch(e){ seguir(); } // si speak() explota, la lectura sigue
 }
 // v2.5 — Esc calla la lectura en voz alta al instante (no toca nada más).
-document.addEventListener('keydown',ev=>{ if(ev.key==='Escape' && window.speechSynthesis && speechSynthesis.speaking) speechSynthesis.cancel(); });
+document.addEventListener('keydown',ev=>{ if(ev.key==='Escape' && window.speechSynthesis && speechSynthesis.speaking){ try{ hablarCola._id = (hablarCola._id||0)+1; hablarCola._vivo = 0; }catch(e){} speechSynthesis.cancel(); } }); /* v57-rol (portado): Esc INVALIDA la tanda (sube _id) ANTES de cancel(). Si no, el cancel() dispara onend→seguir()→habla el trozo siguiente igual, porque el guard mira _id. Ahora la cadena se corta de verdad. */
 // ── v36-lee (Etapa 13C C2) — «LEÉMELO»: lectura de DOCUMENTOS en voz alta ──
 // Reusa la voz elegida (elegirVozActual/MATIZ_VOZ) y el troceo por oraciones de hablar().
 // Lee por TANDAS de 30 trozos encadenadas por onend (encolar miles de utterances cuelga
@@ -6688,6 +7022,7 @@ async function send() {
   const esTarea = (mode === 'mirror') && esRedaccionEnNombre(text);
   if (!esTarea) history.push({role:'user', content:text});
   sesionTurnos++; // v35-vida (Etapa 5)
+  try{ if(typeof cebActiva==='function' && cebActiva() && mode==='mirror') cebTurnoUsuario(text, {}); }catch(e){} // v52-cebolla: gasta energía del turno (gated, solo espejo)
 
   // Elegir estilo visual y system prompt
   const isTarsDB = mode === 'tars' && tesisConnected;
@@ -6696,7 +7031,7 @@ async function send() {
   const systemPrompt = (mode==='jurado') ? buildAnaliticoSystem(SYSTEM_TARS_JURADO)
     : isTarsDB ? buildAnaliticoSystem(SYSTEM_TARS_DB)
     : (mode==='tars') ? buildAnaliticoSystem(SYSTEM_TARS)
-    : buildMirrorSystem(); // v25: el modo analítico hereda el oficio del usuario (lente profesional)
+    : (buildMirrorSystem() + cebLineaPrompt() + cebBanderaPrompt()); // v25 + v52-cebolla: estado sólo en modo espejo (gated)
   const msgStyle = mode==='jurado' ? 'jurado' : (isTarsDB ? 'db' : mode);
 
   // Mensajes a Groq: historial previo liviano + el mensaje actual CON contexto pesado.
@@ -6708,7 +7043,8 @@ async function send() {
   let reply = null;
   let errorMsg = null;
   try {
-    reply = await callGroqResiliente(mensajesGroq, systemPrompt, mode==='jurado'?1100:(isTarsDB?1500:700), (mode==='tars')?0.3:(mode==='jurado'?0.4:0.7));
+    const _cebP = (typeof cebActiva==='function' && cebActiva() && mode==='mirror') ? cebPerillas() : null; // v52-cebolla: perillas (en reposo = 700/0.70, idéntico)
+    reply = await callGroqResiliente(mensajesGroq, systemPrompt, _cebP ? _cebP.tok : (mode==='jurado'?1100:(isTarsDB?1500:700)), _cebP ? _cebP.temp : ((mode==='tars')?0.3:(mode==='jurado'?0.4:0.7)));
   } catch(e) {
     if (e.tipo === 'too_big' && (tesisContext || ragContext)) {
       // Reintento con contexto REDUCIDO: resumen de datos + menos fragmentos de PDF.
@@ -6730,6 +7066,7 @@ async function send() {
   }
 
   removeTyping();
+  try{ if(typeof cebActiva==='function' && cebActiva() && mode==='mirror') cebTurnoResultado({ error: !!errorMsg }); }catch(e){} // v52-cebolla
   if (!reply) reply = errorMsg || (mode==='tars'
     ? 'No pude procesar la consulta. Probá reformularla o más tarde.'
     : 'Che, no me llegó bien eso. ¿Me lo repetís?');
@@ -8664,6 +9001,8 @@ function duckMusic(){
        <div class="cons-h">¿Qué <em>sabe hacer</em> tu MIRROR?</div>
        <div class="cons-p">Activá solo lo que quieras. Cada cosa es real y ya está construida — nada de humo. Algunos prefieren su MIRROR en silencio; otros, con voz y micrófono. Es tu decisión.</div>
        <div id="cons-toggles"></div>
+       <label class="cons-label">Panel estado 🧅 <span style="opacity:0.6;font-size:9px;">(opcional — el estado interno de tu MIRROR en números honestos)</span></label>
+       <div id="cons-cebolla"></div>
        <label class="cons-label">Carácter de tu MIRROR <span style="opacity:0.6;font-size:9px;">(perillas estilo TARS de Interstellar — vos las regulás)</span></label>
        <div id="cons-caracter"></div>
        <a class="cons-premlink" onclick="abrirPremium()">💎 Insumos premium (honestos) y qué viene próximamente</a>
@@ -8785,6 +9124,7 @@ function duckMusic(){
 
   let motorSel = 'groq';
   let capState = Object.assign({}, CONFIG_DEFAULT.cap);
+  let cebState = { on:false, vars:{ energia:true, sintonia:true, claridad:true, carga:true } }; // v52-cebolla
   let colorSel = 'violeta';
 
   // Aplica el color del propio constructor en vivo (preview).
@@ -8801,7 +9141,7 @@ function duckMusic(){
     prog.querySelectorAll('span').forEach((s,i)=>s.classList.toggle('on', i<=n));
     document.getElementById('cons-ov').scrollTop = 0;
     if(n===2) renderMotores();
-    if(n===3){ renderToggles(); renderCaracter(); renderColors(); } // v35-car
+    if(n===3){ renderToggles(); renderCaracter(); renderColors(); renderCebolla(); } // v52-cebolla // v35-car
   };
 
   // ── COSTO HONESTO POR MOTOR (sin números que caduquen: modelo de costo + link al pricing real) ──
@@ -8874,6 +9214,21 @@ function duckMusic(){
       cont.appendChild(row);
     });
   }
+  // v52-cebolla: control del dueño — encender el panel estado y elegir sus dimensiones.
+  function renderCebolla(){
+    const cont = document.getElementById('cons-cebolla'); if(!cont) return; cont.innerHTML='';
+    const head = document.createElement('div'); head.className='cons-tog';
+    head.innerHTML = '<div><div class="tl">🧅 Panel estado (la «cebolla»)</div><div class="td">Un estado interno en NÚMEROS que ajusta el tono y vive en el dispositivo. No son sentimientos — se ven y se ponen en cero.</div></div>'+'<div class="cons-sw'+(cebState.on?' on':'')+'"></div>';
+    head.querySelector('.cons-sw').onclick = function(){ cebState.on=!cebState.on; this.classList.toggle('on', cebState.on); };
+    cont.appendChild(head);
+    (typeof CEB_VARS!=='undefined'?CEB_VARS:[]).forEach(function(V){
+      const row = document.createElement('div'); row.className='cons-tog';
+      const dorm = V.cableada ? '' : ' <span style="opacity:0.6">(sin estímulos aún)</span>';
+      row.innerHTML = '<div><div class="tl">'+V.n+dorm+'</div><div class="td">'+V.q+'</div></div>'+'<div class="cons-sw'+(cebState.vars[V.k]?' on':'')+'"></div>';
+      row.querySelector('.cons-sw').onclick = function(){ cebState.vars[V.k]=!cebState.vars[V.k]; this.classList.toggle('on', cebState.vars[V.k]); };
+      cont.appendChild(row);
+    });
+  }
   // v35-car (Etapa 5B): perillas de carácter — el usuario esculpe CÓMO le habla su MIRROR.
   const CAR_INFO = [
     { k:'franqueza', t:'Franqueza', lo:'diplomático', hi:'sin anestesia' },
@@ -8931,6 +9286,7 @@ function duckMusic(){
     else if (motorSel==='cerebras'){ CONFIG.motorRespaldo='groq'; CONFIG.modeloRespaldo='qwen/qwen3.6-27b'; } // v38-motor
     else { CONFIG.motorRespaldo=''; CONFIG.modeloRespaldo=''; }
     CONFIG.cap = Object.assign({}, capState);
+    CONFIG.cebolla = { on: !!cebState.on, vars: Object.keys(cebState.vars).filter(function(k){ return cebState.vars[k]; }) }; // v52-cebolla
     CONFIG.caracter = Object.assign({}, carState); // v35-car
     CONFIG.colorTema = colorSel;
     // v41-barra: se guarda SIN barra final — las rutas se arman concatenando y «…dev//groq»
@@ -8978,6 +9334,7 @@ function duckMusic(){
     motorSel = CONFIG.motorPrincipal||'groq';
     capState = Object.assign({}, CONFIG_DEFAULT.cap, CONFIG.cap||{});
     carState = Object.assign({}, CONFIG_DEFAULT.caracter, CONFIG.caracter||{}); // v35-car
+    { const cc = CONFIG.cebolla || {}; const vs = Array.isArray(cc.vars)?cc.vars:['energia','sintonia','claridad','carga']; cebState={on:!!cc.on,vars:{}}; vs.forEach(function(k){ cebState.vars[k]=true; }); } // v52-cebolla
     colorSel = CONFIG.colorTema||'violeta';
     set('c-proxy',CONFIG.proxyUrl); set('c-fb',CONFIG.fbUrl);
     // v38-roles (H1.bis): si ya dio la constancia, no se le vuelve a exigir en cada ajuste
