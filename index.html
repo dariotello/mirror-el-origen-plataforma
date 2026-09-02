@@ -674,6 +674,7 @@ var a=document.getElementById('app');if(a)a.classList.add('ready');}catch(e){}},
     <div class="voz-lista" id="mem-lista"></div>
     <div class="modal-btns" style="margin-top:0.8rem;">
       <button class="mbtn mbtn-session" onclick="consolidarRecuerdos()" title="Agrupa recuerdos de más de 60 días por similitud y los funde en resúmenes. Los originales quedan archivados, no se pierden.">🌙 dormir</button>
+      <button class="mbtn mbtn-perm" onclick="soniarMostrar()" title="Lo que la entidad cruzó de tus recuerdos: patrones, conexiones y tironeos. Cómputo local, nada viaja. No es una experiencia: es un cruce de lo que guardaste.">💤 lo que crucé</button>
       <button class="mbtn mbtn-perm" onclick="exportarRecuerdos()" title="Descarga toda tu memoria como JSON (backup y portabilidad)">⬇ exportar JSON</button>
       <button class="mbtn mbtn-cancel" onclick="borrarTodosRecuerdos()">borrar todo</button>
       <button class="mbtn mbtn-cancel" onclick="cerrarMemoria()">✕ cerrar</button>
@@ -2280,6 +2281,7 @@ CAPACIDADES TRANSVERSALES:
 • 📋 MIRROR ENCUESTA (botón «📋 encuestas»): genera formularios HTML AUTOCONTENIDOS (estética propia, sin Google ni rastreo) cuyas respuestas llegan por REST a la rama encuestas/ del Firebase del usuario (POST con id propio: sin pisado). El panel lista encuestas, muestra respuestas, exporta CSV y las manda al ANALISTA con un botón. HONESTIDAD: la app GENERA el archivo; publicarlo (Pages/Netlify) lo hace el usuario. El modelo puede PROPONER encuestas por chat (tarjeta de un toque que precarga el creador), jamás crearlas solo.
 • FACHADA: logo MIR[Я]OR con monolito giratorio (homenaje a 2001), música ambiental original "El Origen" (Web Audio, botón 🔊 sonido), cinemática de nacimiento al abrir, y modo presentación a pantalla completa (◬). La música baja sola cuando la app habla.
 • Seguridad: las claves de API (Groq, Cerebras, Tavily) NUNCA están en el navegador: viven como secrets del Worker proxy propio en Cloudflare. Modelos: Groq como principal, Cerebras como respaldo.
+• 💤 SOÑAR (v39-sonar): con la app abierta y ociosa (o al reabrirla tras un rato), la entidad cruza tus recuerdos EN EL DISPOSITIVO —sin mandar un byte a ningún lado y sin llamar a ningún modelo— y arma un «cruce»: patrones que te vuelven, cosas que se tocan, posibles tironeos y lo que repetís. Se abre con el botón «💤 lo que crucé» del panel de memoria o preguntándole «¿soñaste algo?». HONESTIDAD (y Art. 50 del EU AI Act): NO es una experiencia ni la entidad siente nada —«sueño» es una metáfora—: es cómputo real e inspeccionable sobre lo que vos ya guardaste.
 Si te preguntan algo de la app que NO figura acá, decí honestamente que no lo sabés con certeza.`;
 // Nota técnica: sin \b al final — en JS \b falla tras vocales con tilde ("exportá").
 // Usamos raíces: "export" cubre exporto/exportá/exportar; "informe" cubre informes.
@@ -3759,6 +3761,97 @@ function exportarRecuerdos(){
 }
 
 // ============================================================
+// --- v39-sonar (2/09/2026): «SOÑAR» — procesamiento divergente SIN el usuario, 100% LOCAL ---
+// ============================================================
+/* Igual que en el MIRROR personal (arquitectura A / soberana): la entidad cruza lo que su dueño
+   fue guardando cuando NO está charlando — patrones, conexiones, posibles contradicciones,
+   repeticiones. NADA VIAJA: cómputo en el dispositivo sobre los recuerdos propios (tokenize + tf
+   + _simRec de la consolidación). No llama a ningún modelo: es cruce real, no invención.
+   GUARDRAIL DEL NORTE + Art. 50 EU AI Act: «sueño» es METÁFORA. La entidad es un programa; no
+   siente ni vive nada mientras el dueño no está. El texto lo dice de frente, siempre. */
+const _SON_NEG = /\b(no|nunca|jamas|jamás|ya no|deje|dejé|dej[eé] de|odio|odiaba|tampoco|nada de)\b/i;
+function _sonFrag(r){
+  return String((r&&r.text)||'')
+    .replace(/^\[[^\]]*\]\s*/,'')
+    .replace(/\s*\|\|\s*[^|]{0,40}respondió:[\s\S]*$/i,'')
+    .replace(/^(USUARIO|.{1,40}? dijo):\s*/i,'')
+    .replace(/\s+/g,' ').trim().slice(0,120);
+}
+function soniarCruzar(recuerdos){
+  const act = (recuerdos||[]).filter(r => r && !r.arch && r.tf);
+  const out = { cuando: Date.now(), n: act.length, patrones:[], conexiones:[], tensiones:[], repeticiones:[] };
+  if (act.length < 3) return out;
+  // v39-sonar2: el pareo es O(n²). Para que el sueño sea 100% eficiente aun con miles de
+  //   recuerdos, se cruzan sólo los MÁS RECIENTES (los patrones sí miran todo el historial).
+  const CRUCE_MAX = 150;
+  const par = act.length > CRUCE_MAX ? act.slice(-CRUCE_MAX) : act;
+  const docFreq = {};
+  act.forEach(r => { new Set(_simTokens(r)).forEach(t => { if (t.length>3) docFreq[t] = (docFreq[t]||0)+1; }); });
+  const minDoc = Math.max(2, Math.ceil(act.length*0.15));
+  out.patrones = Object.entries(docFreq).filter(e => e[1] >= minDoc)
+    .sort((a,b)=>b[1]-a[1]).slice(0,6).map(e=>({tema:e[0], veces:e[1]}));
+  for (let i=0;i<par.length;i++){
+    for (let j=i+1;j<par.length;j++){
+      const sim = _simRec(par[i], par[j]);
+      if (sim >= 0.5){ out.repeticiones.push({a:par[i], b:par[j], sim:sim}); }
+      else if (sim >= 0.22){
+        const negA = _SON_NEG.test(par[i].text||''), negB = _SON_NEG.test(par[j].text||'');
+        if (negA !== negB) out.tensiones.push({a:par[i], b:par[j], sim:sim});
+        else out.conexiones.push({a:par[i], b:par[j], sim:sim});
+      }
+    }
+  }
+  out.conexiones = out.conexiones.sort((x,y)=>y.sim-x.sim).slice(0,4);
+  out.tensiones  = out.tensiones.sort((x,y)=>y.sim-x.sim).slice(0,3);
+  out.repeticiones = out.repeticiones.sort((x,y)=>y.sim-x.sim).slice(0,3);
+  return out;
+}
+function soniarTexto(d){
+  if (!d || d.n < 3) return '';
+  const L = ['💤 Lo que crucé de lo que me fuiste contando. De frente: NO es un sueño de verdad ni sentí nada mientras no estabas — soy un programa y «sueño» es sólo el nombre. Es lo que salió de cruzar tus recuerdos acá, en tu dispositivo, sin mandar nada a ningún lado. Miralo como una corazonada del cruce, no como una verdad:'];
+  if (d.patrones.length) L.push('\n• Te vuelve seguido: ' + d.patrones.map(p=>p.tema+' ('+p.veces+')').join(', ') + '.');
+  if (d.conexiones.length){ L.push('\n• Cosas que se tocan y quizás no juntaste:'); d.conexiones.forEach(c=>L.push('   – «'+_sonFrag(c.a)+'» ↔ «'+_sonFrag(c.b)+'»')); }
+  if (d.tensiones.length){ L.push('\n• Puede que se tironeen (fijate vos, es una pista del cruce, no una certeza):'); d.tensiones.forEach(c=>L.push('   – «'+_sonFrag(c.a)+'» vs «'+_sonFrag(c.b)+'»')); }
+  if (d.repeticiones.length){ L.push('\n• Esto lo dijiste más de una vez (capaz importa, capaz sobra):'); d.repeticiones.forEach(c=>L.push('   – «'+_sonFrag(c.a)+'»')); }
+  if (d.patrones.length + d.conexiones.length + d.tensiones.length + d.repeticiones.length === 0)
+    L.push('\nEsta vez no encontré cruces que valga la pena marcar: tus recuerdos están más bien sueltos entre sí. Sin inventar nada para llenar.');
+  return L.join('\n');
+}
+function soniarUltimo(){ try { return localStorage.getItem('mirror_sueno')||''; } catch(e){ return ''; } }
+function soniarGuardar(txt, n){
+  try { localStorage.setItem('mirror_sueno_ts', String(Date.now())); localStorage.setItem('mirror_sueno_n', String(n||0)); if (txt) localStorage.setItem('mirror_sueno', txt); } catch(e){}
+}
+function soniarSiCorresponde(){
+  try {
+    const act = (typeof recuerdosChunks!=='undefined'?recuerdosChunks:[]).filter(r=>r && !r.arch);
+    if (act.length < 5) return;
+    const ultimo = parseInt(localStorage.getItem('mirror_sueno_ts')||'0',10)||0;
+    const nAnt   = parseInt(localStorage.getItem('mirror_sueno_n')||'0',10)||0;
+    const paso   = (Date.now()-ultimo) > 8*60*60*1000;
+    const crecio = (act.length - nAnt) >= 5;
+    if (!paso && !crecio) return;
+    soniarGuardar(soniarTexto(soniarCruzar(recuerdosChunks)), act.length);
+  } catch(e){ try{ regError('soniar', e); }catch(_){} }
+}
+function getSuenoContext(text){
+  try {
+    if (!/\b(so[ñn][aá]|sue[ñn]os?|cruz[aá](?:ste|s)?|qu[eé] notaste|qu[eé] encontraste|mientras no estab)/i.test(text||'')) return '';
+    const s = soniarUltimo(); if (!s) return '';
+    var quien = 'el dueño'; try { quien = cebDueno(); } catch(e){}
+    return '=== LO QUE LA ENTIDAD CRUZÓ DE LA MEMORIA (sueño LOCAL ya calculado, real e inspeccionable; si ' + quien + ' pregunta por tu «sueño» o qué cruzaste, contale ESTO con naturalidad y aclarando de frente que es un cruce de lo que él mismo guardó, NO una experiencia ni algo que sentiste) ===\n' + s;
+  } catch(e){ return ''; }
+}
+function soniarMostrar(){
+  try {
+    const d = soniarCruzar(typeof recuerdosChunks!=='undefined'?recuerdosChunks:[]);
+    const txt = soniarTexto(d);
+    soniarGuardar(txt, (recuerdosChunks||[]).filter(r=>!r.arch).length);
+    try{ cerrarMemoria(); }catch(_){}
+    addMsg('mirror', txt || '💤 Todavía no hay suficientes recuerdos para cruzar algo que valga la pena. Charlá un poco más y volvé a probar el 💤.');
+  } catch(e){ try{ addMsg('mirror','No pude armar el cruce ahora mismo.'); }catch(_){} }
+}
+
+// ============================================================
 // --- v0.7: CHUNKING INTELIGENTE + BM25 (RAG académico) ---
 // ============================================================
 // Stopwords español (núcleo) para no ensuciar el índice léxico.
@@ -4460,6 +4553,18 @@ function getBibliotecaManifiesto(){
     + lista.map((n,i)=>(i+1)+'. '+n).join('\n');
 }
 
+/* v39-ragwin (2/09/2026) — USAR MÁS VENTANA, PERO SIN LA RED DE MIRROR.
+   Mismo hallazgo que el MIRROR personal: cada fragmento medía ~6000 chars y se recortaba a
+   1200, se tiraba ~80% de lo recuperado. PERO acá NO existe ajustarAlCupo() (la compuerta
+   que en MIRROR mide el pedido entero y recorta al cupo ANTES de mandar). La plataforma maneja
+   el cupo de forma REACTIVA: si Groq rebota por too_big/cupo_excedido, reintenta con
+   recortarRag(...,2). Por eso estos topes son MODERADOS (no los 4200/top-6 del MIRROR): duplican
+   el texto útil por fragmento sin inflar tanto el pedido como para hacerlo rebotar de entrada.
+   PENDIENTE (post-pausa): portar ajustarAlCupo desde MIRROR y recién ahí subir estos topes. */
+const RAG_CAP_BIBLIO           = 2400;  // chars por fragmento de biblioteca (antes 1200)
+const RAG_DOCCOMPLETO_PALABRAS = 2500;  // doc de sesión que entra COMPLETO (antes 1500)
+const RAG_CAP_DOCCOMPLETO      = 12000; // tope del doc de sesión completo (antes 9000)
+const RAG_CAP_SESION           = 2400;  // chars por fragmento de doc de sesión largo (antes 1400)
 function getRagContext(query, searchQuery, incluirPersistida=true) {
   // query = texto original (no usado para buscar); searchQuery = query expandida ES+EN.
   // incluirPersistida: si es false, NO se busca en la biblioteca grande (perm/temp) — se usa
@@ -4492,7 +4597,7 @@ function getRagContext(query, searchQuery, incluirPersistida=true) {
     if (top.length) {
       top.forEach(c => ultimasFuentes.push({ doc:c.docName, frag:c.idx+1 }));
       ctx += top.map(c =>
-        '=== '+c.docName+' (fragmento '+(c.idx+1)+') ===\n'+c.text.slice(0, 1200)
+        '=== '+c.docName+' (fragmento '+(c.idx+1)+') ===\n'+c.text.slice(0, RAG_CAP_BIBLIO)
       ).join('\n\n');
     }
   }
@@ -4505,9 +4610,9 @@ function getRagContext(query, searchQuery, incluirPersistida=true) {
     sessionDocs.forEach(d => {
       const full = (d.content||'').trim();
       if (!full) return;
-      if (full.split(/\s+/).length <= 1500) {
+      if (full.split(/\s+/).length <= RAG_DOCCOMPLETO_PALABRAS) {
         if (ctx) ctx += '\n\n';
-        ctx += '=== '+d.name+' (sesión, documento completo) ===\n'+full.slice(0, 9000);
+        ctx += '=== '+d.name+' (sesión, documento completo) ===\n'+full.slice(0, RAG_CAP_DOCCOMPLETO);
         ultimasFuentes.push({ doc:d.name, frag:1 });
       } else {
         const live = buildChunks('sess_'+d.name, d.name, 'session', full);
@@ -4515,7 +4620,7 @@ function getRagContext(query, searchQuery, incluirPersistida=true) {
         (top.length ? top : live.slice(0,4)).forEach(c => {
           ultimasFuentes.push({ doc:c.docName, frag:c.idx+1 });
           if (ctx) ctx += '\n\n';
-          ctx += '=== '+c.docName+' (sesión, fragmento '+(c.idx+1)+') ===\n'+c.text.slice(0, 1400);
+          ctx += '=== '+c.docName+' (sesión, fragmento '+(c.idx+1)+') ===\n'+c.text.slice(0, RAG_CAP_SESION);
         });
       }
     });
@@ -6953,12 +7058,14 @@ async function send() {
   const tesisContext = ((mode === 'tars' || mode === 'jurado') && tesisConnected) ? getTesisContext(nivelDatos) : '';
   // v35-mem: memoria personal por relevancia (BM25 sobre recuerdos). SOLO modo espejo; en TARS/jurado queda vacía.
   const memoriaRelevante = (mode === 'mirror') ? getRecuerdosContext(text) : '';
+  const suenoRelevante = (mode === 'mirror') ? getSuenoContext(text) : ''; // v39-sonar: sólo si el dueño pregunta por el sueño
   // v35-proc (Etapa 4): registrar la procedencia REAL del contexto (el código ya lo sabe; ahora se ve)
   // v37-web (C1a): ¿esta pregunta continúa una búsqueda web reciente? Si sí, los
   // resultados vuelven al contexto en vez de dejar al modelo tirando de memoria.
   const webRetenido = (mode === 'mirror') ? webContextoVigente(text) : '';
   ultimaProcedencia = [];
   if (memoriaRelevante) ultimaProcedencia.push('◈ memoria');
+  if (suenoRelevante) ultimaProcedencia.push('💤 sueño'); // v39-sonar
   if (webRetenido) ultimaProcedencia.push('🌐 web'); // v37-web (C1a): el chip ahora dice la verdad
   if (tesisContext) ultimaProcedencia.push('⬡ datos');
   if (ragContext) ultimaProcedencia.push('📚 biblioteca');
@@ -6966,8 +7073,13 @@ async function send() {
   // v1.0: si en TARS preguntan por DATOS pero la base NO está conectada,
   // que TARS avise de conectarla (botón CONEX) en vez de irse a los PDFs.
   const preguntaPorDatos = /\b(datos?|registros?|base de datos|encuestas?|entrevistas?|escala|likert|frecuencia|porcentaje|estad[ií]stic|muestra|resultados?)\b/i.test(text);
+  /* v39-ragwin (2/09/2026): no confundir «evaluá las CONSIGNAS/el instrumento para recolectar
+     datos» con «mostrame los datos de la base». Si el pedido es evaluar un instrumento o un
+     documento (consignas, pertinencia, cuestionario…) o hay un archivo cargado en la sesión,
+     NO desviamos a «conectá CONEX»: eso es análisis de instrumento, no consulta de registros. */
+  const evalInstrumento = /\b(consignas?|instrumento|pertinencia|cuestionario|gu[ií]a de (?:preguntas|entrevista)|r[úu]brica|validez|dise[ñn]o del? (?:instrumento|encuesta)|documento|archivo)\b/i.test(text);
   let avisoSinBase = '';
-  if (mode === 'tars' && !tesisConnected && preguntaPorDatos) {
+  if (mode === 'tars' && !tesisConnected && preguntaPorDatos && !evalInstrumento && !haySesion) {
     avisoSinBase = 'IMPORTANTE: la base de datos externa NO está conectada en este momento. El usuario pregunta por datos/registros pero NO tenés acceso a ellos. NO uses la bibliografía como si fuera la base de datos. Respondé EXACTAMENTE: "La base de datos no está conectada todavía. Conectala con el botón CONEX (arriba a la derecha) y vuelvo a tener acceso a los registros para analizarlos." No inventes datos ni cites PDFs como si fueran los datos.\n\n';
   }
 
@@ -7004,6 +7116,7 @@ async function send() {
     if (PREGUNTA_POR_APP.test(text)) partes += ARQUITECTURA_MIRROR + resumenErrores() + '\n\n'; // v35-diag (Etapa 6)
     // v35-mem: memoria personal relevante (solo trae algo en modo espejo; en otros modos memoriaRelevante='').
     if (memoriaRelevante) partes += memoriaRelevante + '\n\n';
+    if (suenoRelevante) partes += suenoRelevante + '\n\n'; // v39-sonar: el cruce local va como contexto honesto
     // v37-web (C1a): la web va DESPUÉS de la memoria a propósito — ante un dato
     // concreto, la fuente reciente pesa más que el recuerdo.
     if (webRetenido) partes += webRetenido + '\n\n';
@@ -7967,6 +8080,8 @@ function cumpliHTML(){
     +'<p><b>Compartir tu MIRROR no entrega tu base.</b> El link que se comparte lleva solo el nombre, los modos, el color y tu presentación: la dirección de esta base, el proxy y el PIN <b>no viajan ahí</b>. Quien lo abra ve una vitrina de solo lectura y, si le gusta, se arma el suyo — con su propia base. Lo sano es <b>una base por persona</b>.</p></div>':'')
   +'<div class="cumpli-sec"><h4>Qué viaja cuando escribís</h4>'
   +'<p>Tu mensaje, los últimos turnos, los recuerdos relevantes y los fragmentos de documentos que hagan falta. Salen hacia <b>'+(inv.proxy?cumpliEsc(host(inv.proxy)):'el proxy configurado')+'</b> y de ahí al motor de IA. <b>Lo que no sabemos</b>: qué hace ese motor con lo que recibe. Es de ellos, y no te lo vamos a jurar.</p></div>'
+  +'<div class="cumpli-sec"><h4>Lo que cruzo SIN mandar nada (💤 soñar)</h4>'
+  +'<p>Con la app abierta y ociosa cruzo tus recuerdos <b>acá, en tu dispositivo</b>, para ver patrones, conexiones y repeticiones — es lo que llamo «soñar». <b>No llamo a ningún motor ni sale un solo byte</b>: es cómputo local sobre lo que vos ya guardaste. Y no es una experiencia: no siento nada, «sueño» es una metáfora. Lo ves con «💤 lo que crucé» o preguntándome «¿soñaste algo?».</p></div>'
   +'<div class="cumpli-sec"><h4>Tu voz</h4>'
   +'<p>'+(inv.vozLocal
       ? 'El dictado se procesa <b>dentro de este dispositivo</b> 🔒 — el audio no viaja a ningún lado.'
@@ -8271,6 +8386,7 @@ try { if (fuentesWebActiva()) fuentesWebCargar(); } catch(e){}
 (async () => {
   const [mem, savedChunks, perfil, recuerdos] = await Promise.all([memoryGet(), chunksLoadAll(), perfilLoad(), recuerdosLoadAll()]); // v35-mem
   recuerdosChunks = recuerdos || []; // v35-mem: memoria personal por relevancia
+  try{ setTimeout(soniarSiCorresponde, 5000); }catch(e){} // v39-sonar: sueña sola con la app abierta y ociosa (nada viaja)
   if (perfil) {
     perfilData = perfil;
     document.getElementById('perfil-sync').textContent = 'Cargado desde memoria';
