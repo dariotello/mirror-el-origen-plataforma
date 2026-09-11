@@ -1556,6 +1556,10 @@ function recortar_(s, max) {
         <p>Los teléfonos y mails que tu MIRROR tiene guardados. Viven en <b>este dispositivo</b>, no salen de acá. Cuando le pedís «mandale un WhatsApp a X», los saca de esta lista.</p>
         <div class="voz-lista" id="agenda-lista"></div>
         <div style="border-top:1px solid var(--border);margin-top:10px;padding-top:10px;">
+          <div style="font-size:11px;opacity:0.7;margin-bottom:6px;">🗓 Tus tareas / pendientes — lo que agendaste vive acá, en tu dispositivo, y te lo recuerdo</div>
+          <div class="voz-lista" id="tareas-lista"></div>
+        </div>
+        <div style="border-top:1px solid var(--border);margin-top:10px;padding-top:10px;">
           <div style="font-size:11px;opacity:0.7;margin-bottom:6px;">Agregar o actualizar un contacto</div>
           <div style="display:flex;flex-wrap:wrap;gap:6px;">
             <input type="text" id="ag-nombre" placeholder="nombre" style="flex:1 1 120px;font-size:12px;background:var(--glass);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:7px;" aria-label="Nombre del contacto">
@@ -1565,6 +1569,16 @@ function recortar_(s, max) {
         </div>
         <div class="modal-btns" style="margin-top:0.8rem;">
           <button class="mbtn mbtn-perm" onclick="agendaAgregarDesdePanel()">＋ guardar contacto</button>
+          <button class="mbtn mbtn-session" onclick="(document.getElementById('ag-import')||{}).click&&document.getElementById('ag-import').click()" title="Importá tus contactos desde un .vcf o .csv exportado del celular (o de Google Contactos). Se leen acá, en tu dispositivo — no viaja nada.">📥 importar del celu</button>
+          <input type="file" id="ag-import" accept=".vcf,.csv,.txt,text/vcard,text/csv" onchange="contactosImportarArchivo(event)" style="display:none;" aria-label="Importar contactos desde archivo .vcf o .csv">
+      <details class="ag-ayuda" style="flex:1 1 100%;margin-top:6px;font-size:11.5px;color:var(--text-dim);">
+        <summary style="cursor:pointer;color:var(--text-dim);list-style:revert;">¿cómo paso todos mis contactos de una?</summary>
+        <div style="margin-top:6px;line-height:1.55;">
+          <b>Desde la compu (te trae todos):</b> entrá a <b>contacts.google.com</b> con tu cuenta → menú de la izquierda → <b>Exportar</b> → elegí <b>vCard (.vcf)</b> → Exportar (se baja un archivo). Después tocá acá <b>📥 importar del celu</b> y elegí ese archivo.<br>
+          <b>Desde el celular:</b> Contactos → Ajustes → <b>Exportar a .vcf</b>, y después importás ese archivo.<br>
+          <span style="opacity:0.75;">Se lee todo en tu dispositivo — no viaja nada. No piso los contactos que ya tenías y te aviso cuántos entraron.</span>
+        </div>
+      </details>
           <button class="mbtn mbtn-cancel" onclick="cerrarAgenda()">✕ cerrar</button>
         </div>
       </div>
@@ -2700,6 +2714,7 @@ function renderAgenda(){
 }
 function abrirAgenda(){
   renderAgenda();
+  try{ renderTareas(); }catch(e){}
   const n=document.getElementById('ag-nombre'), t=document.getElementById('ag-tel'), m=document.getElementById('ag-mail');
   if(n)n.value=''; if(t)t.value=''; if(m)m.value='';
   const modal=document.getElementById('agenda-modal'); if(modal) modal.classList.add('visible');
@@ -3770,15 +3785,30 @@ function exportarRecuerdos(){
    GUARDRAIL DEL NORTE + Art. 50 EU AI Act: «sueño» es METÁFORA. La entidad es un programa; no
    siente ni vive nada mientras el dueño no está. El texto lo dice de frente, siempre. */
 const _SON_NEG = /\b(no|nunca|jamas|jamás|ya no|deje|dejé|dej[eé] de|odio|odiaba|tampoco|nada de)\b/i;
+/* v39-sonar3 (9/09/2026) — CALIDAD del cruce (hallazgos en vivo de Darío en la plataforma):
+   (a) los PATRONES mostraban muletillas («bien», «tengo», «querés», «puedo»): filtramos con
+       este stoplist de palabras comunes que NO son tema, además de STOPWORDS_ES.
+   (b) se colaban recuerdos triviales (saludos/despedidas) y turnos donde el asistente tiró un
+       error: se descartan antes de cruzar. */
+const _SON_STOP = new Set(('bien mal tengo tenes tenés tiene tienen tuve quiero queres querés quiere queria quería puedo podes podés puede pude hacer hago haces hace cosa cosas algo nada todo toda gusta gustan gustaria gustaría saber sabes sabe digo dice decir dije voy vas vamos fui estar estoy estas está estan estamos ser soy sos somos dar doy veo esto esta este ese esa eso aca acá alla allá ahora hoy ayer mañana igual capaz quizas quizás bueno buena dale gracias hola chau tema temas vez veces').split(' '));
+const _SON_TRIVIAL = /^(hola|buenas|buen d[ií]a|buenas noches|buenas tardes|chau|adios|adiós|gracias|ok|oka|dale|listo|s[ií]|no|jaja+|nada|me voy a dormir|hasta (luego|ma[ñn]ana)|nos vemos|buena noche|todo bien)\b/i;
+const _SON_ERROR = /no pude procesar|reintent[aá]|no te (puedo|pude) escuchar|maximum context|too large|cupo|sin conexi[oó]n|no tengo (acceso|conexi[oó]n)/i;
 function _sonFrag(r){
   return String((r&&r.text)||'')
-    .replace(/^\[[^\]]*\]\s*/,'')
-    .replace(/\s*\|\|\s*[^|]{0,40}respondió:[\s\S]*$/i,'')
-    .replace(/^(USUARIO|.{1,40}? dijo):\s*/i,'')
+    .replace(/^\[[^\]]*\]\s*/,'')                        // saca el sello de fecha
+    .split('||')[0]                                         // SOLO lo que dijo el usuario (no la respuesta)
+    .replace(/^(?:.{1,40}?\s+dijo|usuario|asistente)\s*:\s*/i,'') // saca el rótulo de quién habló
     .replace(/\s+/g,' ').trim().slice(0,120);
 }
 function soniarCruzar(recuerdos){
-  const act = (recuerdos||[]).filter(r => r && !r.arch && r.tf);
+  const act = (recuerdos||[]).filter(r => {
+    if (!r || r.arch || !r.tf) return false;
+    const u = _sonFrag(r);                                    // lo que dijo el usuario, limpio
+    if (u.length < 8 || _SON_TRIVIAL.test(u)) return false;   // muy corto o saludo/despedida: no aporta
+    const asis = String(r.text||'').split('||').slice(1).join(' ');
+    if (_SON_ERROR.test(asis)) return false;                  // el turno terminó en un error del asistente
+    return true;
+  });
   const out = { cuando: Date.now(), n: act.length, patrones:[], conexiones:[], tensiones:[], repeticiones:[] };
   if (act.length < 3) return out;
   // v39-sonar2: el pareo es O(n²). Para que el sueño sea 100% eficiente aun con miles de
@@ -3786,7 +3816,7 @@ function soniarCruzar(recuerdos){
   const CRUCE_MAX = 150;
   const par = act.length > CRUCE_MAX ? act.slice(-CRUCE_MAX) : act;
   const docFreq = {};
-  act.forEach(r => { new Set(_simTokens(r)).forEach(t => { if (t.length>3) docFreq[t] = (docFreq[t]||0)+1; }); });
+  act.forEach(r => { new Set(_simTokens(r)).forEach(t => { if (t.length>3 && !_SON_STOP.has(t) && (typeof STOPWORDS_ES==='undefined' || !STOPWORDS_ES.has(t))) docFreq[t] = (docFreq[t]||0)+1; }); });
   const minDoc = Math.max(2, Math.ceil(act.length*0.15));
   out.patrones = Object.entries(docFreq).filter(e => e[1] >= minDoc)
     .sort((a,b)=>b[1]-a[1]).slice(0,6).map(e=>({tema:e[0], veces:e[1]}));
@@ -3818,6 +3848,19 @@ function soniarTexto(d){
   return L.join('\n');
 }
 function soniarUltimo(){ try { return localStorage.getItem('mirror_sueno')||''; } catch(e){ return ''; } }
+/* v39-sonaviso (9/09/2026) — SALUDO SUAVE DEL SUEÑO AL ABRIR. Aditivo, fuera del camino del
+   chat: una línea descartable, UNA vez por sesión, sólo si hay un cruce guardado. No se encima
+   con el aviso de tareas (si ese ya salió, este se calla). Honestidad de frente: es un cruce, no
+   una experiencia. */
+function soniarAvisoInicial(){
+  try{
+    if(sessionStorage.getItem('mirror_sueno_aviso')==='1') return;
+    if(sessionStorage.getItem('mirror_tareas_aviso')==='1') return; // ya avisé de tareas: no encimo
+    const s=soniarUltimo(); if(!s) return;
+    sessionStorage.setItem('mirror_sueno_aviso','1');
+    cumpliLinea('💤 Mientras no estabas crucé tus recuerdos. Si te pinta, preguntame «¿qué soñaste?» — es un cruce de lo que vos guardaste, no una experiencia.');
+  }catch(e){ try{ regError('sonar:aviso',e) }catch(_){} }
+}
 function soniarGuardar(txt, n){
   try { localStorage.setItem('mirror_sueno_ts', String(Date.now())); localStorage.setItem('mirror_sueno_n', String(n||0)); if (txt) localStorage.setItem('mirror_sueno', txt); } catch(e){}
 }
@@ -4561,10 +4604,60 @@ function getBibliotecaManifiesto(){
    recortarRag(...,2). Por eso estos topes son MODERADOS (no los 4200/top-6 del MIRROR): duplican
    el texto útil por fragmento sin inflar tanto el pedido como para hacerlo rebotar de entrada.
    PENDIENTE (post-pausa): portar ajustarAlCupo desde MIRROR y recién ahí subir estos topes. */
-const RAG_CAP_BIBLIO           = 2400;  // chars por fragmento de biblioteca (antes 1200)
+/* ══ v39-cupo (10/09/2026) — PORTADO DESDE MIRROR (ajustarAlCupo) ══════════════════════════
+   POR QUÉ: la plataforma manejaba el cupo SOLO de forma reactiva (mandaba y, si Groq rebotaba,
+   reintentaba con menos). Eso obligaba a topes de RAG conservadores. Ahora, igual que el MIRROR,
+   se MIDE el pedido y se recorta ANTES de mandar (charla vieja primero; material después; nunca
+   la pregunta, que va al final). Con esta red se pueden subir los topes sin rebote de entrada.
+   Es EL MISMO código del MIRROR (ya auditado en producción), portado verbatim. El reintento
+   reactivo too_big de abajo queda igual, como segunda red. */
+const CUPO_TPM_GRATIS = 8000;
+const CUPO_MARGEN = 500;
+function estimarTokens(t){ return Math.ceil(String(t || '').length / 3.4); }
+function cortarLimpio(texto, largoMax){
+  const s = String(texto || '');
+  if (s.length <= largoMax) return s;
+  const duro = s.slice(0, largoMax);
+  const parr = duro.lastIndexOf('\n\n');
+  if (parr > largoMax * 0.6) return duro.slice(0, parr);         // hay un fin de párrafo cómodo
+  const orac = Math.max(duro.lastIndexOf('. '), duro.lastIndexOf('.\n'), duro.lastIndexOf('; '));
+  if (orac > largoMax * 0.6) return duro.slice(0, orac + 1);     // o un fin de oración
+  const esp = duro.lastIndexOf(' ');
+  return esp > 0 ? duro.slice(0, esp) : duro;                    // al menos, no cortar una palabra al medio
+}
+function ajustarAlCupo(contextoActual, systemPrompt, previos, maxSalida){
+  const fijo = estimarTokens(systemPrompt) + Number(maxSalida || 0) + CUPO_MARGEN;
+  let msgs = (previos || []).slice();
+  let ctx = String(contextoActual || '');
+  let recortado = false;         // se soltó ALGO (historial y/o material)
+  let recorteMaterial = false;   // se cortó MATERIAL de la pregunta (documentos, contexto) — esto sí amerita aviso
+  const total = () => fijo + msgs.reduce((a, m) => a + estimarTokens(m.content), 0) + estimarTokens(ctx);
+
+  /* 1) lo primero que se suelta es la charla vieja: es lo que menos aporta a esta respuesta.
+     v44-consolida2 (6/08): soltar historial viejo es limpieza normal y NO se avisa — el aviso
+     salía hasta en un «cómo estás» y hacía parecer que el motor fallaba (lo vio Darío). */
+  while (total() > CUPO_TPM_GRATIS && msgs.length) { msgs.shift(); recortado = true; }
+
+  // 2) después, el material de contexto — pero NUNCA la pregunta, que va al final.
+  if (total() > CUPO_TPM_GRATIS) {
+    const marca = '\n---\nPREGUNTA: ';
+    const i = ctx.lastIndexOf(marca);
+    const cuerpo = i >= 0 ? ctx.slice(0, i) : '';
+    const cola   = i >= 0 ? ctx.slice(i) : ctx;
+    if (cuerpo) {
+      const sobranTokens = total() - CUPO_TPM_GRATIS;
+      const largoObjetivo = Math.max(0, cuerpo.length - (Math.ceil(sobranTokens * 3.4) + 300));
+      const nuevo = largoObjetivo > 0 ? cortarLimpio(cuerpo, largoObjetivo) : ''; // v44-consolida: corte en borde limpio
+      ctx = (nuevo ? nuevo + '\n\n[…acá había más material, pero no entraba en el cupo del plan gratis y lo recorté. Si necesitás algo puntual de lo que falta, pedímelo.]\n' : '') + cola;
+      recortado = true; recorteMaterial = true;   // v44-consolida2: ESTO sí se avisa
+    }
+  }
+  return { mensajes: [...msgs, { role: 'user', content: ctx }], recortado: recortado, recorteMaterial: recorteMaterial };
+}
+const RAG_CAP_BIBLIO           = 4200;  // chars por fragmento de biblioteca (antes 1200)
 const RAG_DOCCOMPLETO_PALABRAS = 2500;  // doc de sesión que entra COMPLETO (antes 1500)
-const RAG_CAP_DOCCOMPLETO      = 12000; // tope del doc de sesión completo (antes 9000)
-const RAG_CAP_SESION           = 2400;  // chars por fragmento de doc de sesión largo (antes 1400)
+const RAG_CAP_DOCCOMPLETO      = 15000; // v39-cupo: subido (con ajustarAlCupo portado se puede)
+const RAG_CAP_SESION           = 4200;  // v39-cupo: subido (con ajustarAlCupo portado se puede)
 function getRagContext(query, searchQuery, incluirPersistida=true) {
   // query = texto original (no usado para buscar); searchQuery = query expandida ES+EN.
   // incluirPersistida: si es false, NO se busca en la biblioteca grande (perm/temp) — se usa
@@ -6378,7 +6471,8 @@ const ACTUA_CMDS = [
   { // ★N2: agendar evento → Google Calendar con el título puesto (fecha/hora las pone el usuario)
     re: /agend[aá](?:me)?\s+(?!.*n[uú]mero)(.{3,80})/i,
     run(m){ const t=m[1].trim().replace(/[?.!]+$/,'');
-            const ok=actuaTarjeta('📅','Agendar: '+t,'Se abre tu calendario con el título puesto — fecha y hora las confirmás vos.',actuaCalURL(t),'📅 abrir calendario');
+            const ok=actuaTarjeta('📅','Agendar: '+t,'Se abre tu calendario con el título puesto — fecha y hora las confirmás vos.',actuaCalURL(t,_tareaFecha(m.input||t)),'📅 abrir calendario'); // v59-caldate: misma fecha que se guarda
+            try{ tareaGuardar(t, _tareaFecha(m.input||t)); }catch(e){} // v39-tareas
             return ok?'Evento pre-armado ✅ — ajustá fecha y hora y guardalo.':'No pude armar la tarjeta — quedó en mi diagnóstico.'; }
   },
   { // música: prender
@@ -6527,6 +6621,148 @@ function actuaInterceptar(text){
 // una URL cruda (ni del modelo ni del usuario). Números: solo de la agenda local (localStorage,
 // TU dispositivo) o dictados explícitamente — NUNCA inventados.
 function actuaAgenda(){ try{ return JSON.parse(localStorage.getItem('mirror_agenda')||'{}') }catch(e){ return {} } }
+/* ══ v39-contactos (9/09/2026) — IMPORTAR LA AGENDA DEL CELULAR (pedido de Darío) ══
+   El navegador NO puede leer la agenda del teléfono solo: el flujo honesto es «exportá el
+   .vcf desde tu celu y subilo acá». Se lee EN EL DISPOSITIVO, nada viaja. Soporta vCard (.vcf)
+   y CSV (Google Contactos). No pisa lo que ya tenés: un contacto existente se saltea. */
+function _contNormTel(t){ t=String(t||'').trim(); if(!t) return ''; const mas=/^\+/.test(t); const d=t.replace(/[^\d]/g,''); return d?(mas?'+':'')+d:''; }
+function _contCsvFilas(t){
+  const filas=[]; let campo='',fila=[],q=false;
+  t=String(t||'').replace(/\r\n/g,'\n').replace(/\r/g,'\n');
+  for(let i=0;i<t.length;i++){ const ch=t[i];
+    if(q){ if(ch==='"'){ if(t[i+1]==='"'){campo+='"';i++;} else q=false; } else campo+=ch; }
+    else { if(ch==='"') q=true; else if(ch===','){ fila.push(campo);campo=''; } else if(ch==='\n'){ fila.push(campo); filas.push(fila); fila=[];campo=''; } else campo+=ch; } }
+  if(campo!==''||fila.length){ fila.push(campo); filas.push(fila); }
+  return filas.filter(f=>f.some(x=>String(x).trim()!==''));
+}
+/* ══ v39-tareas (9/09/2026) — AGENDA/TAREAS PERSISTENTE (pedido de Darío + de ATIS) ══
+   La tarjeta «Agendar» abría el calendario pero no guardaba nada. Ahora, cuando se agenda algo,
+   se ANOTA acá (localStorage, nada viaja); la entidad lo recuerda si le preguntás y avisa al
+   abrir si algo vence hoy. LEER/recordar, NUNCA enviar ni ejecutar solo — el toque final es tuyo. */
+function tareasCargar(){ try{ const a=JSON.parse(localStorage.getItem('mirror_tareas')||'[]'); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
+function tareasGuardarTodas(a){ try{ localStorage.setItem('mirror_tareas', JSON.stringify(a)); return true; }catch(e){ return false; } }
+function _tareaISO(d){ const z=new Date(d.getTime()-d.getTimezoneOffset()*60000); return z.toISOString().slice(0,10); }
+function _tareaFecha(texto){
+  const t=String(texto||'').toLowerCase(); const hoy=new Date();
+  if(/\bhoy\b/.test(t)) return _tareaISO(hoy);
+  if(/pasado\s+ma[nñ]ana/.test(t)){ const d=new Date(hoy); d.setDate(d.getDate()+2); return _tareaISO(d); }
+  if(/\bma[nñ]ana\b/.test(t)){ const d=new Date(hoy); d.setDate(d.getDate()+1); return _tareaISO(d); }
+  const mm={domingo:0,lunes:1,martes:2,miercoles:3,'miércoles':3,jueves:4,viernes:5,sabado:6,'sábado':6};
+  for(const dn in mm){ if(new RegExp('\\b'+dn+'\\b').test(t)){ const d=new Date(hoy); const delta=((mm[dn]-d.getDay())+7)%7||7; d.setDate(d.getDate()+delta); return _tareaISO(d); } }
+  const m=t.match(/\b(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{2,4}))?\b/);
+  if(m){ const dd=+m[1], mo=+m[2]-1, yy=m[3]?(+m[3]<100?2000+ +m[3]:+m[3]):hoy.getFullYear(); const d=new Date(yy,mo,dd); if(!isNaN(d.getTime())) return _tareaISO(d); }
+  return '';
+}
+function _tareaNorm(s){ return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,' ').trim(); }
+function tareaGuardar(titulo, fechaISO){
+  titulo=String(titulo||'').replace(/\s+/g,' ').trim().slice(0,120); if(!titulo) return false;
+  const a=tareasCargar();
+  if(a.some(x=>!x.hecha && _tareaNorm(x.titulo)===_tareaNorm(titulo) && (x.fecha||'')===(fechaISO||''))) return false;
+  a.push({id:'t_'+Date.now()+'_'+Math.random().toString(36).slice(2,6), titulo:titulo, fecha:fechaISO||'', ts:Date.now(), hecha:false});
+  return tareasGuardarTodas(a);
+}
+function tareasActivas(){ return tareasCargar().filter(x=>!x.hecha).sort((p,q)=>{ const a=p.fecha||'9999-99', b=q.fecha||'9999-99'; return a<b?-1:a>b?1:((p.ts||0)-(q.ts||0)); }); }
+function tareaHecha(id){ const a=tareasCargar(); const x=a.find(t=>t.id===id); if(x){ x.hecha=true; tareasGuardarTodas(a); } try{ renderTareas(); }catch(e){} }
+function tareaBorrar(id){ tareasGuardarTodas(tareasCargar().filter(t=>t.id!==id)); try{ renderTareas(); }catch(e){} }
+function _tareaFechaLinda(iso){ if(!iso) return ''; const p=String(iso).split('-'); return p.length===3?(p[2]+'/'+p[1]):iso; }
+function _tareaVence(iso){ if(!iso) return false; return iso <= _tareaISO(new Date()); }
+function tareasTexto(){ const a=tareasActivas(); if(!a.length) return ''; return a.map(x=>'• '+x.titulo+(x.fecha?' ('+_tareaFechaLinda(x.fecha)+')':'')).join('\n'); }
+function getTareasContext(text){
+  try{
+    if(!/\b(tarea|tareas|pendient|qu[eé] tengo que hacer|qu[eé] tengo pendiente|mi agenda|agenda de hoy|qu[eé] hay para hoy|recordator)/i.test(text||'')) return '';
+    const tt=tareasTexto(); if(!tt) return '';
+    return '=== TUS TAREAS/PENDIENTES GUARDADAS (en el dispositivo; son las que el dueño anotó — contáselas tal cual, NO inventes ni agregues) ===\n'+tt;
+  }catch(e){ return ''; }
+}
+function renderTareas(){
+  const cont=document.getElementById('tareas-lista'); if(!cont) return;
+  const a=tareasActivas();
+  if(!a.length){ cont.innerHTML='<div style="opacity:0.6;font-size:12px;padding:8px 2px;">No hay tareas guardadas. Cuando me pidas «agendá …» o «recordame …», la anoto acá.</div>'; return; }
+  cont.innerHTML=a.map(function(x){
+    const f=x.fecha?'<span style="opacity:0.8;'+(_tareaVence(x.fecha)?'color:#ffb454;':'')+'">'+_tareaFechaLinda(x.fecha)+'</span>':'';
+    return '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 6px;border-bottom:1px solid var(--border);">'
+      +'<div style="font-size:12.5px;color:var(--text-bright);">'+actuaEsc(x.titulo)+(f?' · '+f:'')+'</div>'
+      +'<div style="display:flex;gap:4px;"><button onclick="tareaHecha(\''+x.id+'\')" title="Marcar como hecha" aria-label="Hecha" style="background:none;border:1px solid var(--border);border-radius:6px;color:var(--text-dim);cursor:pointer;font-size:12px;padding:3px 8px;">✓</button>'
+      +'<button onclick="tareaBorrar(\''+x.id+'\')" title="Borrar" aria-label="Borrar" style="background:none;border:1px solid var(--border);border-radius:6px;color:var(--text-dim);cursor:pointer;font-size:12px;padding:3px 8px;">✕</button></div>'
+      +'</div>';
+  }).join('');
+}
+function tareasAvisoInicial(){
+  try{
+    if(sessionStorage.getItem('mirror_tareas_aviso')==='1') return;
+    const due=tareasActivas().filter(x=>x.fecha && _tareaVence(x.fecha));
+    if(!due.length) return;
+    sessionStorage.setItem('mirror_tareas_aviso','1');
+    const items=due.slice(0,3).map(x=>String(x.titulo).replace(/</g,'&lt;')).join(', ');
+    cumpliLinea('📋 Tenés '+due.length+' pendiente'+(due.length>1?'s':'')+' para hoy o vencido'+(due.length>1?'s':'')+': <b>'+items+'</b>. Preguntame «¿qué tengo pendiente?» cuando quieras.');
+  }catch(e){ try{ regError('tareas:aviso',e) }catch(_){} }
+}
+function contactosParse(texto){
+  const t=String(texto||''); const out=[];
+  if(/BEGIN:VCARD/i.test(t)){
+    const lineas=t.replace(/\r\n/g,'\n').replace(/\n[ \t]/g,'').split('\n');
+    let cur=null;
+    for(const ln of lineas){
+      if(/^BEGIN:VCARD/i.test(ln)){ cur={nombre:'',tel:'',email:'',_n:''}; continue; }
+      if(/^END:VCARD/i.test(ln)){ if(cur){ if(!cur.nombre&&cur._n) cur.nombre=cur._n; out.push(cur); } cur=null; continue; }
+      if(!cur) continue;
+      const c=ln.indexOf(':'); if(c<0) continue;
+      const prop=ln.slice(0,c).toUpperCase().replace(/^ITEM\d+\./,'').split(';')[0];
+      const val=ln.slice(c+1).trim();
+      if(prop==='FN'&&val) cur.nombre=val;
+      else if(prop==='N'&&!cur._n){ const p=val.split(';'); cur._n=((p[1]||'')+' '+(p[0]||'')).trim(); }
+      else if(prop==='TEL'&&!cur.tel) cur.tel=val;
+      else if(prop==='EMAIL'&&!cur.email) cur.email=val;
+    }
+  } else {
+    const filas=_contCsvFilas(t);
+    if(filas.length>1){
+      const head=filas[0].map(h=>String(h).toLowerCase().trim());
+      const idxNom=head.findIndex(h=>h==='name'||h==='nombre'||h==='full name');
+      const idxFirst=head.findIndex(h=>/^first name$|^nombre$|given name/.test(h));
+      const idxLast=head.findIndex(h=>/^last name$|^apellido$|family name/.test(h));
+      const idxTel=head.findIndex(h=>/phone.*value|^tel|tel[eé]fono|celular|m[oó]vil|mobile|phone/.test(h));
+      const idxMail=head.findIndex(h=>/e-?mail.*value|^e-?mail|correo/.test(h));
+      for(let i=1;i<filas.length;i++){
+        const fi=filas[i];
+        let nombre=idxNom>=0?(fi[idxNom]||''):'';
+        if(!nombre) nombre=[(idxFirst>=0?fi[idxFirst]:''),(idxLast>=0?fi[idxLast]:'')].filter(Boolean).join(' ').trim();
+        const tel=idxTel>=0?String(fi[idxTel]||'').split(/ ::: |;/)[0]:'';
+        const email=idxMail>=0?String(fi[idxMail]||'').split(/ ::: |;/)[0]:'';
+        out.push({nombre:String(nombre).trim(),tel:tel,email:email});
+      }
+    }
+  }
+  return out.map(c=>({nombre:String(c.nombre||'').trim(),tel:_contNormTel(c.tel),email:String(c.email||'').trim()}))
+            .filter(c=>c.nombre && (c.tel||c.email));
+}
+function contactosImportarArchivo(ev){
+  const f=ev&&ev.target&&ev.target.files&&ev.target.files[0]; if(!f) return;
+  const rd=new FileReader();
+  rd.onload=function(){
+    try{
+      const lista=contactosParse(String(rd.result||''));
+      if(!lista.length){ agendaAvisoPanel('No encontré contactos en ese archivo. Tiene que ser un .vcf (vCard) o un .csv exportado de tu celular o de Google Contactos.'); }
+      else {
+        const ag=actuaAgenda(); let nuevos=0,yaEstaban=0,fallos=0;
+        lista.forEach(function(c){
+          const k=_normNombre(c.nombre); if(!k) return;
+          if(ag[k]!==undefined){ yaEstaban++; return; }
+          const campos={};
+          if(c.tel && actuaNumOk(c.tel)) campos.tel=c.tel;
+          if(c.email && actuaMailDirOk(c.email)) campos.email=c.email;
+          if(!campos.tel && !campos.email) return;
+          if(actuaAgendaGuardar(c.nombre,campos)){ nuevos++; ag[k]=1; } else fallos++;
+        });
+        renderAgenda();
+        agendaAvisoPanel('Importé '+nuevos+' contacto(s) nuevo(s)'+(yaEstaban?' · '+yaEstaban+' ya estaban (no los toqué)':'')+(fallos?' · '+fallos+' no entraron (¿almacenamiento lleno?)':'')+'. Se leyó todo acá, en tu dispositivo — no viajó nada.');
+      }
+    }catch(e){ agendaAvisoPanel('No pude leer ese archivo. Probá con un .vcf o un .csv.'); try{regError('contactos:importar',e);}catch(_){} }
+    try{ ev.target.value=''; }catch(e){}
+  };
+  rd.onerror=function(){ try{ agendaAvisoPanel('No pude abrir el archivo.'); }catch(e){} };
+  rd.readAsText(f);
+}
 /* ══════════ v39-agenda (22/08/2026) — PORTE DE LA AGENDA DEL MIRROR PERSONAL ══════════
    Se construye ACÁ y se prueba ACÁ; no se copia a ojo. Lo que se trae y por qué:
    · _normNombre + clave normalizada: la agenda guardaba «maría» y se buscaba «maria» → no
@@ -6770,7 +7006,20 @@ function actuaWaNum(n){
 function actuaWaURL(n,msg){ const r=actuaWaNum(n); return 'https://wa.me/'+r.num+(msg?'?text='+encodeURIComponent(msg):''); }
 function actuaYtURL(q){ return 'https://www.youtube.com/results?search_query='+encodeURIComponent(q); }
 function actuaMapsURL(q){ return 'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(q); }
-function actuaCalURL(t){ return 'https://calendar.google.com/calendar/render?action=TEMPLATE&text='+encodeURIComponent(t); }
+function actuaCalURL(t, fechaISO){
+  // v59-caldate (10/09/2026) — POR QUÉ: antes el link no llevaba fecha y Google abría en HOY,
+  // aunque MIRROR ya sabía el día (la tarea persistente lo calcula con _tareaFecha). Hallazgo
+  // en vivo de Darío 10/09. Ahora, si hay fecha ISO válida, se pre-carga como evento de día
+  // completo (Google marca all-day con fin exclusivo = día siguiente). La HORA la seguís
+  // poniendo vos — no la inventamos. Sin fecha, se comporta igual que antes.
+  var base='https://calendar.google.com/calendar/render?action=TEMPLATE&text='+encodeURIComponent(t);
+  var m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(fechaISO||''));
+  if(m){ var d=new Date(+m[1],+m[2]-1,+m[3]);
+    if(!isNaN(d.getTime())){ var p=function(n){return String(n).padStart(2,'0');};
+      var fin=new Date(d.getTime()+86400000);
+      base+='&dates='+m[1]+m[2]+m[3]+'/'+fin.getFullYear()+p(fin.getMonth()+1)+p(fin.getDate()); } }
+  return base;
+}
 // v36-redactor (Etapa 13 C2) — REDACTOR: mail con asunto y cuerpo listos. La dirección se valida
 // con charset estricto (sin comillas ni <>) o se deja vacía y la completa el usuario en su correo.
 function actuaMailDirOk(d){ return /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(String(d||'').trim()); }
@@ -6975,7 +7224,8 @@ function actuaProcesarReply(reply){
          — la respuesta de texto queda igual. Hallazgo en vivo de Darío. */
       const _ped = (typeof ultimoPedidoUsuario === 'string') ? ultimoPedidoUsuario : '';
       if (/\b(agend[a\u00e1]|record[a\u00e1]|anot[a\u00e1]|recordatorio|calendario|en\s+(?:la\s+)?agenda)\b/i.test(_ped))
-        actuaPend=['📅','Agendar: '+String(a.titulo).slice(0,80),'Fecha y hora las confirmás vos.',actuaCalURL(String(a.titulo).slice(0,80)),'📅 abrir calendario'];
+        actuaPend=['📅','Agendar: '+String(a.titulo).slice(0,80),'Fecha y hora las confirmás vos.',actuaCalURL(String(a.titulo).slice(0,80),_tareaFecha(typeof ultimoPedidoUsuario==='string'?ultimoPedidoUsuario:'')),'📅 abrir calendario']; // v59-caldate
+        try{ tareaGuardar(String(a.titulo).slice(0,80), _tareaFecha(typeof ultimoPedidoUsuario==='string'?ultimoPedidoUsuario:'')); }catch(e){} // v39-tareas
     }
     // v37-agenda (A2): si el modelo no trae una dirección válida, se busca en la agenda LOCAL.
     // Cierra el hueco del redactor («destinatario a completar»). Nunca inventada.
@@ -7068,6 +7318,7 @@ async function send() {
   // v35-mem: memoria personal por relevancia (BM25 sobre recuerdos). SOLO modo espejo; en TARS/jurado queda vacía.
   const memoriaRelevante = (mode === 'mirror') ? getRecuerdosContext(text) : '';
   const suenoRelevante = (mode === 'mirror') ? getSuenoContext(text) : ''; // v39-sonar: sólo si el dueño pregunta por el sueño
+  const tareasRelevante = (mode === 'mirror') ? getTareasContext(text) : ''; // v39-tareas
   // v35-proc (Etapa 4): registrar la procedencia REAL del contexto (el código ya lo sabe; ahora se ve)
   // v37-web (C1a): ¿esta pregunta continúa una búsqueda web reciente? Si sí, los
   // resultados vuelven al contexto en vez de dejar al modelo tirando de memoria.
@@ -7075,6 +7326,7 @@ async function send() {
   ultimaProcedencia = [];
   if (memoriaRelevante) ultimaProcedencia.push('◈ memoria');
   if (suenoRelevante) ultimaProcedencia.push('💤 sueño'); // v39-sonar
+  if (tareasRelevante) ultimaProcedencia.push('📋 tareas'); // v39-tareas
   if (webRetenido) ultimaProcedencia.push('🌐 web'); // v37-web (C1a): el chip ahora dice la verdad
   if (tesisContext) ultimaProcedencia.push('⬡ datos');
   if (ragContext) ultimaProcedencia.push('📚 biblioteca');
@@ -7126,6 +7378,7 @@ async function send() {
     // v35-mem: memoria personal relevante (solo trae algo en modo espejo; en otros modos memoriaRelevante='').
     if (memoriaRelevante) partes += memoriaRelevante + '\n\n';
     if (suenoRelevante) partes += suenoRelevante + '\n\n'; // v39-sonar: el cruce local va como contexto honesto
+    if (tareasRelevante) partes += tareasRelevante + '\n\n'; // v39-tareas
     // v37-web (C1a): la web va DESPUÉS de la memoria a propósito — ante un dato
     // concreto, la fuente reciente pesa más que el recuerdo.
     if (webRetenido) partes += webRetenido + '\n\n';
@@ -7160,13 +7413,19 @@ async function send() {
   // v2.4: en jurado el proyecto completo viaja en CADA turno (≈7k tokens), así que el
   // historial va más corto — menos presión sobre la cuota por minuto = menos saturación.
   const previos = history.slice(mode==='jurado' ? -5 : -8, -1); // últimos turnos, sin el actual
-  const mensajesGroq = [...previos, {role:'user', content:contextoActual}];
+  // v39-cupo: perillas y presupuesto de salida se calculan ACÁ (ajustarAlCupo los necesita para
+  // medir). En reposo/no-cebolla dan los mismos números de siempre (jurado 1100, TARS-DB 1500,
+  // resto 700; temps de siempre). Antes vivían adentro del try.
+  const _cebP = (typeof cebActiva==='function' && cebActiva() && mode==='mirror') ? cebPerillas() : null; // v52-cebolla
+  const _maxSalida = _cebP ? _cebP.tok : (mode==='jurado'?1100:(isTarsDB?1500:700));
+  const _temp = _cebP ? _cebP.temp : ((mode==='tars')?0.3:(mode==='jurado'?0.4:0.7));
+  const _ajuste = ajustarAlCupo(contextoActual, systemPrompt, previos, _maxSalida); // v39-cupo: mide y recorta ANTES de mandar
+  const mensajesGroq = _ajuste.mensajes;
 
   let reply = null;
   let errorMsg = null;
   try {
-    const _cebP = (typeof cebActiva==='function' && cebActiva() && mode==='mirror') ? cebPerillas() : null; // v52-cebolla: perillas (en reposo = 700/0.70, idéntico)
-    reply = await callGroqResiliente(mensajesGroq, systemPrompt, _cebP ? _cebP.tok : (mode==='jurado'?1100:(isTarsDB?1500:700)), _cebP ? _cebP.temp : ((mode==='tars')?0.3:(mode==='jurado'?0.4:0.7)));
+    reply = await callGroqResiliente(mensajesGroq, systemPrompt, _maxSalida, _temp);
   } catch(e) {
     if (e.tipo === 'too_big' && (tesisContext || ragContext)) {
       // Reintento con contexto REDUCIDO: resumen de datos + menos fragmentos de PDF.
@@ -8182,6 +8441,8 @@ function cumpliTurno(){
   }catch(e){ try{ regError('cumpli:turno',e) }catch(_){} }
 }
 setTimeout(function(){ try{ cumpliAvisoInicial(); }catch(e){} }, 900);
+setTimeout(function(){ try{ tareasAvisoInicial(); }catch(e){} }, 1600); // v39-tareas
+setTimeout(function(){ try{ soniarAvisoInicial(); }catch(e){} }, 2300); // v39-sonaviso
 
 /* ══════════ v38-porta (H2) — PORTABILIDAD TOTAL ══════════
    Anti-retención hecho función: TODO lo del usuario en UN archivo, con verificación de
