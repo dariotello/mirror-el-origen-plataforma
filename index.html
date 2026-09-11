@@ -7338,8 +7338,13 @@ async function send() {
      datos» con «mostrame los datos de la base». Si el pedido es evaluar un instrumento o un
      documento (consignas, pertinencia, cuestionario…) o hay un archivo cargado en la sesión,
      NO desviamos a «conectá CONEX»: eso es análisis de instrumento, no consulta de registros. */
-  const evalInstrumento = /\b(consignas?|instrumento|pertinencia|cuestionario|gu[ií]a de (?:preguntas|entrevista)|r[úu]brica|validez|dise[ñn]o del? (?:instrumento|encuesta)|documento|archivo)\b/i.test(text);
+  const evalInstrumento = /\b(consignas?|instrumento|pertinencia|cuestionario|gu[ií]a de (?:preguntas|entrevista)|r[úu]brica|validez|dise[ñn]o del? (?:instrumento|encuesta)|documentos?|archivos?|papers?|apuntes?)\b/i.test(text);
   let avisoSinBase = '';
+  /* v39-routerdoc (11/09/2026): evalInstrumento ahora cubre el PLURAL (documentos/archivos) + papers/apuntes.
+     Hallazgo EN VIVO de Darío: "analizá los datos de mis documentos" (base SIN conectar, docs PERM)
+     caía en el aviso «conectá CONEX» porque la regex sólo tenía el singular — el modelo no veía sus
+     propios documentos. No se toca la protección de la base: un pedido de registros/encuestas SIN
+     mencionar documentos sigue desviando bien (eso lo amarra TEST_router_docs.js). */
   if (mode === 'tars' && !tesisConnected && preguntaPorDatos && !evalInstrumento && !haySesion) {
     avisoSinBase = 'IMPORTANTE: la base de datos externa NO está conectada en este momento. El usuario pregunta por datos/registros pero NO tenés acceso a ellos. NO uses la bibliografía como si fuera la base de datos. Respondé EXACTAMENTE: "La base de datos no está conectada todavía. Conectala con el botón CONEX (arriba a la derecha) y vuelvo a tener acceso a los registros para analizarlos." No inventes datos ni cites PDFs como si fueran los datos.\n\n';
   }
@@ -7363,6 +7368,12 @@ async function send() {
     }
   }
 
+  /* v39-memfix (11/09/2026): el usuario pregunta si RECUERDA / REPITE / empieza de cero.
+     Sin esto el modelo inventaba «no tengo memoria, cada charla empieza de cero» — FALSO y contra
+     la Regla de Oro: la app SÍ persiste la conversación (se restaura al reabrir) y trae recuerdos
+     por relevancia. Se inyecta una nota honesta para que NUNCA niegue su memoria. Hallazgo en vivo de Darío. */
+  const preguntaPorMemoria = (mode === 'mirror') && /\b(me\s+repet[íi]s|te\s+repet[íi]s|ten[ée]s\s+memoria|ten[ée]s\s+registro|record[áa]s|te\s+acord[áa]s|me\s+olvid[áa]s|te\s+olvid[áa]s|empez[áa]s\s+de\s+cero|arranc[áa]s\s+de\s+cero|de\s+cero\s+cada|guard[áa]s\s+(?:lo|la\s+charla|la\s+conversaci))/i.test(text);
+  const avisoMemoria = preguntaPorMemoria ? 'NOTA DE HONESTIDAD (obligatoria): SÍ tenés memoria persistente de esta conversación — se guarda en el dispositivo del usuario y se restaura cuando reabre la app; además traés recuerdos por RELEVANCIA (no recitás todo). NUNCA digas que «no tenés memoria» ni que «cada charla empieza de cero»: es falso. Si justo ahora no te llegó un recuerdo puntual, decí que no lo tenés a mano y pedile el dato, SIN negar que tenés memoria.\n\n' : '';
   let contextoActual = text;
   if (avisoSinBase) {
     contextoActual = avisoSinBase + 'PREGUNTA: ' + text;
@@ -7376,6 +7387,7 @@ async function send() {
     // arquitectura real al contexto — autoconocimiento sin inventos, en cualquier modo.
     if (PREGUNTA_POR_APP.test(text)) partes += ARQUITECTURA_MIRROR + resumenErrores() + '\n\n'; // v35-diag (Etapa 6)
     // v35-mem: memoria personal relevante (solo trae algo en modo espejo; en otros modos memoriaRelevante='').
+    if (avisoMemoria) partes += avisoMemoria; // v39-memfix: nota de honestidad sobre la memoria
     if (memoriaRelevante) partes += memoriaRelevante + '\n\n';
     if (suenoRelevante) partes += suenoRelevante + '\n\n'; // v39-sonar: el cruce local va como contexto honesto
     if (tareasRelevante) partes += tareasRelevante + '\n\n'; // v39-tareas
