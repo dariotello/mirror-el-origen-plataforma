@@ -1632,8 +1632,8 @@ function recortar_(s, max) {
 <div id="polli-ov" style="position:fixed;inset:0;z-index:100000;display:none;overflow-y:auto;background:radial-gradient(ellipse 80% 60% at 50% 0%, #11112a 0%, #05050c 70%);color:#d8d8f0;font-family:'Space Mono', ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', 'DejaVu Sans Mono', monospace;">
   <div class="share-box">
     <div class="share-h1">Crear imágenes 🎨</div>
-    <div class="share-p">Tu MIRROR puede generar imágenes desde texto con <b>Pollinations</b> (servicio aparte, gratis). Para usarlo, traé tu propia clave — igual que la de tu motor.</div>
-    <div class="share-yes">✓ Es gratis: registrate en <b>enter.pollinations.ai</b> → creá una <b>clave publishable</b> (empieza con <b>pk_</b>). Esa clave es segura para usar acá.</div>
+    <div class="share-p">Tu MIRROR puede generar imágenes desde texto con <b>Pollinations</b> (servicio aparte — <b>hoy es PAGO</b>). Para usarlo necesitás tu propia clave <b>pk_</b> con créditos.</div>
+    <div class="share-yes">✓ Registrate en <b>enter.pollinations.ai</b> → creá una <b>clave publishable</b> (empieza con <b>pk_</b>) y cargale créditos: <b>Pollinations dejó de ser gratis</b>. La pk_ es segura para usar acá.</div>
     <div class="share-no">✗ No uses la clave secreta (sk_): esa es para servidores, nunca para el navegador. Pegá la <b>pk_</b>.</div>
     <div class="share-linkrow">
       <input id="polli-key-input" placeholder="pk_..." style="flex:1;min-width:200px;font-family:'Space Mono', ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', 'DejaVu Sans Mono', monospace;font-size:12px;color:#cfcfff;background:rgba(10,10,28,0.8);border:1px solid rgba(120,120,255,0.3);border-radius:8px;padding:11px 12px;">
@@ -2291,7 +2291,7 @@ CAPACIDADES TRANSVERSALES:
 • 🌐 Búsqueda web (Tavily vía proxy) — disponible con el botón del globo (opcional).
 • ⊕ Subir documentos PDF/DOCX/TXT/MD, como PERM (permanente), TEMP o SESIÓN. También se puede subir audio o video: se transcribe la voz a texto (Whisper de Groq) y queda como un documento más. Lo que el video MUESTRA (imágenes) todavía no se interpreta; eso es "próximamente".
 • 📄 Generar informe: TARS redacta un informe estructurado con los datos y documentos provistos, descargable en Word (.docx), PDF o JSON, con gráficos.
-• 🎙 Dictado por voz y 🔊 lectura en voz alta de las respuestas COMPLETA (por oraciones, sin cortes). DOS voces configurables (▾ en el footer): una para MIRROR (cálida) y otra para TARS/Examinador (más grave). Esc calla la lectura.
+• 🎙 Dictado por voz y 🔊 lectura en voz alta de las respuestas COMPLETA (por oraciones, sin cortes). DOS voces configurables (▾ en el footer): una para MIRROR (cálida) y otra para TARS/Examinador (más grave). Esc calla la lectura. La VOZ usa la Web Speech API del navegador/sistema operativo (no un servidor de la app): si te preguntan por qué tarda o cómo anda, es eso — y OJO, algunas voces del SO marcadas «Online» sintetizan en la nube del SO y por eso pueden tardar más; las locales son instantáneas. NUNCA inventes que la voz «se procesa en un servidor de MIRROR».
 • 🤲 MANOS PROPIAS + 🃏 TARJETAS (capa ACTÚA, toggle «Tu MIRROR actúa»): pedidos simples sobre la app se ejecutan al instante por una capa local sin IA (música, lectura, voces, panel de memoria, modos) que confirma «listo ✅» SOLO si lo hizo. Acciones hacia afuera (llamar, WhatsApp, música puntual, agendar, Maps) se entregan como tarjeta de UN toque: el navegador no disca ni envía solo, y esa confirmación humana es seguridad. Números: solo de la agenda local del dispositivo, jamás inventados. Trámites con credenciales NO se hacen: honestidad sobre los límites.
 • ✉ REDACTOR (capa ACTÚA extendida, toggle «Redactor de respuestas» — Etapa 13 C2): el usuario pega un mail o mensaje recibido y su espejo redacta la respuesta EN SU VOZ (perfil + memoria por relevancia), con modos rápidos («que sí pero corto», «que no sin herir», «formal»). Entrega en tarjeta de UN toque (mailto: listo o WhatsApp cargado); si el borrador no entra en un enlace, la app lo dice y lo copia al portapapeles. NO lee bandejas de entrada, NO envía solo, NO hace mensajes masivos.
 • 🌐 IDIOMAS (v36-i18n, Etapa 13B): el constructor ofrece español, inglés y portugués. El idioma elegido gobierna la interfaz del constructor y los avisos, el dictado (es-AR/en-US/pt-BR), las voces sugeridas y el idioma en que responde el modo espejo. HONESTIDAD sobre el alcance (v36-i18n): el idioma elegido gobierna además las ENCUESTAS que se generan, el FORMULARIO público que responden los encuestados y los INFORMES. La VOZ sigue el idioma del CONTENIDO que lee, no el de la interfaz (por eso ya no suena una voz inglesa leyendo castellano). Lo que SIGUE en español por diseño: los modos analítico y examinador y la guía técnica; el catálogo de motores se traduce parcialmente. Tu MIRROR sabe esto y lo avisa de frente en vez de prometer un informe en un idioma que no va a entregar. Sin idioma elegido, todo queda en español como siempre.
@@ -2301,7 +2301,8 @@ CAPACIDADES TRANSVERSALES:
 • 📊 MIRROR ANALISTA (botón «📊 datos» del pie): analiza archivos CSV EN EL DISPOSITIVO — estadística descriptiva (media, mediana, desvío, cuartiles), frecuencias y correlaciones de Pearson, con gráficos exportables (Chart.js bajo demanda, multi-CDN). REGLA DE HONESTIDAD NUMÉRICA: la matemática la calcula la app en JavaScript; el modelo recibe SOLO el resumen calculado y lo interpreta — jamás recalcula ni ve filas crudas. Un cálculo que no figura en el resumen no se estima: se dice.
 • 📋 MIRROR ENCUESTA (botón «📋 encuestas»): genera formularios HTML AUTOCONTENIDOS (estética propia, sin Google ni rastreo) cuyas respuestas llegan por REST a la rama encuestas/ del Firebase del usuario (POST con id propio: sin pisado). El panel lista encuestas, muestra respuestas, exporta CSV y las manda al ANALISTA con un botón. HONESTIDAD: la app GENERA el archivo; publicarlo (Pages/Netlify) lo hace el usuario. El modelo puede PROPONER encuestas por chat (tarjeta de un toque que precarga el creador), jamás crearlas solo.
 • FACHADA: logo MIR[Я]OR con monolito giratorio (homenaje a 2001), música ambiental original "El Origen" (Web Audio, botón 🔊 sonido), cinemática de nacimiento al abrir, y modo presentación a pantalla completa (◬). La música baja sola cuando la app habla.
-• Seguridad: las claves de API (Groq, Cerebras, Tavily) NUNCA están en el navegador: viven como secrets del Worker proxy propio en Cloudflare. Modelos: Groq como principal, Cerebras como respaldo.
+• Seguridad: las claves de API (Groq, Cerebras, Tavily) NUNCA están en el navegador: viven como secrets del Worker proxy propio en Cloudflare.
+• MOTOR DE IA (NO lo confundas con la versión de la app): ahora mismo corrés sobre el motor «${CONFIG.motorPrincipal}» con el modelo «${CONFIG.modeloPrincipal}», con «${CONFIG.motorRespaldo}» de respaldo (y Cloudflare Workers AI como última red). Si te preguntan «¿qué modelo/motor de IA sos?», la respuesta es ESA. El «v38» (o el número del pie) es la VERSIÓN de la APP, NO el modelo: no los mezcles.
 • 💤 SOÑAR (v39-sonar): con la app abierta y ociosa (o al reabrirla tras un rato), la entidad cruza tus recuerdos EN EL DISPOSITIVO —sin mandar un byte a ningún lado y sin llamar a ningún modelo— y arma un «cruce»: patrones que te vuelven, cosas que se tocan, posibles tironeos y lo que repetís. Se abre con el botón «💤 lo que crucé» del panel de memoria o preguntándole «¿soñaste algo?». HONESTIDAD (y Art. 50 del EU AI Act): NO es una experiencia ni la entidad siente nada —«sueño» es una metáfora—: es cómputo real e inspeccionable sobre lo que vos ya guardaste.
 Si te preguntan algo de la app que NO figura acá, decí honestamente que no lo sabés con certeza.`;
 // Nota técnica: sin \b al final — en JS \b falla tras vocales con tilde ("exportá").
@@ -5710,7 +5711,7 @@ async function generarImagen(){
     if (!res.ok){
       let msg = 'No se pudo crear la imagen (HTTP '+res.status+').';
       if (res.status===401 || res.status===403) msg = 'La clave de Pollinations no es válida o no tiene permiso. Revisá tu pk_.';
-      else if (res.status===402) msg = 'Tu cuenta de Pollinations se quedó sin créditos (Pollen). Recargá o esperá el grant diario de tu tier gratis.';
+      else if (res.status===402) msg = 'Tu cuenta de Pollinations se quedó sin créditos (Pollen). Pollinations es un servicio pago: cargá créditos en tu cuenta para seguir generando.';
       else if (res.status===429) msg = 'Pollinations está saturado o llegaste al límite de tu tier. Probá en un rato.';
       removeTyping(); addMsg('mirror','⚠ '+msg, mode);
       setButtonsBusy(false); return;
@@ -9934,9 +9935,12 @@ function duckMusic(){
   // v22: si la URL trae un MIRROR compartido (#m=...), entramos en modo solo-lectura (no constructor).
   var _shared = (typeof window.leerPayloadCompartido==='function') ? window.leerPayloadCompartido() : null;
   if (_shared){ window.MODO_COMPARTIDO = _shared; }
-  window.MIRROR_necesitaConfig = !CONFIG.configurado && !window.MODO_COMPARTIDO;
+  // v39-conslink (19/09/2026): ?constructor (o #constructor) en la URL fuerza el asistente de armado,
+  // tenga o no config guardada — link de demo compartible, sin tocar la app normal del dueño.
+  window._forzarConstructor = function(){ try { var q=((location.search||'')+(location.hash||'')); return /[?&#]constructor(?=$|[=&])/i.test(q); } catch(e){ return false; } };
+  window.MIRROR_necesitaConfig = (!CONFIG.configurado || window._forzarConstructor()) && !window.MODO_COMPARTIDO;
   window.lanzarConstructorTrasBoot = function(){
-    if (!CONFIG.configurado){ pintarConstructor(); document.getElementById('cons-ov').classList.add('show'); consGo(0); }
+    if (!CONFIG.configurado || window._forzarConstructor()){ pintarConstructor(); document.getElementById('cons-ov').classList.add('show'); consGo(0); }
   };
   if (CONFIG.configurado){ aplicarNombresUI(); aplicarCapacidades(); }
 })();
