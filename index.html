@@ -3653,7 +3653,7 @@ async function recuerdosLoadAll(){
 }
 function getRecuerdosContext(query){
   if (!recuerdosChunks.length) return '';
-  const hits = bm25Search(query, recuerdosChunks.filter(r=>!r.arch), 4); // v36-duerme (Etapa 4 C2): los archivados no compiten
+  const hits = bm25Search(query, recuerdosChunks.filter(r=>!r.arch), 4, RECENCIA_PESO_MEMORIA); // v36-duerme + v39-recencia: archivados no compiten; empujón por lo reciente (gato viejo)
   if (!hits.length) return '';
   // v38-roles2: se dice qué es cada rótulo. Un formato explícito que no se explica sigue
   // siendo adivinanza para el modelo, y adivinar es de donde salía la confabulación.
@@ -3978,7 +3978,15 @@ async function chunksDeleteByDoc(docId){
 }
 
 // --- BM25: ranking de chunks relevantes a la pregunta ---
-function bm25Search(query, chunks, topK=4){
+// ── v39-recencia (19/09/2026) — EL EMPUJÓN POR LO RECIENTE (el "gato viejo") ──
+// La MEMORIA personal se recuperaba SOLO por relevancia (BM25): un dato dicho hace meses volvía
+// como si fuera de hoy — MIRROR te reflejaba tu vos del pasado aunque cambiaste de idea. Recencia
+// suma el eje TIEMPO como FACTOR SUAVE sobre el score: entre recuerdos PAREJOS en relevancia gana el
+// más reciente; pero un recuerdo mucho más relevante y viejo SIGUE ganando (no es un martillo). Solo
+// la memoria personal lo activa; documentos y la búsqueda del panel llaman con peso 0 y NO cambian.
+const RECENCIA_PESO_MEMORIA = 0.35;               // hasta +35% al recuerdo recién guardado (tunable; 0 = apagar)
+const RECENCIA_VIDA_MEDIA_MS = 14*24*60*60*1000;  // el empujón cae a la mitad a los 14 días y decae a ~0 (tunable)
+function bm25Search(query, chunks, topK=4, recencyWeight=0){
   if (!chunks.length) return [];
   const qTerms = [...new Set(tokenize(query))];
   if (!qTerms.length) return [];
@@ -3997,6 +4005,11 @@ function bm25Search(query, chunks, topK=4){
       const denom = f + k1 * (1 - b + b * ((c.len||1)/avgLen));
       score += idf * (f * (k1 + 1)) / denom;
     });
+    // v39-recencia: empujón SUAVE por lo reciente (solo si el llamador lo pide y el chunk tiene fecha).
+    if (recencyWeight > 0 && score > 0 && c.ts){
+      const fresco = Math.pow(2, -Math.max(0, Date.now() - c.ts) / RECENCIA_VIDA_MEDIA_MS); // 1 recién → 0.5 a los 14d → ~0 viejo
+      score *= (1 + recencyWeight * fresco);
+    }
     return { chunk: c, score };
   }).filter(x => x.score > 0)
     .sort((a,b)=> b.score - a.score)
