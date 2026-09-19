@@ -1102,7 +1102,7 @@ const CONFIG = {
   RUTA:      &#x27;groq&#x27;,
 
   // El modelo (para Groq gratis suele andar bien):
-  MODELO:    &#x27;qwen/qwen3.6-27b&#x27;,
+  MODELO:    &#x27;openai/gpt-oss-120b&#x27;,
 
   // IDIOMA de las respuestas (igual respeta el idioma del mail entrante).
   IDIOMA:    &#x27;español rioplatense&#x27;,
@@ -1674,7 +1674,14 @@ const MOTORES = {
        ORDEN = PRIORIDAD. qwen3.6 va primero porque ya lo usamos para visión (mismo proxy,
        misma clave, probado) y porque NO es de razonamiento: gpt-oss necesita la curita de
        reasoning_effort o devuelve vacío (ver llamarMotor). */
-    modelos: ['qwen/qwen3.6-27b', 'openai/gpt-oss-120b', 'openai/gpt-oss-20b'],
+    /* v39-motor2 (18/09/2026): openai/gpt-oss-120b pasa a ENCABEZAR. Hallazgo en vivo de Darío:
+       su motor devolvió «qwen/qwen3.6-27b ya no está disponible» y el fallback cayó bien a
+       gpt-oss-120b. Groq NO lo deprecó (sigue como reemplazo recomendado y ES el de visión),
+       pero para el ARRANQUE conviene liderar con el modelo de PRODUCCIÓN estable (131k ctx,
+       ideal análisis/documentos largos). qwen3.6 queda de respaldo y sigue en modeloVision.
+       La curita de reasoning_effort es POR MODELO (/gpt-oss/i, ver llamarMotor), así que
+       gpt-oss lidera sin devolver vacío. Doc: console.groq.com/docs/models (18/09/2026). */
+    modelos: ['openai/gpt-oss-120b', 'qwen/qwen3.6-27b', 'openai/gpt-oss-20b'],
     modeloVision: 'qwen/qwen3.6-27b'
   },
   cerebras: {
@@ -1723,7 +1730,7 @@ const CONFIG_DEFAULT = {
   appName: 'MIRROR',
   modos: { mirror: 'MIRROR', tars: 'ANALISTA', jurado: 'EXAMINADOR', conn: 'CONEX' },
   motorPrincipal: 'groq',
-  modeloPrincipal: 'qwen/qwen3.6-27b',   // v38-motor: Llama 3.3 se apaga el 16/08/2026 (ver MOTORES.groq)
+  modeloPrincipal: 'openai/gpt-oss-120b',   // v38-motor: Llama 3.3 se apaga el 16/08/2026 (ver MOTORES.groq)
   motorRespaldo: 'cerebras',
   modeloRespaldo: 'gpt-oss-120b',
   proxyUrl: '',
@@ -9857,7 +9864,7 @@ function duckMusic(){
       if (CONFIG && CONFIG.proxyUrl) code=code.replace('https://TU-PROXY.fisica-dat.workers.dev', CONFIG.proxyUrl);
       var ruta=(typeof MOTORES!=='undefined' && MOTORES[CONFIG.motorPrincipal]) ? MOTORES[CONFIG.motorPrincipal].ruta : 'groq';
       code=code.replace("RUTA:      'groq'", "RUTA:      '"+ruta+"'");
-      if (CONFIG && CONFIG.modeloPrincipal) code=code.replace("'qwen/qwen3.6-27b'", "'"+CONFIG.modeloPrincipal+"'"); // v38-motor: tiene que coincidir con el literal del snippet de arriba
+      if (CONFIG && CONFIG.modeloPrincipal) code=code.replace("'openai/gpt-oss-120b'", "'"+CONFIG.modeloPrincipal+"'"); // v38-motor: tiene que coincidir con el literal del snippet de arriba
       var perfil=(typeof construirPerfilNucleo==='function') ? construirPerfilNucleo() : '';
       if (perfil) code=code.replace("'Describí acá quién sos y tu estilo de escritura (lo mismo que pusiste en tu MIRROR).'", JSON.stringify(perfil));
     } catch(e){}
