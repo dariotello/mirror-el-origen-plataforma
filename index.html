@@ -2307,7 +2307,7 @@ CAPACIDADES TRANSVERSALES:
 Si te preguntan algo de la app que NO figura acá, decí honestamente que no lo sabés con certeza.`;
 // Nota técnica: sin \b al final — en JS \b falla tras vocales con tilde ("exportá").
 // Usamos raíces: "export" cubre exporto/exportá/exportar; "informe" cubre informes.
-const PREGUNTA_POR_APP = /\b(mirror|tars|jurado|examinador|conex|esta app|la app|aplicaci[oó]n|el sistema|arquitectura|funcionamiento|c[oó]mo funcion|qu[ée] pod[eé]s hacer|tus (modos|funciones|capacidades)|informe|export|dictado|micr[oó]fono|pwa|proxy|firebase|biblioteca de (pdf|documentos))/i;
+const PREGUNTA_POR_APP = /\b(mirror|tars|jurado|examinador|conex|esta app|la app|aplicaci[oó]n|el sistema|arquitectura|funcionamiento|c[oó]mo funcion|qu[ée] pod[eé]s hacer|tus (modos|funciones|capacidades)|informe|export|dictado|micr[oó]fono|pwa|proxy|firebase|biblioteca de (pdf|documentos)|(?:modelo|motor)\s+(?:de\s+)?(?:ia\b|iag\b|inteligencia)|qu[ée]\s+(?:modelo|motor)\s+(?:sos\b|us[áa]s|ten[ée]s|corr[eé]s|est[áa]s)|(?:por\s+qu[ée]|c[óo]mo).{0,25}\b(?:voz|lectura)\b)/i; // v39-autofix (19/09): + preguntas por el modelo/motor de IA y por la voz — antes no disparaban el autoconocimiento (hallazgo en vivo de Darío)
 
 // ══════════ VOZ (v2.3) — dictado + lectura en voz alta (Web Speech API, gratis y local) ══════════
 // v2.3 — BLINDAJE DEL DICTADO (fix de los dos bugs vistos en producción el 10/6):
