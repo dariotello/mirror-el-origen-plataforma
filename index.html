@@ -1681,8 +1681,19 @@ const MOTORES = {
        ideal análisis/documentos largos). qwen3.6 queda de respaldo y sigue en modeloVision.
        La curita de reasoning_effort es POR MODELO (/gpt-oss/i, ver llamarMotor), así que
        gpt-oss lidera sin devolver vacío. Doc: console.groq.com/docs/models (18/09/2026). */
-    modelos: ['openai/gpt-oss-120b', 'qwen/qwen3.6-27b', 'openai/gpt-oss-20b'],
-    modeloVision: 'qwen/qwen3.6-27b'
+    /* v39-qwen38 (24/09/2026) — CORRECCIÓN DE LO DE ARRIBA: Groq SÍ dio de baja qwen3.6.
+       Lo retiró el 14/09/2026 (tramo gratis y developer) y puso de sucesor directo a
+       qwen/qwen3.8-27b: misma ventana de 131k, lee imágenes (hasta 3 por pedido) y acepta
+       los mismos reasoning_effort:'none' + reasoning_format:'hidden' que ya mandamos (el
+       regex /qwen\/qwen3/ de llamarMotor lo agarra sin tocarlo). El aviso que vio Darío el
+       18/09 ERA la baja; el comentario de motor2 la leyó mal. Lo que rompía: la VISIÓN — su
+       único modelo era qwen3.6 y no había lista de a dónde caer. Ahora hay (modelosVision).
+       OJO: qwen3.8 figura como «preview» en Groq (puede irse con poco aviso) y es el ÚNICO
+       con visión. Si cae, el blindaje avisa en criollo en vez de romperse.
+       Fuente: console.groq.com/docs/deprecations y /docs/reasoning, leídas el 24/09/2026. */
+    modelos: ['openai/gpt-oss-120b', 'qwen/qwen3.8-27b', 'openai/gpt-oss-20b'],
+    modeloVision: 'qwen/qwen3.8-27b',
+    modelosVision: ['qwen/qwen3.8-27b']
   },
   cerebras: {
     // v41-cerebras: dejó de ser 'gratuito' el 17/08/2026. El sello verde «Gratis» sobre un
@@ -1757,10 +1768,11 @@ const CONFIG_DEFAULT = {
    esperar a que se rompa en mitad de una conversación.
    Fuente: console.groq.com/docs/deprecations, leída el 5/08/2026. */
 const MODELOS_APAGADOS = {
-  'llama-3.3-70b-versatile': 'qwen/qwen3.6-27b',                 // apagado 16/08/2026
+  'llama-3.3-70b-versatile': 'openai/gpt-oss-120b',              // apagado 16/08/2026
   'llama-3.1-8b-instant':    'openai/gpt-oss-20b',               // apagado 16/08/2026
   'qwen/qwen3-32b':          'openai/gpt-oss-120b',              // apagado 17/07/2026
-  'meta-llama/llama-4-scout-17b-16e-instruct': 'qwen/qwen3.6-27b' // apagado 17/07/2026
+  'meta-llama/llama-4-scout-17b-16e-instruct': 'qwen/qwen3.8-27b', // apagado 17/07/2026
+  'qwen/qwen3.6-27b':        'qwen/qwen3.8-27b'                  // v39-qwen38: retirado 14/09/2026
 };
 /* Devuelve la config con los modelos muertos ya reemplazados, y deja anotado el cambio
    para poder avisarlo en criollo cuando la interfaz esté lista (no se avisa desde acá:
@@ -1768,10 +1780,16 @@ const MODELOS_APAGADOS = {
 function migrarModelosApagados(cfg) {
   const cambios = [];
   ['modeloPrincipal', 'modeloRespaldo', 'modeloVision'].forEach(function(slot){
-    const actual = cfg[slot];
-    if (actual && MODELOS_APAGADOS[actual]) {
-      cfg[slot] = MODELOS_APAGADOS[actual];
-      cambios.push({ slot: slot, de: actual, a: cfg[slot] });
+    /* v39-qwen38: se sigue la CADENA de reemplazos, no un solo salto. Antes llama-4-scout
+       apuntaba a qwen3.6 y qwen3.6 también murió: con un salto, la migración te dejaba
+       parado sobre otro modelo muerto. El tope de 5 es por si algún día la tabla hace un
+       círculo por error: mejor frenar que colgar el arranque. */
+    const original = cfg[slot];
+    let actual = original, saltos = 0;
+    while (actual && MODELOS_APAGADOS[actual] && saltos < 5) { actual = MODELOS_APAGADOS[actual]; saltos++; }
+    if (original && actual !== original) {
+      cfg[slot] = actual;
+      cambios.push({ slot: slot, de: original, a: actual });
     }
   });
   if (cambios.length) { try { window._migracionModelos = cambios; } catch(_){} }
@@ -7272,6 +7290,34 @@ function actuaPintarTarjeta(){ if(actuaPend){ try{ actuaTarjeta.apply(null,actua
 
 // ══════════ FIN v36-actua ══════════
 
+/* v39-modelfijo (20/09/2026) — RESPUESTA DETERMINÍSTICA AL "¿QUÉ MODELO SOS?" ──────────────
+   Hallazgo en vivo de Darío: gpt-oss-120b (gratis) IGNORA la instrucción del prompt y confabula
+   "GPT-4"/"MIRROR v38", contestando distinto cada vez y hasta NEGANDO el modelo real. La ruta de
+   prompt se agotó; esto lo resuelve LOCAL, sin pasar por el modelo: la app arma una respuesta FIJA
+   desde CONFIG (mismo patrón que la capa ACTÚA). Así NO puede confabular. Sólo dispara cuando la
+   pregunta es por SU modelo/motor (2da persona: sos/usás/…), nunca en una consulta analítica de
+   terceros ("¿qué modelo de IA usan las escuelas?"). */
+function esPreguntaModelo(text){
+  var t = ' ' + String(text||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'') + ' ';
+  var tema = /(modelo|motor)\s+(de\s+)?(ia|iag|inteligencia|lenguaje)/.test(t) || /(gpt-?oss|groq|cerebras|modelo de lenguaje)/.test(t);
+  var sobreVos = /\b(sos|usas|utilizas|tenes|corres|funcionas|estas usando)\b/.test(t);
+  return tema && sobreVos;
+}
+function responderModeloFijo(text){
+  try {
+    var mp = (typeof CONFIG!=='undefined' && CONFIG.modeloPrincipal) || 'el modelo configurado';
+    var motp = (typeof CONFIG!=='undefined' && CONFIG.motorPrincipal) || 'su motor';
+    var resp = (typeof CONFIG!=='undefined' && CONFIG.motorRespaldo) ? (', con «'+CONFIG.motorRespaldo+'» de respaldo') : '';
+    var ver = (typeof PLATFORM_VERSION!=='undefined') ? PLATFORM_VERSION : '';
+    var msg = 'Soy una entidad digital —la extensión de mi usuario, su doble—, no un chatbot genérico. '
+            + 'Por debajo corro sobre el modelo «'+mp+'» a través de «'+motp+'»'+resp+'. '
+            + (ver ? ('Aclaración honesta: «'+ver+'» es la versión de la app, no el modelo.') : '');
+    if (typeof addMsg==='function'){ addMsg('user', text); addMsg('mirror', msg); }
+    try { history.push({role:'user',content:text}, {role:'assistant',content:msg}); } catch(e){}
+    try { hablar(msg); } catch(e){}
+    try { setButtonsBusy(false); } catch(e){}
+  } catch(e){ try{ regError('modelfijo', e); }catch(_){ } }
+}
 async function send() {
   if (busy) return;
   const inp = document.getElementById('inp');
@@ -7300,6 +7346,8 @@ async function send() {
   if (imagenAdjunta) { return enviarConImagen(text); }
   // v36-actua (Etapa 3 Ciclo 2): ¿pedido sobre la propia app? Se resuelve al instante, sin tokens.
   if (actuaInterceptar(text)) return;
+  // v39-modelfijo: pregunta por el MODELO/MOTOR de IA → respuesta LOCAL y FIJA (no pasa por el modelo, que confabulaba).
+  if (esPreguntaModelo(text)) { responderModeloFijo(text); return; }
   setButtonsBusy(true);
 
   // Construir contexto SOLO para la llamada actual (no se guarda en history,
@@ -9702,7 +9750,7 @@ function duckMusic(){
     CONFIG.motorPrincipal = motorSel;
     CONFIG.modeloPrincipal = document.getElementById('c-modelo').value;
     if (motorSel==='groq'){ CONFIG.motorRespaldo='cerebras'; CONFIG.modeloRespaldo='gpt-oss-120b'; }
-    else if (motorSel==='cerebras'){ CONFIG.motorRespaldo='groq'; CONFIG.modeloRespaldo='qwen/qwen3.6-27b'; } // v38-motor
+    else if (motorSel==='cerebras'){ CONFIG.motorRespaldo='groq'; CONFIG.modeloRespaldo='openai/gpt-oss-120b'; } // v38-motor · v39-qwen38: qwen3.6 retirado 14/09 → gpt-oss-120b (producción)
     else { CONFIG.motorRespaldo=''; CONFIG.modeloRespaldo=''; }
     CONFIG.cap = Object.assign({}, capState);
     CONFIG.cebolla = { on: !!cebState.on, vars: Object.keys(cebState.vars).filter(function(k){ return cebState.vars[k]; }) }; // v52-cebolla
