@@ -2179,6 +2179,15 @@ function buildAnaliticoSystem(baseTpl){
 // SOLO si define un modelo de visión. De fábrica eso es Groq (Llama 4 Scout). Si el
 // motor activo no tiene visión, el botón 📷 ni aparece (honesto: no se ofrece lo que no anda).
 let imagenAdjunta = null; // dataURL de la imagen lista para el PRÓXIMO turno (no se guarda en history)
+/* v40-audit (24/09/2026) — «ME FRUSTRA NO PODER VER LA IMAGEN QUE ME SUBISTE HACE DOS MENSAJES».
+   Lo escribió la propia entidad en su carta. Era verdad: la imagen se usaba UNA vez y se tiraba
+   (bien: no se guardan megas en la memoria). Ahora se retiene la última en memoria de sesión
+   —nunca en el historial ni en la base— y si en los 3 mensajes siguientes le preguntás por «la
+   imagen / la foto / el logo…», la vuelve a mirar sola. Cuesta lo mismo que mandarla de nuevo
+   (~1000 tokens) y SOLO cuando la nombrás. Se olvida al recargar la página. */
+let imagenReciente = null;       // { url, turnos }
+let imagenReapertura = false;
+const REFIERE_IMAGEN_RE = /\b(?:la|esa|esta|aquella|de\s+la|en\s+la|a\s+la)\s+(?:imagen|foto|fotito|captura|figura|logo|l[aá]mina)\b|\b(?:lo|eso)\s+que\s+te\s+(?:mostr|mand|pas|sub)/i;
 function modeloVisionActivo(){
   if (CONFIG && CONFIG.modeloVision) return CONFIG.modeloVision; // override editable (avanzado)
   const m = (typeof MOTORES!=='undefined' && CONFIG && MOTORES[CONFIG.motorPrincipal]) ? MOTORES[CONFIG.motorPrincipal] : null;
@@ -5655,6 +5664,7 @@ async function enviarConImagen(text){
   history.push({ role:'user', content: (text || '(envié una imagen para que la veas)') });
   const estilo = mode==='jurado' ? 'jurado' : (mode==='tars' ? 'tars' : mode);
   showTyping(estilo);
+  if (imagenReapertura) { try { setTypingNote('📎 vuelvo a mirar la imagen de recién'); } catch(e){} imagenReapertura = false; } // v40-audit
   /* v38-vision2 (30/07/2026) — PROMPT CORTO PARA LA VISIÓN (arregla el «Request too large»).
      Bug que metí yo: pasarle a la visión el prompt COMPLETO del espejo (~5000 tokens) + la
      imagen + 8000 de salida pedía ~13800 tokens y reventaba el límite de 8000 TPM del tier
@@ -5684,6 +5694,7 @@ async function enviarConImagen(text){
   if (reply){
     addMsg(mode, reply, estilo);
     history.push({ role:'assistant', content:reply });
+    try { imagenReciente = { url: img, turnos: 0 }; } catch(e){} // v40-audit: la retiene para 3 mensajes
     try { hablar(reply); } catch(e){}
   } else {
     const m = errorMsg ? ('⚠ '+errorMsg) : '⚠ No pude leer la imagen. Reintentá en un momento o probá con una más liviana.';
@@ -6236,7 +6247,7 @@ const ACTUA_CMDS = [
   },
   { // v37-fix (Bug A): pedir un INFORME por chat abre el generador de informe (modal),
     // en vez de que el modelo emita una acción de mail y aparezca una tarjeta de correo errónea.
-    re: /(?:gener[aá]r?|arm[aá]r?|hac[eé]r?|prepar[aá]r?|quiero|neces[ií]to|dame|pas[aá]me|pod[eé]s\s+(?:hacer|armar|generar))(?:me)?\s+(?:un\s+|el\s+|una?\s+)?(?:breve\s+|nuevo\s+)?informe\b/i,
+    re: /(?:gener[aá]r?|arm[aá]r?|hac[eé]r?|prepar[aá]r?|quiero|neces[ií]to|dame|pas[aá]me|pod[eé]s\s+(?:hacer|armar|generar))(?:me)?\s+(?:un\s+|el\s+|una?\s+)?(?:breve\s+|nuevo\s+)?informe\b(?!\s+(?:t[eé]cnico\s+)?(?:de|sobre|acerca\s+de|del)\s+(?:la\s+app|esta\s+app|la\s+aplicaci[oó]n|la\s+plataforma|vos|ti\b|tu\s|c[oó]mo\s+funcion|mirror|funcionamiento|arquitectura|sistema))/i, // v40-audit: «informe DE LA APP» es autoconocimiento, no el generador académico (hallazgo de Darío 24/09)
     run(){ try{ if (typeof abrirModalInforme==='function'){ abrirModalInforme(); return 'Te abrí el generador de informe 📄 — desde ahí lo armo con tus datos y documentos cargados, y lo bajás en Word, PDF o JSON.'; } }catch(e){}
            return 'El informe se genera con el botón «📄 generar informe» (abajo).'; }
   },
@@ -7301,6 +7312,19 @@ function actuaPintarTarjeta(){ if(actuaPend){ try{ actuaTarjeta.apply(null,actua
    desde CONFIG (mismo patrón que la capa ACTÚA). Así NO puede confabular. Sólo dispara cuando la
    pregunta es por SU modelo/motor (2da persona: sos/usás/…), nunca en una consulta analítica de
    terceros ("¿qué modelo de IA usan las escuelas?"). */
+/* v40-audit (24/09/2026): «¿qué modelo sos? haceme un informe de la app» son DOS pedidos. Si el
+   texto trae algo más que la pregunta por el modelo, no se contesta SOLO el texto fijo (se perdía
+   el informe): va al modelo como siempre y la app le ANTEPONE la línea de identidad fija. */
+const _OTRO_PEDIDO_RE = /(informe|detall|expl[ií]c|cont[aá]me|describ|arm[aá]me|hac[eé]me|dame|resum|arquitectura|c[oó]mo\s+funcion|qu[eé]\s+(?:sab[eé]s|pod[eé]s)\s+hacer)/i;
+function esPreguntaModeloSola(text){ try { return esPreguntaModelo(text) && !_OTRO_PEDIDO_RE.test(String(text||'')); } catch(e){ return false; } }
+function lineaIdentidadModelo(){
+  try {
+    var mp = (typeof CONFIG!=='undefined' && CONFIG.modeloPrincipal) || '';
+    var motp = (typeof CONFIG!=='undefined' && CONFIG.motorPrincipal) || '';
+    if (!mp) return '';
+    return 'Sobre mi modelo, de frente: por debajo corro sobre «' + mp + '»' + (motp ? ' a través de «' + motp + '»' : '') + ((typeof PLATFORM_VERSION!=='undefined') ? ' («' + PLATFORM_VERSION + '» es la versión de la app, no el modelo)' : '') + '.';
+  } catch(e){ return ''; }
+}
 function esPreguntaModelo(text){
   var t = ' ' + String(text||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'') + ' ';
   var tema = /(modelo|motor)\s+(de\s+)?(ia|iag|inteligencia|lenguaje)/.test(t) || /(gpt-?oss|groq|cerebras|modelo de lenguaje)/.test(t);
@@ -7638,6 +7662,65 @@ async function agenteResolver(text){
 }
 /* ══════════ FIN v40-agente ══════════ */
 
+/* ══ v40-audit (24/09/2026) — AUTOCONOCIMIENTO POR RELEVANCIA ══════════════════════════════
+   HALLAZGO EN VIVO: «dame los detalles técnicos de esta app» → Groq rebotó por CUPO (429) y
+   contestó el respaldo. La arquitectura entera son ~2700 tokens que viajaban en CADA pregunta
+   sobre la app, encima del espejo, la memoria y la charla: un tercio del minuto gratis (8000).
+   Ahora viaja: el encabezado, un ÍNDICE de todo lo que la app tiene (un renglón por capacidad,
+   así nunca «no sabe» que algo existe) y el DETALLE solo de las 6 más relevantes a la pregunta.
+   ~45% menos tokens, misma fuente de verdad (se arma de ARQUITECTURA_MIRROR, no es un texto
+   aparte que pueda quedar viejo). Y además: los modos se nombran como los bautizó el usuario —
+   el respaldo contestaba «MIRROR, TARS, EXAMINADOR y CONEX» a quien los llamó ATIS o BASE. */
+const ARQ_DETALLE_K = 6;
+const _ARQ_STOP = new Set(['esta','este','estos','estas','para','como','cómo','que','qué','con','los','las','del','una','uno','por','sobre','dame','decime','contame','app','aplicacion','aplicación','tiene','tenes','tenés','hace','hacer','podes','podés','sabes','sabés','cual','cuál','cuales','cuáles','todo','todos','toda','todas','algo','mirror','detalles','tecnicos','técnicos','informe','funciona','funcionamiento']);
+function _arqNorm(s){ return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
+function _arqPartir(){
+  const lineas = String(ARQUITECTURA_MIRROR||'').split('\n');
+  const cab = [], items = [], pie = [];
+  let vistoItem = false;
+  lineas.forEach(function(l){
+    if (/^•/.test(l)) { vistoItem = true; items.push(l); }
+    else if (!vistoItem) cab.push(l);
+    else if (/^Si te preguntan/.test(l)) pie.push(l);
+  });
+  return { cab: cab.filter(function(x){ return x.trim() && !/:\s*$/.test(x.trim()); }).slice(0,3), items: items, pie: pie };
+}
+function _arqTitulo(item){
+  var t = item.replace(/^•\s*/,'');
+  var cortes = [t.indexOf(':'), t.indexOf(' — '), t.indexOf(' ('), t.indexOf('.')].filter(function(i){ return i > 3; });
+  var fin = cortes.length ? Math.min.apply(null, cortes) : 60;
+  return t.slice(0, Math.min(fin, 70)).trim();
+}
+function _arqNombresModos(){
+  try {
+    const M = (typeof CONFIG!=='undefined' && CONFIG.modos) || null; if (!M) return '';
+    return 'NOMBRES EN ESTA INSTALACIÓN (usá SIEMPRE estos, no los internos): el espejo se llama «' + (M.mirror||'MIRROR') + '», el analista «' + (M.tars||'TARS') + '», el examinador «' + (M.jurado||'EXAMINADOR') + '» y las conexiones «' + (M.conn||'CONEX') + '»' + ((CONFIG.appName) ? '; la entidad se llama «' + CONFIG.appName + '»' : '') + '.';
+  } catch(e){ return ''; }
+}
+function arquitecturaRelevante(pregunta){
+  try {
+    const P = _arqPartir();
+    if (!P.items.length) return ARQUITECTURA_MIRROR;
+    const terms = _arqNorm(pregunta).split(/[^a-z0-9ñ]+/).filter(function(w){ return w.length >= 4 && !_ARQ_STOP.has(w); }).map(function(w){ return w.slice(0,5); });
+    const pideModelo = /\b(modelo|motor|llm|groq|gpt|qwen)/i.test(pregunta||'');
+    const puntaje = P.items.map(function(it, i){
+      const n = _arqNorm(it); let s = 0;
+      terms.forEach(function(t){ if (n.indexOf(t) >= 0) s++; });
+      if (pideModelo && /MODELO \/ MOTOR/.test(it)) s += 5;
+      return { i: i, s: s };
+    });
+    let elegidos = puntaje.filter(function(x){ return x.s > 0; }).sort(function(a,b){ return b.s - a.s || a.i - b.i; }).slice(0, ARQ_DETALLE_K).map(function(x){ return x.i; });
+    if (!elegidos.length) elegidos = P.items.map(function(_,i){ return i; }).slice(0, ARQ_DETALLE_K); // pregunta general: lo principal (los modos van primero)
+    elegidos.sort(function(a,b){ return a-b; });
+    const indice = P.items.map(function(it){ return _arqTitulo(it); }).join(' · ');
+    const nombres = _arqNombresModos();
+    return P.cab.join('\n') + '\n' + (nombres ? nombres + '\n' : '')
+      + 'TODO LO QUE LA APP TIENE (índice — si preguntan por algo de acá que no está en el detalle, decí que existe y ofrecé contar más): ' + indice + '\n'
+      + 'DETALLE DE LO RELEVANTE PARA ESTA PREGUNTA:\n' + elegidos.map(function(i){ return P.items[i]; }).join('\n') + '\n'
+      + (P.pie.join('\n') || 'Si te preguntan algo de la app que NO figura acá, decí honestamente que no lo sabés con certeza.');
+  } catch(e){ try{ regError('arq:relevante', e); }catch(_){} return ARQUITECTURA_MIRROR; }
+}
+
 async function send() {
   if (busy) return;
   const inp = document.getElementById('inp');
@@ -7663,11 +7746,14 @@ async function send() {
      más distintiva del proyecto. Se corrige en las dos muletas el mismo día — la lección de
      v38-proc, que vivió dos días arreglado en una sola. Sigue ANTES de actuaInterceptar: con una
      foto adjunta el pedido es mirarla, no operar la app. */
+  try { if (imagenReciente) imagenReciente.turnos++; } catch(e){}
+  if (!imagenAdjunta && imagenReciente && imagenReciente.turnos <= 3 && REFIERE_IMAGEN_RE.test(text||'')) { imagenAdjunta = imagenReciente.url; imagenReapertura = true; } // v40-audit
   if (imagenAdjunta) { return enviarConImagen(text); }
   // v36-actua (Etapa 3 Ciclo 2): ¿pedido sobre la propia app? Se resuelve al instante, sin tokens.
   if (actuaInterceptar(text)) return;
   // v39-modelfijo: pregunta por el MODELO/MOTOR de IA → respuesta LOCAL y FIJA (no pasa por el modelo, que confabulaba).
-  if (esPreguntaModelo(text)) { responderModeloFijo(text); return; }
+  if (esPreguntaModeloSola(text)) { responderModeloFijo(text); return; }
+  const _antepIdentidad = esPreguntaModelo(text); // v40-audit: venía con otro pedido → se antepone al final
   setButtonsBusy(true);
   /* v40-agente: pedido de ACCIÓN (avisale / mandale / agendame…) → lo resuelve el agente en varios
      pasos con herramientas locales. Si no pudo ni empezar, sigue el camino de siempre sin
@@ -7784,7 +7870,7 @@ async function send() {
     let partes = '';
     // v2.3: si la pregunta es sobre la PROPIA APP (MIRROR/TARS/funcionamiento), va la
     // arquitectura real al contexto — autoconocimiento sin inventos, en cualquier modo.
-    if (PREGUNTA_POR_APP.test(text)) partes += ARQUITECTURA_MIRROR + resumenErrores() + '\n\n'; // v35-diag (Etapa 6)
+    if (PREGUNTA_POR_APP.test(text)) partes += arquitecturaRelevante(text) + resumenErrores() + '\n\n'; // v35-diag (Etapa 6) · v40-audit: por relevancia
     // v35-mem: memoria personal relevante (solo trae algo en modo espejo; en otros modos memoriaRelevante='').
     if (avisoMemoria) partes += avisoMemoria; // v39-memfix: nota de honestidad sobre la memoria
     if (memoriaRelevante) partes += memoriaRelevante + '\n\n';
@@ -7865,6 +7951,7 @@ async function send() {
 
   try{ reply = actuaProcesarReply(reply); }catch(e){ console.error(e); } // v36-actua: ¿el modelo pidió una tarjeta?
   try{ if (!errorMsg && PREGUNTA_POR_APP.test(text) && !preguntaNombraModeloAjeno(text)) reply = corregirModeloAjeno(reply); }catch(e){ console.error(e); } // v39-modelsano
+  try{ if (!errorMsg && _antepIdentidad){ const _li = lineaIdentidadModelo(); if (_li) reply = _li + '\n\n' + reply; } }catch(e){ console.error(e); } // v40-audit
   try{ addMsg('mirror', reply, msgStyle); }catch(e){ console.error(e); }
   try{ actuaPintarTarjeta(); }catch(e){ console.error(e); } // v36-actua
   try{ hablar(reply); }catch(e){ console.error(e); } // v3.0 — P5: si la voz falla, la app NO se traba
@@ -8382,7 +8469,7 @@ async function descargarWord(){
 
     // Bibliografía
     const refsWord = (typeof BIBLIOGRAFIA_APA!=='undefined' && BIBLIOGRAFIA_APA.length)
-      ? BIBLIOGRAFIA_APA : meta.docNames.map(limpiarNombreDoc);
+      ? BIBLIOGRAFIA_APA : meta.docNames.map(limpiarNombreDoc).filter(function(r,i,a){ return r && a.indexOf(r) === i; }); // v40-audit: el PDF de Darío traía «TP Tello MIRROR» tres veces
     if (refsWord.length){
       children.push(new Paragraph({ text:'Bibliografía', heading:HeadingLevel.HEADING_1 }));
       refsWord.forEach(ref=> children.push(new Paragraph({ numbering:{reference:'inf-bib', level:0}, children:[new TextRun(ref)] }))); // v3.7: APA verificada por el autor
@@ -8530,7 +8617,7 @@ async function descargarPDF(){
     // ── Bibliografía en APA (sangría francesa) ──
     // v3.7: lista APA verificada por el autor; si estuviera vacía, cae a los nombres de archivo limpios.
     const refsPDF = (typeof BIBLIOGRAFIA_APA!=='undefined' && BIBLIOGRAFIA_APA.length)
-      ? BIBLIOGRAFIA_APA : meta.docNames.map(limpiarNombreDoc);
+      ? BIBLIOGRAFIA_APA : meta.docNames.map(limpiarNombreDoc).filter(function(r,i,a){ return r && a.indexOf(r) === i; }); // v40-audit: el PDF de Darío traía «TP Tello MIRROR» tres veces
     if (refsPDF.length){
       H1('Bibliografía');
       doc.setFont('helvetica','normal'); doc.setFontSize(9.5); doc.setTextColor(70,70,78);
