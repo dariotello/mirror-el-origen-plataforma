@@ -8197,8 +8197,8 @@ async function fotoResolver(text){
      · la solapa «🔄 actualizar» del pie muestra la versión, lo nuevo y «buscar ahora».
    Actualizar = recargar con lo nuevo. La configuración, la memoria, los contactos y las tareas
    NO se tocan: no viven en el código. Nunca recarga sola ni a mitad de una respuesta. */
-const APP_BUILD = '2026-09-25.4';
-const APP_NOVEDADES = ["✦ Generación v40: tu MIRROR actúa en varios pasos, entiende por significado, te acompaña por voz y se actualiza solo.", "🔧 Arreglos de la auditoría: ninguna ventana queda sin salida (✕, Esc o tocando afuera); si una voz no suena, sigue con otra de tu compu y te avisa; «¿cómo estás? ¿cuál es tu modelo?» contesta las dos cosas; y si agendás una fecha que ya pasó, te lo advierte.", "🧭 Tu MIRROR ahora actúa en varios pasos: «avisale a Juan que no llego y anotame reprogramar» — busca, prepara y te deja las tarjetas; el último toque es tuyo.", "🧠 Memoria que entiende (opcional): encuentra por significado, no solo por palabras. Corre en tu dispositivo.", "🎧 Charla por voz manos libres y Aa modo fácil, para usarla sin teclado.", "📷 Foto y resuelvo: foto de una factura o un turno + «agendame el vencimiento».", "🔄 Esta solapa: te avisa cuando hay una versión nueva."];
+const APP_BUILD = '2026-09-25.5';
+const APP_NOVEDADES = ["✦ Generación v40: tu MIRROR actúa en varios pasos, entiende por significado, te acompaña por voz y se actualiza solo.", "🔧 Arreglos de la auditoría: tu MIRROR ya sabe qué trae su versión y que se actualiza (antes lo inventaba); ninguna ventana queda sin salida (✕, Esc o tocando afuera); si una voz no suena, sigue con otra de tu compu y te avisa; «¿cómo estás? ¿cuál es tu modelo?» contesta las dos cosas; y si agendás una fecha que ya pasó, te lo advierte.", "🧭 Tu MIRROR ahora actúa en varios pasos: «avisale a Juan que no llego y anotame reprogramar» — busca, prepara y te deja las tarjetas; el último toque es tuyo.", "🧠 Memoria que entiende (opcional): encuentra por significado, no solo por palabras. Corre en tu dispositivo.", "🎧 Charla por voz manos libres y Aa modo fácil, para usarla sin teclado.", "📷 Foto y resuelvo: foto de una factura o un turno + «agendame el vencimiento».", "🔄 Esta solapa: te avisa cuando hay una versión nueva."];
 const ACT_CADA_MS = 6 * 60 * 60 * 1000;
 let _actUltimo = null;
 function _actCompara(a, b){ a = String(a || ''); b = String(b || ''); return a === b ? 0 : (a > b ? 1 : -1); }   // «AAAA-MM-DD.n» ordena como texto
@@ -8340,6 +8340,33 @@ function arquitecturaRelevante(pregunta){
       + 'DETALLE DE LO RELEVANTE PARA ESTA PREGUNTA:\n' + elegidos.map(function(i){ return P.items[i]; }).join('\n') + '\n'
       + (P.pie.join('\n') || 'Si te preguntan algo de la app que NO figura acá, decí honestamente que no lo sabés con certeza.');
   } catch(e){ try{ regError('arq:relevante', e); }catch(_){} return ARQUITECTURA_MIRROR; }
+}
+
+/* ══ v40-audit6 (25/09/2026, 19:33) — «¿QUÉ TIENE DE BUENO LA v40?» → INVENTABA ══════════════════════
+   HALLAZGO EN VIVO DE DARÍO, con la v40 recién deployada: preguntó qué trae la versión, si hay
+   novedades, por qué es mejor que la v38 y si se actualiza sola. La entidad INVENTÓ («barra de acciones
+   rápidas», «cifrado actualizado», «control de permisos más estricto») y NEGÓ lo que sí existe («No, la
+   app no se actualiza sola»). CAUSA: la lista REAL de novedades (APP_NOVEDADES) vivía solo en la solapa
+   🔄 — el modelo nunca la veía; y «¿alguna novedad?» / «¿se actualiza sola?» no nombran la app, así que
+   ni siquiera entraba la arquitectura. Con el motor de respaldo (más chico) el hueco se llenó de humo.
+   AHORA: cualquier pregunta por la versión, las novedades o las actualizaciones lleva al contexto la
+   FUENTE DE VERDAD (versión, build, la lista textual de novedades y cómo se actualiza), con la orden de
+   no afirmar nada fuera de eso. Se sostiene 2 turnos más, para las repreguntas («¿cuáles son esas
+   ventajas?») que ya no nombran la versión. */
+const PREGUNTA_POR_VERSION = /(versi[oó]n|\bv\s?\d{2}\b|novedad|\bqu[eé]\s+(hay|trae|tiene)\s+de\s+(nuev|buen)|\bqu[eé]\s+cambi[oó]|actualiz|\bbuild\b|lo\s+nuevo)/i;
+let _versionTurnos = 0;
+function bloqueVersion(){
+  try {
+    const nov = (typeof APP_NOVEDADES !== 'undefined' && Array.isArray(APP_NOVEDADES)) ? APP_NOVEDADES : [];
+    const ver = (typeof PLATFORM_VERSION !== 'undefined') ? PLATFORM_VERSION : '';
+    const bld = (typeof APP_BUILD !== 'undefined') ? APP_BUILD : '';
+    return '=== VERSIÓN Y NOVEDADES DE ESTA APP (fuente de verdad — lo ÚNICO que podés afirmar sobre la versión) ===\n'
+      + 'Versión: ' + ver + (bld ? ' · build ' + bld : '') + '.\n'
+      + 'LO NUEVO DE ESTA VERSIÓN (la lista completa y real, en este orden):\n' + nov.map(function(n){ return '- ' + n; }).join('\n') + '\n'
+      + '¿SE ACTUALIZA SOLA? SÍ BUSCA SOLA Y AVISA: al abrir (y cada 6 horas) mira si hay una versión publicada más nueva y, si la hay, muestra un cartel con «Actualizar ahora»: un toque y queda al día. Nunca se cambia a mitad de una respuesta ni sin avisar. La solapa «🔄 actualizar» (en «⋯ más») muestra la versión, lo nuevo y «buscar ahora». Al actualizar NO se toca nada tuyo: memoria, documentos, contactos, tareas y configuración quedan igual.\n'
+      + 'REGLAS: contestá con ESTO, en tus palabras y con calidez, sin listas eternas. NO inventes funciones, mejoras, cifras ni cambios de seguridad que no estén acá. Si te piden un detalle que no figura, decí que no lo sabés con certeza y ofrecé abrir «🔄 actualizar». Si comparan con la versión anterior, lo que cambió es exactamente esta lista. Si la pregunta NO es sobre esta app (p. ej. la versión de un documento), ignorá este bloque.\n'
+      + '=== FIN VERSIÓN ===\n\n';
+  } catch(e){ return ''; }
 }
 
 async function send() {
@@ -8494,6 +8521,7 @@ async function send() {
     // v2.3: si la pregunta es sobre la PROPIA APP (MIRROR/TARS/funcionamiento), va la
     // arquitectura real al contexto — autoconocimiento sin inventos, en cualquier modo.
     if (PREGUNTA_POR_APP.test(text)) partes += arquitecturaRelevante(text) + resumenErrores() + '\n\n'; // v35-diag (Etapa 6) · v40-audit: por relevancia
+    try { if (PREGUNTA_POR_VERSION.test(text)) _versionTurnos = 3; if (_versionTurnos > 0){ partes += bloqueVersion(); _versionTurnos--; } } catch(e){} // v40-audit6: la versión real, no inventada
     // v35-mem: memoria personal relevante (solo trae algo en modo espejo; en otros modos memoriaRelevante='').
     if (avisoMemoria) partes += avisoMemoria; // v39-memfix: nota de honestidad sobre la memoria
     if (memoriaRelevante) partes += memoriaRelevante + '\n\n';
