@@ -19,6 +19,7 @@
      en Chrome, F12) y, peor, Chrome toma el PRIMER manifest del documento → usaba el roto y
      nunca el dinámico (v36-pwa, más abajo), que sí existe y trae los íconos adentro. -->
 <meta name="theme-color" content="#05050a">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%2305050a'/%3E%3Crect x='27' y='10' width='10' height='44' rx='2' fill='%23000' stroke='%237070ff' stroke-width='2.5'/%3E%3C/svg%3E"><!-- v40-audit2: el monolito como ícono; sin esto el navegador pedía /favicon.ico → 404 en la consola -->
 <title>MIRROR — El Origen</title>
 <!-- v38-cdn (2/08/2026) — ACÁ IBA EL PEDIDO A GOOGLE FONTS, Y SE FUE.
      Era lo ÚNICO que salía a un tercero en CADA apertura, sin que el usuario lo eligiera:
@@ -2174,7 +2175,13 @@ function buildMirrorSystem() {
        <nombre de la entidad>», y nadie le explicaba la diferencia. Este mapa va SIEMPRE (~60 tokens). */
     const _m = (CONFIG && CONFIG.modos) || {};
     const _usr = (CONFIG && CONFIG.perfil && CONFIG.perfil.nombre) ? CONFIG.perfil.nombre : 'la persona dueña de este perfil';
-    bloqueIdentidad += '\nQUIÉN ES QUIÉN (fijo): «' + nom + '» sos VOS, la entidad digital. «' + (_m.mirror||'MIRROR') + '», «' + (_m.tars||'TARS') + '», «' + (_m.jurado||'EXAMINADOR') + '» y «' + (_m.conn||'CONEX') + '» son los nombres de TUS MODOS (tus maneras de trabajar), no son personas: «' + (_m.mirror||'MIRROR') + '» es tu modo espejo —cuando hablás como tu usuario—, NO es tu usuario. Tu usuario, la persona que te escribe, es ' + _usr + '. MIRROR «El Origen» es la marca de la plataforma sobre la que existís (idea de Darío A. Tello).';
+    /* v40-audit2 (25/09/2026) — CHOQUE DE NOMBRES: en la config de prueba de Darío el PERFIL (la
+       persona) y el MODO ESPEJO se llaman igual («ATIS»). Entonces el mapa decía a la vez «ATIS es tu
+       modo, NO tu usuario» y «tu usuario es ATIS», y el modelo elegía una mitad. Si los nombres
+       chocan, se dice de frente y se le enseña a explicar las dos cosas. */
+    const _chocan = (function(){ try { const u = String(_usr||'').trim().toLowerCase(); if (!u || !CONFIG.perfil || !CONFIG.perfil.nombre) return ''; const ns = [nom, _m.mirror, _m.tars, _m.jurado, _m.conn].filter(Boolean); const c = ns.find(function(x){ return String(x).trim().toLowerCase() === u; }); return c || ''; } catch(e){ return ''; } })();
+    bloqueIdentidad += '\nQUIÉN ES QUIÉN (fijo): «' + nom + '» sos VOS, la entidad digital. «' + (_m.mirror||'MIRROR') + '», «' + (_m.tars||'TARS') + '», «' + (_m.jurado||'EXAMINADOR') + '» y «' + (_m.conn||'CONEX') + '» son los nombres de TUS MODOS (tus maneras de trabajar), no son personas: «' + (_m.mirror||'MIRROR') + '» es tu modo espejo —cuando hablás como tu usuario—, NO es tu usuario. Tu usuario, la persona que te escribe, es ' + _usr + '. MIRROR «El Origen» es la marca de la plataforma sobre la que existís (idea de Darío A. Tello).'
+      + (_chocan ? ' OJO, CHOQUE DE NOMBRES: tu usuario se llama igual que «' + _chocan + '». Si te preguntan «¿quién es ' + _chocan + '?», explicá LAS DOS cosas en una frase: es la persona (tu usuario) y también el nombre que te puso para ' + (_chocan === nom ? 'vos, la entidad' : 'uno de tus modos') + '. No elijas una sola.' : '');
   } catch(e) {}
   /* v38-honest (30/07/2026) — BLINDAJE DE HONESTIDAD DEL ESPEJO.
      Auditoría en vivo de Darío: MIRROR (facha ATIS) (1) inventó la descripción de
@@ -3616,9 +3623,18 @@ let pinCallback = null;
 let _memCount = 0;      // cuántos mensajes de history ya están persistidos en esta sesión
 let _memIds = [];       // ids en orden temporal (para la poda a 30)
 let _memLegacy = false; // ¿Firebase todavía guarda el formato array viejo?
+/* v40-audit2 (25/09/2026) — SIN FIREBASE NO SE PIDE NADA. Con la memoria sin configurar, FB_URL es
+   '' y cada lectura/escritura iba a «/memory.json», «/chunks.json», «/perfil.json» DEL PROPIO SITIO:
+   tres 404 rojos en la consola del sitio publicado y, detrás, la verdad que nadie decía — la entidad
+   NO estaba guardando nada entre sesiones («lenta para aprender», auditoría de Darío). fbFetch
+   contesta como una base vacía, sin salir a la red; y la app lo avisa una vez por sesión. */
+function fbFetch(u, o){
+  if (!FB_URL) return Promise.resolve(new Response('null', { status: 200, headers: { 'Content-Type': 'application/json' } }));
+  return fetch(u, o);
+}
 async function memoryGet() {
   try {
-    const res = await fetch(FB_URL+'/memory.json'); const d = await res.json();
+    const res = await fbFetch(FB_URL+'/memory.json'); const d = await res.json();
     if (Array.isArray(d)) { _memLegacy = true; _memCount = d.length; _memIds = []; return d; } // formato viejo: se lee igual
     if (d && typeof d === 'object') {
       const entradas = Object.keys(d).map(k => Object.assign({id:k}, d[k])).filter(e => e && e.role)
@@ -3634,7 +3650,7 @@ async function memorySet(msgs) {
     if (_memLegacy) { // migración única array→ids: un solo PUT, y de acá en más siempre PATCH
       const base = Date.now(); const obj = {}; _memIds = [];
       msgs.slice(-30).forEach((m,i) => { const id = 'm_'+(base+i)+'_'+Math.random().toString(36).slice(2,6); obj[id] = { role: m.role, content: m.content, ts: base+i }; _memIds.push(id); });
-      await fetch(FB_URL+'/memory.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(obj)});
+      await fbFetch(FB_URL+'/memory.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(obj)});
       _memLegacy = false; _memCount = msgs.length; return;
     }
     const nuevos = msgs.slice(_memCount);
@@ -3642,12 +3658,12 @@ async function memorySet(msgs) {
     const base = Date.now(); const patch = {};
     nuevos.forEach((m,i) => { const id = 'm_'+(base+i)+'_'+Math.random().toString(36).slice(2,6); patch[id] = { role: m.role, content: m.content, ts: base+i }; _memIds.push(id); });
     if (_memIds.length > 40) { _memIds.splice(0, _memIds.length - 30).forEach(id => { patch[id] = null; }); } // poda: quedan los últimos 30
-    await fetch(FB_URL+'/memory.json',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(patch)});
+    await fbFetch(FB_URL+'/memory.json',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(patch)});
     _memCount = msgs.length;
   } catch(e) { regError('memorySet', e); } // v35-diag
 }
 async function memoryClear() {
-  try { _memCount = 0; _memIds = []; _memLegacy = false; await fetch(FB_URL+'/memory.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:'null'}); } catch(e) { regError('memoryClear', e); } // v35-diag
+  try { _memCount = 0; _memIds = []; _memLegacy = false; await fbFetch(FB_URL+'/memory.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:'null'}); } catch(e) { regError('memoryClear', e); } // v35-diag
 }
 
 // --- v35-mem: MEMORIA PERSONAL POR RELEVANCIA (portada del MIRROR v3.9, fix probado en vivo) ---
@@ -3682,7 +3698,7 @@ async function recuerdoGuardar(userText, reply){
   const rec = recuerdoArmar(userText, reply);
   recuerdosChunks.push(rec);
   try {
-    await fetch(FB_URL+'/recuerdos.json',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({[rec.id]: rec})});
+    await fbFetch(FB_URL+'/recuerdos.json',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({[rec.id]: rec})});
     return true;
   } catch(e){ console.error('recuerdoGuardar', e); return false; }
 }
@@ -3718,7 +3734,7 @@ function recuerdoNormalizar(rec){
 }
 async function recuerdosLoadAll(){
   if (!FB_URL) return [];
-  try { const res = await fetch(FB_URL+'/recuerdos.json'); const d = await res.json(); return d ? Object.values(d).map(recuerdoNormalizar) : []; }
+  try { const res = await fbFetch(FB_URL+'/recuerdos.json'); const d = await res.json(); return d ? Object.values(d).map(recuerdoNormalizar) : []; }
   catch(e){ return []; }
 }
 function getRecuerdosContext(query){
@@ -3765,7 +3781,7 @@ function renderRecuerdos(filtro){
 }
 async function borrarRecuerdo(id){
   if (!confirm('¿Borrar este recuerdo para siempre?')) return;
-  try { await fetch(FB_URL+'/recuerdos/'+id+'.json',{method:'DELETE'}); } catch(e){ console.error('borrarRecuerdo',e); }
+  try { await fbFetch(FB_URL+'/recuerdos/'+id+'.json',{method:'DELETE'}); } catch(e){ console.error('borrarRecuerdo',e); }
   recuerdosChunks = recuerdosChunks.filter(r=>r.id!==id);
   const b = document.getElementById('mem-buscar');
   renderRecuerdos(b ? b.value : '');
@@ -3831,7 +3847,7 @@ async function consolidarRecuerdos(){
     recuerdosChunks.push(rec);
   });
   try {
-    await fetch(FB_URL+'/recuerdos.json',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(patch)});
+    await fbFetch(FB_URL+'/recuerdos.json',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(patch)});
   } catch(e){ regError('consolidarRecuerdos', e); alert('Ojo: la consolidación quedó aplicada acá pero Firebase no respondió. Reintentá el 🌙 más tarde para sincronizar.'); }
   renderRecuerdos('');
   alert('Listo. '+fundidos+' recuerdos fundidos en '+grupos.length+' resumen(es). Los originales quedaron archivados en tu Firebase, recuperables.');
@@ -3839,7 +3855,7 @@ async function consolidarRecuerdos(){
 
 async function borrarTodosRecuerdos(){
   if (!confirm('¿Borrar TODA la memoria personal? Esto no se puede deshacer. (Tip: exportá el JSON antes, por las dudas.)')) return;
-  try { await fetch(FB_URL+'/recuerdos.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:'null'}); } catch(e){ console.error('borrarTodosRecuerdos',e); }
+  try { await fbFetch(FB_URL+'/recuerdos.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:'null'}); } catch(e){ console.error('borrarTodosRecuerdos',e); }
   recuerdosChunks = [];
   renderRecuerdos('');
 }
@@ -4027,23 +4043,23 @@ async function chunksSave(records){
   const payload = {};
   records.forEach(r => { payload[r.id] = r; });
   try {
-    await fetch(FB_URL+'/chunks.json',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    await fbFetch(FB_URL+'/chunks.json',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
     return true;
   } catch(e){ return false; }
 }
 async function chunksLoadAll(){
-  try { const res = await fetch(FB_URL+'/chunks.json'); const d = await res.json(); return d ? Object.values(d) : []; }
+  try { const res = await fbFetch(FB_URL+'/chunks.json'); const d = await res.json(); return d ? Object.values(d) : []; }
   catch(e){ return []; }
 }
 async function chunksDeleteByDoc(docId){
   // Borra todos los chunks de un documento. Firebase no filtra por valor en PATCH,
   // así que traemos y eliminamos las claves de ese docId.
   try {
-    const res = await fetch(FB_URL+'/chunks.json'); const d = await res.json();
+    const res = await fbFetch(FB_URL+'/chunks.json'); const d = await res.json();
     if (!d) return;
     const del = {};
     Object.entries(d).forEach(([k,v]) => { if (v.docId === docId) del[k] = null; });
-    if (Object.keys(del).length) await fetch(FB_URL+'/chunks.json',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(del)});
+    if (Object.keys(del).length) await fbFetch(FB_URL+'/chunks.json',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(del)});
   } catch(e){}
 }
 
@@ -4092,14 +4108,14 @@ function bm25Search(query, chunks, topK=4, recencyWeight=0){
 // --- Firebase Perfil ---
 async function perfilLoad() {
   try {
-    const res = await fetch(FB_URL+'/perfil.json');
+    const res = await fbFetch(FB_URL+'/perfil.json');
     const d = await res.json();
     return d || null;
   } catch(e) { return null; }
 }
 async function perfilSave(data) {
   try {
-    await fetch(FB_URL+'/perfil.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+    await fbFetch(FB_URL+'/perfil.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
   } catch(e) {}
 }
 
@@ -5857,7 +5873,7 @@ async function encCrear(titulo, pregTxt){
   if (!titulo || !preguntas.length){ alert('Falta el título o las preguntas (una por línea).'); return false; }
   const id = 'e_'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
   const def = { id: id, titulo: titulo, preguntas: preguntas, ts: Date.now(), fb: String(FB_URL).replace(/["\\]/g,'') };
-  try{ await fetch(FB_URL+'/encuestas/'+id+'/def.json', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(def) }); }
+  try{ await fbFetch(FB_URL+'/encuestas/'+id+'/def.json', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(def) }); }
   catch(e){ try{ regError('encuesta:def', e); }catch(_){ } alert('Firebase no respondió al guardar la definición — probá de nuevo.'); return false; }
   encDescargar('encuesta_'+id+'.html', encFormHTML(def));
   addMsg('mirror','Encuesta creada ✅ — se descargó «encuesta_'+id+'.html». Subilo a tu hosting (Pages/Netlify, gratis) o compartilo directo; las respuestas caen en TU Firebase y las ves en «📋 encuestas». Publicarlo corre por tu cuenta: yo genero, vos decidís dónde vive.');
@@ -5866,7 +5882,7 @@ async function encCrear(titulo, pregTxt){
 }
 async function encListar(){
   if (!FB_URL) return null;
-  try{ const res = await fetch(FB_URL+'/encuestas.json'); const d = await res.json(); return d && typeof d === 'object' ? d : {}; }
+  try{ const res = await fbFetch(FB_URL+'/encuestas.json'); const d = await res.json(); return d && typeof d === 'object' ? d : {}; }
   catch(e){ return {}; }
 }
 /* v37-dato (V36-2): fecha/hora de una respuesta en ISO 8601 con huso horario.
@@ -5962,7 +5978,7 @@ async function encExportCSV(id){ const e = await encGet(id); if (!e || !e.def) r
 async function encAnalizar(id){ const e = await encGet(id); if (!e || !e.def) return; const n = e.respuestas ? Object.keys(e.respuestas).length : 0; if (!n){ alert('Sin respuestas para analizar todavía.'); return; } encCerrar(); anaAnalizar('encuesta: '+e.def.titulo, encCSV(e.def, e.respuestas)); }
 async function encBorrar(id){
   if (!confirm('¿Borrar la encuesta y TODAS sus respuestas? No hay vuelta atrás (exportá el CSV antes si las querés).')) return;
-  try{ await fetch(FB_URL+'/encuestas/'+id+'.json', { method:'PUT', headers:{'Content-Type':'application/json'}, body:'null' }); }catch(e){ try{ regError('encuesta:borrar', e); }catch(_){ } }
+  try{ await fbFetch(FB_URL+'/encuestas/'+id+'.json', { method:'PUT', headers:{'Content-Type':'application/json'}, body:'null' }); }catch(e){ try{ regError('encuesta:borrar', e); }catch(_){ } }
   encRender();
 }
 function encAbrir(){
@@ -6492,7 +6508,12 @@ const ACTUA_CMDS = [
            return ok?'Listo ✅ — un toque y se abre tu correo.':'No pude armar la tarjeta — quedó en mi diagnóstico.'; }
   },
   { // ★N2: llamar → tarjeta tel: (número de la agenda o dictado; JAMÁS inventado)
-    re: /(?:llam[aá](?:le|me)?|marc[aá](?:le|me)?)\s+(?:a\s+|al\s+)?(.{2,40})/i,
+    /* v40-audit2 (25/09/2026) — HALLAZGO EN VIVO: «MI PERRA SE LLAMA POCHOLA» → «No tengo el número
+       de POCHOLA». La regla buscaba «llama <algo>» EN CUALQUIER LUGAR de la frase, así que «se llama»,
+       «me llamo», «cómo se llama» eran pedidos de llamar. Ahora el verbo tiene que ABRIR el pedido
+       (o venir después de una coma / «y» / «che» / «por favor» / «dale») y nunca después de
+       se/me/te/nos/cómo/qué. Hablar del nombre de alguien no es pedir que lo llame. */
+    re: /(?:^|[,.;:!?¿¡]\s*|\b(?:y|che|dale|porfa|por\s+favor|ahora)\s+)(?:llam[aá](?:le|lo|la|me)?|marc[aá](?:le|me)?)\s+(?:a\s+|al\s+)?(.{2,40})/i,
     run(m){ const dest=m[1].trim().replace(/[.?!]+$/,'');
             if (actuaNumOk(dest)){ const ok=actuaTarjeta('📞','Llamar','Número listo en el discador.',actuaTelURL(dest),'📞 llamar ahora');
               return ok?'Número listo ✅ — un toque y llama.':'No pude armar la tarjeta — quedó en mi diagnóstico.'; }
@@ -7356,7 +7377,7 @@ function actuaPintarTarjeta(){ if(actuaPend){ try{ actuaTarjeta.apply(null,actua
    texto trae algo más que la pregunta por el modelo, no se contesta SOLO el texto fijo (se perdía
    el informe): va al modelo como siempre y la app le ANTEPONE la línea de identidad fija. */
 const _OTRO_PEDIDO_RE = /(informe|detall|expl[ií]c|cont[aá]me|describ|arm[aá]me|hac[eé]me|dame|resum|arquitectura|c[oó]mo\s+funcion|qu[eé]\s+(?:sab[eé]s|pod[eé]s)\s+hacer)/i;
-function esPreguntaModeloSola(text){ try { return esPreguntaModelo(text) && !_OTRO_PEDIDO_RE.test(String(text||'')); } catch(e){ return false; } }
+function esPreguntaModeloSola(text){ try { return esPreguntaModelo(text) && !_OTRO_PEDIDO_RE.test(String(text||'')) && String(text||'').trim().length <= 60; } catch(e){ return false; } } // v40-audit2: si viene con charla («estoy cansado, vos cómo estás…»), contesta todo y antepone la identidad
 function lineaIdentidadModelo(){
   try {
     var mp = (typeof CONFIG!=='undefined' && CONFIG.modeloPrincipal) || '';
@@ -7365,11 +7386,23 @@ function lineaIdentidadModelo(){
     return 'Sobre mi modelo, de frente: por debajo corro sobre «' + mp + '»' + (motp ? ' a través de «' + motp + '»' : '') + ((typeof PLATFORM_VERSION!=='undefined') ? ' («' + PLATFORM_VERSION + '» es la versión de la app, no el modelo)' : '') + '.';
   } catch(e){ return ''; }
 }
+/* v40-audit2: aviso honesto una vez por sesión si la memoria no está configurada */
+function avisoSinMemoria(){
+  try {
+    if (FB_URL || !CONFIG || !CONFIG.configurado || window.MODO_COMPARTIDO) return;
+    if (sessionStorage.getItem('mirror_aviso_sinfb') === '1') return;
+    sessionStorage.setItem('mirror_aviso_sinfb', '1');
+    addMsg('mirror', '◈ Aviso honesto: todavía no tengo memoria conectada (falta tu Firebase). Recuerdo lo de esta charla, pero al cerrar se borra. Para que te recuerde de verdad, cargá tu Firebase en el constructor (paso de la memoria).');
+  } catch(e){}
+}
+setTimeout(avisoSinMemoria, 4500);
 function esPreguntaModelo(text){
   var t = ' ' + String(text||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'') + ' ';
   var tema = /(modelo|motor)\s+(de\s+)?(ia|iag|inteligencia|lenguaje)/.test(t) || /(gpt-?oss|groq|cerebras|modelo de lenguaje)/.test(t) || /\b(que|cual)\s+modelo\s+(sos|eres)\b/.test(t); // v40-quien: «¿qué modelo sos?» a secas (24/09 lo contestaba el modelo)
   var sobreVos = /\b(sos|usas|utilizas|tenes|corres|funcionas|estas usando)\b/.test(t);
-  return tema && sobreVos;
+  // v40-audit2: «…cómo es tu nueva versión, tu modelo?» (25/09 contestó el respaldo: «mi modelo es MANIFIESTOS»)
+  var tuModelo = /\b(tu|su)\s+(modelo|motor)\b/.test(t) && !/\bmodelo\s+de\s+(negocio|examen|carta|nota|informe|mail|correo)/.test(t);
+  return (tema && sobreVos) || tuModelo;
 }
 function responderModeloFijo(text){
   try {
@@ -7757,7 +7790,21 @@ async function semCargar(){
     for (const u of SEM_LIB_URLS){ try { lib = await import(u); if (lib && lib.pipeline) break; } catch(e){ ultimo = e; lib = null; } }
     if (!lib || !lib.pipeline) throw (ultimo || new Error('no pude cargar la librería de Transformers.js'));
     try { if (lib.env){ lib.env.allowLocalModels = false; } } catch(e){}
-    _sem.extractor = await lib.pipeline('feature-extraction', SEM_MODELO, { dtype:'q8', device:'wasm', progress_callback: semProgreso });
+    /* v40-audit2 (25/09/2026) — HALLAZGO EN VIVO: en la red de Darío huggingface.co responde SIN
+       permiso CORS (el navegador lo bloquea: «Failed to fetch»), mientras jsDelivr anda perfecto.
+       Plan B honesto: bajar el MISMO modelo a través de TU proxy de Cloudflare (ruta /hf, lista
+       cerrada de modelos, ver WORKER_ruta_hf.md). Se recuerda qué camino anduvo. */
+    const _viaProxy = function(){ try { return (typeof PROXY_URL === 'string' && PROXY_URL) ? PROXY_URL.replace(/\/+$/, '') + '/hf/' : ''; } catch(e){ return ''; } };
+    const _abrir = function(){ return lib.pipeline('feature-extraction', SEM_MODELO, { dtype:'q8', device:'wasm', progress_callback: semProgreso }); };
+    let _prefProxy = false; try { _prefProxy = localStorage.getItem('mirror_sem_via') === 'proxy'; } catch(e){}
+    if (_prefProxy && _viaProxy()){ try { lib.env.remoteHost = _viaProxy(); } catch(e){} }
+    try { _sem.extractor = await _abrir(); }
+    catch(e1){
+      const hf = _viaProxy();
+      if (!hf || _prefProxy) throw new Error(_semMensajeRed(e1, !!hf));
+      try { lib.env.remoteHost = hf; _sem.estado = 'descargando'; semPintar(); _sem.extractor = await _abrir(); try { localStorage.setItem('mirror_sem_via', 'proxy'); } catch(_){} }
+      catch(e2){ throw new Error(_semMensajeRed(e2, true)); }
+    }
     await _semCargarCache();
     _sem.estado = 'listo'; semPintar();
     return true;
@@ -7767,6 +7814,13 @@ async function semCargar(){
     semPintar(); return false;
   });
   return _sem.cargando;
+}
+function _semMensajeRed(e, probeProxy){
+  const m = String((e && e.message) || e || '');
+  if (/fetch|network|cors|load failed/i.test(m))
+    return probeProxy ? 'tu red no me deja bajar el modelo de Hugging Face, y tu proxy todavía no tiene la ruta /hf (la instrucción está en el LEEME, es pegar un bloque en tu Worker)'
+                      : 'tu red no me deja bajar el modelo de Hugging Face, y sin proxy configurado no tengo otro camino';
+  return m.slice(0, 160);
 }
 async function semEmbed(textos, prefijo){
   const out = await _sem.extractor(textos.map(function(t){ return prefijo + String(t || '').slice(0, 2000); }), { pooling:'mean', normalize:true });
@@ -8022,8 +8076,8 @@ async function fotoResolver(text){
      · la solapa «🔄 actualizar» del pie muestra la versión, lo nuevo y «buscar ahora».
    Actualizar = recargar con lo nuevo. La configuración, la memoria, los contactos y las tareas
    NO se tocan: no viven en el código. Nunca recarga sola ni a mitad de una respuesta. */
-const APP_BUILD = '2026-09-25.1';
-const APP_NOVEDADES = ["🧭 Tu MIRROR ahora actúa en varios pasos: «avisale a Juan que no llego y anotame reprogramar» — busca, prepara y te deja las tarjetas; el último toque es tuyo.", "🧠 Memoria que entiende (opcional): encuentra por significado, no solo por palabras. Corre en tu dispositivo.", "🎧 Charla por voz manos libres y Aa modo fácil, para usarla sin teclado.", "📷 Foto y resuelvo: foto de una factura o un turno + «agendame el vencimiento».", "🔄 Esta solapa: te avisa cuando hay una versión nueva."];
+const APP_BUILD = '2026-09-25.2';
+const APP_NOVEDADES = ["🔧 Arreglos de la auditoría: «mi perra se llama…» ya no se toma como «llamá a…»; si falta tu memoria (Firebase) te lo avisa de frente; y la memoria que entiende puede bajar por tu proxy si tu red bloquea Hugging Face.", "🧭 Tu MIRROR ahora actúa en varios pasos: «avisale a Juan que no llego y anotame reprogramar» — busca, prepara y te deja las tarjetas; el último toque es tuyo.", "🧠 Memoria que entiende (opcional): encuentra por significado, no solo por palabras. Corre en tu dispositivo.", "🎧 Charla por voz manos libres y Aa modo fácil, para usarla sin teclado.", "📷 Foto y resuelvo: foto de una factura o un turno + «agendame el vencimiento».", "🔄 Esta solapa: te avisa cuando hay una versión nueva."];
 const ACT_CADA_MS = 6 * 60 * 60 * 1000;
 let _actUltimo = null;
 function _actCompara(a, b){ a = String(a || ''); b = String(b || ''); return a === b ? 0 : (a > b ? 1 : -1); }   // «AAAA-MM-DD.n» ordena como texto
