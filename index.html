@@ -8205,7 +8205,7 @@ async function fotoResolver(text){
      · la solapa «🔄 actualizar» del pie muestra la versión, lo nuevo y «buscar ahora».
    Actualizar = recargar con lo nuevo. La configuración, la memoria, los contactos y las tareas
    NO se tocan: no viven en el código. Nunca recarga sola ni a mitad de una respuesta. */
-const APP_BUILD = '2026-09-25.6';
+const APP_BUILD = '2026-09-25.7';
 const APP_NOVEDADES = ["✦ Generación v40: tu MIRROR actúa en varios pasos, entiende por significado, te acompaña por voz y se actualiza solo.", "🔧 Arreglos de la auditoría: tu MIRROR ya sabe qué trae su versión y que se actualiza (antes lo inventaba, y hasta se lo acordaba mal: ahora la verdad le gana a la memoria); ninguna ventana queda sin salida (✕, Esc o tocando afuera); si una voz no suena, sigue con otra de tu compu y te avisa; «¿cómo estás? ¿cuál es tu modelo?» contesta las dos cosas; y si agendás una fecha que ya pasó, te lo advierte.", "🧭 Tu MIRROR ahora actúa en varios pasos: «avisale a Juan que no llego y anotame reprogramar» — busca, prepara y te deja las tarjetas; el último toque es tuyo.", "🧠 Memoria que entiende (opcional): encuentra por significado, no solo por palabras. Corre en tu dispositivo.", "🎧 Charla por voz manos libres y Aa modo fácil, para usarla sin teclado.", "📷 Foto y resuelvo: foto de una factura o un turno + «agendame el vencimiento».", "🔄 Esta solapa: te avisa cuando hay una versión nueva."];
 const ACT_CADA_MS = 6 * 60 * 60 * 1000;
 let _actUltimo = null;
@@ -8372,6 +8372,7 @@ function bloqueVersion(){
       + 'Versión: ' + ver + (bld ? ' · build ' + bld : '') + '.\n'
       + 'LO NUEVO DE ESTA VERSIÓN (la lista completa y real, en este orden):\n' + nov.map(function(n){ return '- ' + n; }).join('\n') + '\n'
       + '¿SE ACTUALIZA SOLA? SÍ BUSCA SOLA Y AVISA: al abrir (y cada 6 horas) mira si hay una versión publicada más nueva y, si la hay, muestra un cartel con «Actualizar ahora»: un toque y queda al día. Nunca se cambia a mitad de una respuesta ni sin avisar. La solapa «🔄 actualizar» (en «⋯ más») muestra la versión, lo nuevo y «buscar ahora». Al actualizar NO se toca nada tuyo: memoria, documentos, contactos, tareas y configuración quedan igual.\n'
+      + 'OJO: lo que la app YA tenía antes (las tarjetas de un toque para llamar o mandar WhatsApp, las encuestas, los informes, el panel de estado, el «+» de la barra) NO es novedad de esta versión: no lo presentes como nuevo ni le inventes nombres.\n'
       + 'ESTO LE GANA A TODO: a la memoria y a lo que hayas dicho antes en esta charla. Si ahí aparece otra lista de novedades o funciones que acá no están, fue un ERROR tuyo: no la repitas, y si ya la dijiste en esta charla, corregite de frente en una línea («me corrijo: antes te dije cosas que la v… no tiene»).\n'
       + 'REGLAS: contestá con ESTO, en tus palabras y con calidez, sin listas eternas. NO inventes funciones, mejoras, cifras ni cambios de seguridad que no estén acá. Si te piden un detalle que no figura, decí que no lo sabés con certeza y ofrecé abrir «🔄 actualizar». Si comparan con la versión anterior, lo que cambió es exactamente esta lista. Si la pregunta NO es sobre esta app (p. ej. la versión de un documento), ignorá este bloque.\n'
       + '=== FIN VERSIÓN ===\n\n';
@@ -8570,7 +8571,13 @@ async function send() {
   // Mensajes a Groq: historial previo liviano + el mensaje actual CON contexto pesado.
   // v2.4: en jurado el proyecto completo viaja en CADA turno (≈7k tokens), así que el
   // historial va más corto — menos presión sobre la cuota por minuto = menos saturación.
-  const previos = history.slice(mode==='jurado' ? -5 : -8, -1); // últimos turnos, sin el actual
+  /* v40-audit8 (25/09/2026, 19:58): con la .6 la memoria ya no mentía, pero la respuesta todavía traía «la barra de
+     acciones rápidas». CAUSA: al abrir, la app RESTAURA la charla desde la Firebase («Memoria restaurada…») y los últimos
+     turnos viajan como historial — ahí estaban las respuestas inventadas de las 19:33. En preguntas de versión, las
+     respuestas VIEJAS de la entidad sobre versiones no viajan (la verdad va en bloqueVersion); lo que dijo el usuario, sí. */
+  const previos = history.slice(mode==='jurado' ? -5 : -8, -1).filter(function(m){ // últimos turnos, sin el actual
+    try { return !(_preguntaVersion && m && m.role === 'assistant' && _RECUERDO_DE_VERSION.test(String(m.content || ''))); } catch(e){ return true; }
+  });
   // v39-cupo: perillas y presupuesto de salida se calculan ACÁ (ajustarAlCupo los necesita para
   // medir). En reposo/no-cebolla dan los mismos números de siempre (jurado 1100, TARS-DB 1500,
   // resto 700; temps de siempre). Antes vivían adentro del try.
