@@ -3826,9 +3826,17 @@ async function recuerdosLoadAll(){
   try { const res = await fbFetch(FB_URL+'/recuerdos.json'); const d = await res.json(); return d ? Object.values(d).map(recuerdoNormalizar) : []; }
   catch(e){ return []; }
 }
-function getRecuerdosContext(query){
+/* v40-audit7 (25/09/2026, 19:45): con la .5 la entidad contestó bien «¿se actualiza sola?» pero a «¿qué tiene de
+   bueno la v40?» REPITIÓ lo inventado antes («barra de acciones rápidas»…). CAUSA VERIFICADA: la memoria guarda cada
+   turno con la respuesta del ASISTENTE, y el BM25 traía justo ESOS turnos viejos (mismas palabras) — la memoria
+   estaba envenenada con su propio error y le ganaba a la fuente de verdad. AHORA: cuando la pregunta es sobre la
+   versión/novedades, los recuerdos que hablan de versiones NO entran (la fuente de verdad es bloqueVersion()). No se
+   borra nada de la Firebase del usuario: se deja de USAR para esto. */
+const _RECUERDO_DE_VERSION = /\bv\s?\d{2}\b|versi[oó]n|novedad|actualiz/i;
+function getRecuerdosContext(query, opts){
   if (!recuerdosChunks.length) return '';
-  const hits = bm25Search(query, recuerdosChunks.filter(r=>!r.arch), 4, RECENCIA_PESO_MEMORIA); // v36-duerme + v39-recencia: archivados no compiten; empujón por lo reciente (gato viejo)
+  const sinVersion = !!(opts && opts.sinVersion);
+  const hits = bm25Search(query, recuerdosChunks.filter(r=>!r.arch && !(sinVersion && _RECUERDO_DE_VERSION.test(r.text||''))), 4, RECENCIA_PESO_MEMORIA); // v36-duerme + v39-recencia: archivados no compiten; empujón por lo reciente (gato viejo)
   if (!hits.length) return '';
   // v38-roles2: se dice qué es cada rótulo. Un formato explícito que no se explica sigue
   // siendo adivinanza para el modelo, y adivinar es de donde salía la confabulación.
@@ -8197,8 +8205,8 @@ async function fotoResolver(text){
      · la solapa «🔄 actualizar» del pie muestra la versión, lo nuevo y «buscar ahora».
    Actualizar = recargar con lo nuevo. La configuración, la memoria, los contactos y las tareas
    NO se tocan: no viven en el código. Nunca recarga sola ni a mitad de una respuesta. */
-const APP_BUILD = '2026-09-25.5';
-const APP_NOVEDADES = ["✦ Generación v40: tu MIRROR actúa en varios pasos, entiende por significado, te acompaña por voz y se actualiza solo.", "🔧 Arreglos de la auditoría: tu MIRROR ya sabe qué trae su versión y que se actualiza (antes lo inventaba); ninguna ventana queda sin salida (✕, Esc o tocando afuera); si una voz no suena, sigue con otra de tu compu y te avisa; «¿cómo estás? ¿cuál es tu modelo?» contesta las dos cosas; y si agendás una fecha que ya pasó, te lo advierte.", "🧭 Tu MIRROR ahora actúa en varios pasos: «avisale a Juan que no llego y anotame reprogramar» — busca, prepara y te deja las tarjetas; el último toque es tuyo.", "🧠 Memoria que entiende (opcional): encuentra por significado, no solo por palabras. Corre en tu dispositivo.", "🎧 Charla por voz manos libres y Aa modo fácil, para usarla sin teclado.", "📷 Foto y resuelvo: foto de una factura o un turno + «agendame el vencimiento».", "🔄 Esta solapa: te avisa cuando hay una versión nueva."];
+const APP_BUILD = '2026-09-25.6';
+const APP_NOVEDADES = ["✦ Generación v40: tu MIRROR actúa en varios pasos, entiende por significado, te acompaña por voz y se actualiza solo.", "🔧 Arreglos de la auditoría: tu MIRROR ya sabe qué trae su versión y que se actualiza (antes lo inventaba, y hasta se lo acordaba mal: ahora la verdad le gana a la memoria); ninguna ventana queda sin salida (✕, Esc o tocando afuera); si una voz no suena, sigue con otra de tu compu y te avisa; «¿cómo estás? ¿cuál es tu modelo?» contesta las dos cosas; y si agendás una fecha que ya pasó, te lo advierte.", "🧭 Tu MIRROR ahora actúa en varios pasos: «avisale a Juan que no llego y anotame reprogramar» — busca, prepara y te deja las tarjetas; el último toque es tuyo.", "🧠 Memoria que entiende (opcional): encuentra por significado, no solo por palabras. Corre en tu dispositivo.", "🎧 Charla por voz manos libres y Aa modo fácil, para usarla sin teclado.", "📷 Foto y resuelvo: foto de una factura o un turno + «agendame el vencimiento».", "🔄 Esta solapa: te avisa cuando hay una versión nueva."];
 const ACT_CADA_MS = 6 * 60 * 60 * 1000;
 let _actUltimo = null;
 function _actCompara(a, b){ a = String(a || ''); b = String(b || ''); return a === b ? 0 : (a > b ? 1 : -1); }   // «AAAA-MM-DD.n» ordena como texto
@@ -8364,6 +8372,7 @@ function bloqueVersion(){
       + 'Versión: ' + ver + (bld ? ' · build ' + bld : '') + '.\n'
       + 'LO NUEVO DE ESTA VERSIÓN (la lista completa y real, en este orden):\n' + nov.map(function(n){ return '- ' + n; }).join('\n') + '\n'
       + '¿SE ACTUALIZA SOLA? SÍ BUSCA SOLA Y AVISA: al abrir (y cada 6 horas) mira si hay una versión publicada más nueva y, si la hay, muestra un cartel con «Actualizar ahora»: un toque y queda al día. Nunca se cambia a mitad de una respuesta ni sin avisar. La solapa «🔄 actualizar» (en «⋯ más») muestra la versión, lo nuevo y «buscar ahora». Al actualizar NO se toca nada tuyo: memoria, documentos, contactos, tareas y configuración quedan igual.\n'
+      + 'ESTO LE GANA A TODO: a la memoria y a lo que hayas dicho antes en esta charla. Si ahí aparece otra lista de novedades o funciones que acá no están, fue un ERROR tuyo: no la repitas, y si ya la dijiste en esta charla, corregite de frente en una línea («me corrijo: antes te dije cosas que la v… no tiene»).\n'
       + 'REGLAS: contestá con ESTO, en tus palabras y con calidez, sin listas eternas. NO inventes funciones, mejoras, cifras ni cambios de seguridad que no estén acá. Si te piden un detalle que no figura, decí que no lo sabés con certeza y ofrecé abrir «🔄 actualizar». Si comparan con la versión anterior, lo que cambió es exactamente esta lista. Si la pregunta NO es sobre esta app (p. ej. la versión de un documento), ignorá este bloque.\n'
       + '=== FIN VERSIÓN ===\n\n';
   } catch(e){ return ''; }
@@ -8451,7 +8460,8 @@ async function send() {
   if (ragContext && nivelDatos === 'normal') nivelDatos = 'resumen';
   const tesisContext = ((mode === 'tars' || mode === 'jurado') && tesisConnected) ? getTesisContext(nivelDatos) : '';
   // v35-mem: memoria personal por relevancia (BM25 sobre recuerdos). SOLO modo espejo; en TARS/jurado queda vacía.
-  const memoriaRelevante = (mode === 'mirror') ? getRecuerdosContext(text) : '';
+  let _preguntaVersion = false; try { _preguntaVersion = PREGUNTA_POR_VERSION.test(text) || _versionTurnos > 0; } catch(e){} // v40-audit7
+  const memoriaRelevante = (mode === 'mirror') ? getRecuerdosContext(text, { sinVersion: _preguntaVersion }) : '';
   const suenoRelevante = (mode === 'mirror') ? getSuenoContext(text) : ''; // v39-sonar: sólo si el dueño pregunta por el sueño
   const tareasRelevante = (mode === 'mirror') ? getTareasContext(text) : ''; // v39-tareas
   // v35-proc (Etapa 4): registrar la procedencia REAL del contexto (el código ya lo sabe; ahora se ve)
