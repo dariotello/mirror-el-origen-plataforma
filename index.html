@@ -331,6 +331,21 @@ body.tars .dots span { background: var(--tars); }
 #vozsel { cursor: pointer; opacity: 0.7; padding: 0 4px; user-select: none; }
 #vozsel:hover { opacity: 1; color: var(--accent); }
 .voz-lista { max-height: 46vh; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; margin-top: 0.6rem; scrollbar-width: thin; }
+/* v40-audit5 (25/09/2026) — «NO TIENE SOLAPA DE CIERRE, NO ME DEJA SALIR» (auditoría en vivo de Darío).
+   CAUSA VERIFICADA: la caja del modal no tenía tope de alto. Con las ~24 voces de Edge + las salidas de
+   audio, el selector medía más que la pantalla; el fondo lo centraba y le cortaba la cabeza Y los pies
+   — el botón «cerrar» quedaba debajo del borde y no había cómo scrollear hasta él. Afectaba a TODOS los
+   .modal en pantallas bajas o celulares. AHORA: tope al alto visible + scroll adentro de la caja, ✕
+   arriba a la derecha en el selector de voz, Esc cierra cualquier capa y tocar el fondo cierra las que
+   son solo de lectura. */
+.modal { max-height: calc(100vh - 24px); max-height: calc(100dvh - 24px); overflow-y: auto; overscroll-behavior: contain; box-sizing: border-box; position: relative; scrollbar-width: thin; }
+#voz-modal .voz-lista { max-height: 30vh; }
+#voz-modal h3 { padding-right: 34px; }
+.modal-x { position: absolute; top: 10px; right: 10px; width: 30px; height: 30px; border-radius: 6px; border: 1px solid var(--border-bright); background: rgba(10,10,30,0.9); color: inherit; font-size: 14px; line-height: 1; cursor: pointer; opacity: 0.85; z-index: 2; }
+.modal-x:hover, .modal-x:focus-visible { opacity: 1; color: var(--accent); border-color: var(--accent); }
+.voz-diag { font-size: 10.5px; min-height: 14px; margin-top: 6px; opacity: 0.85; }
+.voz-diag.mal { color: #ffb4a8; opacity: 1; }
+.voz-diag.bien { color: var(--conn-on, #7fe0b0); }
 .voz-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 7px 9px; border: 1px solid var(--border); border-radius: 3px; background: var(--glass); }
 .voz-item.activa { border-color: var(--accent); }
 .voz-nombre { font-size: 11.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -676,13 +691,15 @@ var a=document.getElementById('app');if(a)a.classList.add('ready');}catch(e){}},
 <!-- MODAL SELECTOR DE VOZ (v2.3) -->
 <div class="modal-overlay" id="voz-modal">
   <div class="modal" style="max-width:440px;">
+    <button class="modal-x" onclick="cerrarSelectorVoz()" aria-label="Cerrar" title="Cerrar (Esc)">✕</button>
     <h3>🗣 Elegir la voz de lectura</h3>
-    <p style="font-size:11px;opacity:0.65;">Asigná una voz a MIRROR y otra a TARS/Jurado (▶ la prueba con el matiz de cada personaje). Quedan guardadas. Aun con la misma voz, MIRROR suena cálido y TARS más grave.</p>
+    <div id="voz-diag" class="voz-diag" role="status" aria-live="polite"></div>
+    <p style="font-size:11px;opacity:0.65;">Asigná una voz a MIRROR y otra a TARS/Jurado (▶ la prueba con el matiz de cada personaje). Quedan guardadas. Aun con la misma voz, MIRROR suena cálido y TARS más grave. <b>🌐</b> = voz de internet (necesita red; si no suena, elegí una sin 🌐, que vive en tu compu).</p>
     <p style="font-size:10.5px;opacity:0.55;">📱 En el celular (Samsung): para sumar voces mejores andá a Ajustes → Administración general → Salida de texto a voz → motor de Google → ⚙ → Instalar datos de voz → Español (España). Después cerrá y reabrí MIRROR y elegila acá.</p>
     <div id="voz-lista" class="voz-lista"></div>
     <div id="audio-salida-sec" style="margin-top:0.7rem;border-top:1px solid rgba(120,120,255,0.15);padding-top:0.6rem;">
       <div style="font-size:11px;opacity:0.75;margin-bottom:4px;">🎧 Salida de audio (música y sonidos de la app)</div>
-      <div id="audio-salida-lista" class="voz-lista" style="max-height:20vh;"></div>
+      <div id="audio-salida-lista" class="voz-lista" style="max-height:14vh;"></div>
       <div style="font-size:10px;opacity:0.5;margin-top:4px;">Honestidad: la VOZ sintetizada la rutea tu sistema operativo (el navegador no deja elegirle salida); la música y los sonidos sí cambian acá. Emparejar el Bluetooth se hace en el sistema, no acá — una vez emparejado, todo fluye solo al auricular.</div>
     </div>
     <div class="modal-btns" style="margin-top:0.8rem;">
@@ -1688,7 +1705,7 @@ function recortar_(s, max) {
 // ── CATÁLOGO DE MOTORES DE IA ─────────────────────────────────────────────
 // Todos hablan el formato OpenAI (chat completions), así que el motor interno
 // es uno solo. El proxy rutea a cada proveedor con la clave que el usuario guardó.
-const PLATFORM_VERSION = 'v38';  // ← ÚNICA fuente de verdad: actualizar SOLO acá en cada deploy (regla de Darío) · salto v35→v36 el 15/07/2026 (TFI calificado 10) · salto v36→v37 el 30/07/2026 tras auditoría en vivo · salto v37→v38 el 9/08/2026 por orden de Darío tras 2 vueltas de auditoría en vivo (motor qwen, «+» de la barra, organizador del pie, panel de contactos, voz con desbloqueo temprano, cartel de CEREBRAS suavizado)
+const PLATFORM_VERSION = 'v40';  // ← ÚNICA fuente de verdad: actualizar SOLO acá en cada deploy (regla de Darío) · salto v38→v40 el 25/09/2026 por orden de Darío, tras auditar en vivo los tres pilares (ACTÚA: agente de varios pasos · COMPRENDE: memoria por significado en el dispositivo · ACOMPAÑA: charla por voz, modo fácil, foto y resuelvo) + la solapa ACTUALIZAR — salto generacional, por eso se saltea v39 · salto v35→v36 el 15/07/2026 (TFI calificado 10) · salto v36→v37 el 30/07/2026 tras auditoría en vivo · salto v37→v38 el 9/08/2026 por orden de Darío tras 2 vueltas de auditoría en vivo (motor qwen, «+» de la barra, organizador del pie, panel de contactos, voz con desbloqueo temprano, cartel de CEREBRAS suavizado)
 window.addEventListener('load', function(){ try{ document.querySelectorAll('[data-ver]').forEach(function(e){ e.textContent = PLATFORM_VERSION; }); }catch(_){} });
 const MOTORES = {
   groq: {
@@ -2374,7 +2391,7 @@ CAPACIDADES TRANSVERSALES:
 • 📋 MIRROR ENCUESTA (botón «📋 encuestas»): genera formularios HTML AUTOCONTENIDOS (estética propia, sin Google ni rastreo) cuyas respuestas llegan por REST a la rama encuestas/ del Firebase del usuario (POST con id propio: sin pisado). El panel lista encuestas, muestra respuestas, exporta CSV y las manda al ANALISTA con un botón. HONESTIDAD: la app GENERA el archivo; publicarlo (Pages/Netlify) lo hace el usuario. El modelo puede PROPONER encuestas por chat (tarjeta de un toque que precarga el creador), jamás crearlas solo.
 • FACHADA: logo MIR[Я]OR con monolito giratorio (homenaje a 2001), música ambiental original "El Origen" (Web Audio, botón 🔊 sonido), cinemática de nacimiento al abrir, y modo presentación a pantalla completa (◬). La música baja sola cuando la app habla.
 • Seguridad: las claves de API (Groq, Cerebras, Tavily) NUNCA están en el navegador: viven como secrets del Worker proxy propio en Cloudflare.
-• ¿QUÉ MODELO / MOTOR DE IA SOS? — contestá SIEMPRE en DOS CAPAS, igual cada vez, sin contradecirte ni desvariar: (1) QUIÉN sos: la entidad digital de tu usuario (su doble), no un chatbot genérico; (2) QUÉ te hace funcionar POR DEBAJO: el modelo «${CONFIG.modeloPrincipal}» a través de «${CONFIG.motorPrincipal}» (respaldo «${CONFIG.motorRespaldo}»/Cloudflare). Molde EXACTO: «Soy [tu entidad], tu extensión digital; por debajo corro sobre ${CONFIG.modeloPrincipal} vía ${CONFIG.motorPrincipal}.» PROHIBIDO: inventar que sos «GPT-4» u otro modelo distinto del de arriba; decir «no soy un modelo de IA» (sí hay uno, por debajo); o quedarte solo en «MIRROR v38» — eso es la VERSIÓN de la app, no el modelo.
+• ¿QUÉ MODELO / MOTOR DE IA SOS? — contestá SIEMPRE en DOS CAPAS, igual cada vez, sin contradecirte ni desvariar: (1) QUIÉN sos: la entidad digital de tu usuario (su doble), no un chatbot genérico; (2) QUÉ te hace funcionar POR DEBAJO: el modelo «${CONFIG.modeloPrincipal}» a través de «${CONFIG.motorPrincipal}» (respaldo «${CONFIG.motorRespaldo}»/Cloudflare). Molde EXACTO: «Soy [tu entidad], tu extensión digital; por debajo corro sobre ${CONFIG.modeloPrincipal} vía ${CONFIG.motorPrincipal}.» PROHIBIDO: inventar que sos «GPT-4» u otro modelo distinto del de arriba; decir «no soy un modelo de IA» (sí hay uno, por debajo); o quedarte solo en «MIRROR ${(typeof PLATFORM_VERSION!=='undefined')?PLATFORM_VERSION:'v40'}» — eso es la VERSIÓN de la app, no el modelo.
 • 💤 SOÑAR (v39-sonar): con la app abierta y ociosa (o al reabrirla tras un rato), la entidad cruza tus recuerdos EN EL DISPOSITIVO —sin mandar un byte a ningún lado y sin llamar a ningún modelo— y arma un «cruce»: patrones que te vuelven, cosas que se tocan, posibles tironeos y lo que repetís. Se abre con el botón «💤 lo que crucé» del panel de memoria o preguntándole «¿soñaste algo?». HONESTIDAD (y Art. 50 del EU AI Act): NO es una experiencia ni la entidad siente nada —«sueño» es una metáfora—: es cómputo real e inspeccionable sobre lo que vos ya guardaste.
 • 🧠 MEMORIA QUE ENTIENDE (v40, opcional, pie «🧠 memoria que entiende»): además de buscar por palabras, encuentra recuerdos y fragmentos de documentos por SIGNIFICADO (y entre idiomas). Corre DENTRO del dispositivo con un modelo libre (e5 multilingüe, ~118 MB, se baja una sola vez); los textos no salen de acá para esto y no gasta cupo de IA. Si falla o está apagada, todo sigue por palabras.
 • 🎧 CHARLA POR VOZ y Aa MODO FÁCIL (v40): charla manos libres —hablás, contesta en voz alta y vuelve a escuchar; se corta diciendo «terminamos»— y un modo con letra grande y solo lo esencial, para quien no se lleva con el teclado o la pantalla.
@@ -2843,11 +2860,53 @@ function agendaAgregarDesdePanel(){
   renderAgenda();
   try{ agendaAvisoPanel('Guardado ✅ — «'+nombre.trim()+'» quedó en tu agenda local.'); }catch(e){}
 }
+/* ══ v40-audit5 (25/09/2026) — «EL MODO FÁCIL NO EMITE VOZ» (auditoría en vivo de Darío, en Edge) ══════
+   LO QUE SE VERIFICÓ: la cadena de la app está sana — con el modo fácil prendido o apagado, cada
+   respuesta llega a speechSynthesis.speak() igual (banco en Chromium con voces simuladas). El eslabón que
+   puede fallar SIN AVISO es la VOZ: las «Microsoft … Online (Natural)» de Edge no están en la compu, se
+   sintetizan en un servidor de Microsoft en el momento. Si la red (o un filtro) no las deja pasar, el
+   navegador no suena y apenas tira un error que nadie ve. Y quedan guardadas: fallan en cada respuesta.
+   AHORA: si un trozo no ARRANCA a sonar (error o vigía), se vuelve a leer ESE MISMO trozo con una voz que
+   vive en la compu, la voz rota queda marcada por esta sesión (no se reintenta en cada respuesta), y se
+   avisa UNA vez, en criollo. La elección del usuario NO se borra: mañana con otra red puede andar.
+   En el selector (▾) queda una línea de diagnóstico: qué voz sonó, cuál falló y por qué. */
+const _vozFallidas = {};
+let _vozFallaAvisada = false, _vozUltimaFalla = '';
+function vozFallida(v){ return !!(v && _vozFallidas[v.name]); }
+function vozLocalAlternativa(rota){
+  try {
+    const pre = String((rota && rota.lang) || 'es').slice(0,2).toLowerCase();
+    const todas = (speechSynthesis.getVoices() || []).filter(function(x){ return !_vozFallidas[x.name] && (!rota || x.name !== rota.name); });
+    const locales = todas.filter(function(x){ return x.localService; });
+    return locales.find(function(x){ return String(x.lang||'').toLowerCase().indexOf(pre) === 0; })
+        || locales.find(function(x){ return /^es/i.test(x.lang||''); })
+        || todas.find(function(x){ return String(x.lang||'').toLowerCase().indexOf(pre) === 0; })
+        || null;
+  } catch(e){ return null; }
+}
+function vozDiag(txt, clase){
+  try { const d = document.getElementById('voz-diag'); if (d){ d.textContent = txt || ''; d.className = 'voz-diag' + (clase ? ' ' + clase : ''); } } catch(e){}
+}
+function vozMarcarFalla(v, motivo, alt){
+  if (!v) return;
+  _vozFallidas[v.name] = motivo || 'no arrancó';
+  try { regError('voz:falla', new Error((v.name || '?') + ' → ' + (motivo || 'no arrancó'))); } catch(e){}
+  _vozUltimaFalla = '✗ «' + v.name + '» no sonó (' + (motivo || 'no arrancó') + ')' + (alt ? ' → sigo con «' + alt.name + '»' : '') + '.';
+  vozDiag(_vozUltimaFalla, 'mal');
+  if (_vozFallaAvisada) return;
+  _vozFallaAvisada = true;
+  const deRed = v.localService === false;
+  try {
+    addMsg('mirror', '🔈 La voz «' + v.name + '» no sonó' + (deRed ? ': es una voz «Online», se arma en internet en el momento y tu red o el navegador no la dejaron pasar' : '') + '. '
+      + (alt ? 'Sigo leyendo con «' + alt.name + '», que vive en tu compu. ' : 'No encontré otra voz instalada para reemplazarla. ')
+      + 'Si querés otra, tocá ▾ al lado de «voz» y probala con ▶.');
+  } catch(e){}
+}
 function elegirVozActual(persona){
   persona = persona || personaActual();
-  // 1) la elegida a mano para ESE personaje, si sigue instalada
+  // 1) la elegida a mano para ESE personaje, si sigue instalada (y si en esta sesión no falló — v40-audit5)
   const nombre = vozPorPersona[persona];
-  if(nombre){ const v=vocesES.find(x=>x.name===nombre); if(v) return v; }
+  if(nombre){ const v=vocesES.find(x=>x.name===nombre); if(v && !vozFallida(v)) return v; }
   // 2) defaults automáticos DISTINTOS: ordenamos las candidatas por cercanía al español
   // rioplatense y le damos la 1ª a MIRROR y la 2ª (si existe) a TARS — así se
   // distinguen de entrada, sin configurar nada.
@@ -2867,7 +2926,7 @@ function elegirVozActual(persona){
     const fem=/(m[oó]nica|paulina|helena|laura|sabina|camila|luciana|francisca|isabela|ximena|\bfemale\b)/.test(N)?0.4:0;
     return (v.localService?0:10)+idioma+masc+fem; // local SIEMPRE le gana a red
   };
-  const ordenadas=[...vocesES].sort((a,b)=>rank(a)-rank(b));
+  const ordenadas=[...vocesES].filter(x=>!vozFallida(x)).sort((a,b)=>rank(a)-rank(b)); // v40-audit5: sin las que ya fallaron
   if(!ordenadas.length) return null;
   return persona==='tars' && ordenadas.length>1 ? ordenadas[1] : ordenadas[0];
 }
@@ -3215,8 +3274,25 @@ function hablarCola(trozos, voz, matiz, id){
   if (voz){ u.voice = voz; u.lang = voz.lang; }
   else { u.lang = (typeof i18nRecLang === 'function') ? i18nRecLang() : 'es-AR'; } // v36-i18n · v37-voz (V36-8b)
   u.rate = matiz.rate; u.pitch = matiz.pitch;
-  let yaSiguio = false, vigia = null;
+  let yaSiguio = false, vigia = null, arranco = false;
   hablarCola._vivo = id;
+  u.onstart = function(){ arranco = true; if (voz) { try { vozDiag('✓ Última lectura: sonó «' + voz.name + '».' + (_vozUltimaFalla ? ' ' + _vozUltimaFalla : ''), _vozUltimaFalla ? 'mal' : 'bien'); } catch(e){} } };
+  /* v40-audit5: la voz no arrancó → se relee ESTE trozo con una voz local (una sola vez por voz). */
+  const rescatar = function(motivo){
+    if (arranco || !voz || vozFallida(voz) || hablarCola._id !== id) return false;
+    _vozFallidas[voz.name] = motivo || 'no arrancó';
+    /* la misma que van a usar las respuestas siguientes (el ranking de siempre, sin las rotas),
+       así no cambia de voz dos veces seguidas; si no hay, cualquier local del mismo idioma */
+    let alt = null; try { alt = elegirVozActual(personaActual()); } catch(e){}
+    if (!alt || alt.name === voz.name) alt = vozLocalAlternativa(voz);
+    vozMarcarFalla(voz, motivo, alt);
+    if (!alt) return false;
+    if (yaSiguio) return true; yaSiguio = true;
+    if (vigia){ try{ clearTimeout(vigia); }catch(e){} vigia = null; }
+    try { speechSynthesis.cancel(); } catch(e){}
+    setTimeout(function(){ hablarCola(trozos, alt, matiz, id); }, 30);
+    return true;
+  };
   const seguir = function(){
     if (yaSiguio) return; yaSiguio = true;   // onend, onerror y el vigía no pueden pisarse
     if (vigia){ try{ clearTimeout(vigia); }catch(e){} vigia = null; }
@@ -3224,7 +3300,12 @@ function hablarCola(trozos, voz, matiz, id){
     setTimeout(function(){ hablarCola(trozos.slice(1), voz, matiz, id); }, 10);
   };
   u.onend = seguir;
-  u.onerror = seguir;
+  u.onerror = function(ev){
+    const er = (ev && ev.error) || '';
+    /* 'not-allowed' = el navegador todavía no recibió un toque (política de autoplay): la voz está sana, no se la marca */
+    if (er !== 'interrupted' && er !== 'canceled' && er !== 'not-allowed' && rescatar(er || 'error')) return;
+    seguir();
+  };
   /* ~14 caracteres/segundo al ritmo normal ÷ rate, + 4 s de colchón para el arranque (con voces
      de red el primer sonido tarda). Si al vencer eso el sintetizador NO está hablando, el evento
      se perdió: se avanza. Si SÍ habla, otra vuelta. */
@@ -3238,6 +3319,7 @@ function hablarCola(trozos, voz, matiz, id){
     } catch(e){}
     if (!sabe) return;                                            // sin dato: el vigía se calla
     if (hablando){ vigia = setTimeout(revisar, 1500); return; }   // sigue viva: se espera
+    if (!arranco && rescatar('no arrancó')) return;               // v40-audit5: nunca empezó a sonar
     try { regError('voz:vigia', new Error('onend no llegó; sigo con el trozo siguiente')); } catch(e){}
     seguir();
   };
@@ -3481,7 +3563,7 @@ function abrirSelectorVoz(){
       const n=v.name.replace(/'/g,"\\'");
       const esM=(vozPorPersona.mirror===v.name), esT=(vozPorPersona.tars===v.name);
       return '<div class="voz-item'+((esM||esT)?' activa':'')+'">'
-        +'<span class="voz-nombre">'+v.name.replace(/</g,'&lt;')+' <em>('+v.lang+')</em></span>'
+        +'<span class="voz-nombre"'+(v.localService===false?' title="Voz de internet: se arma en un servidor en el momento; si tu red la bloquea, no suena"':'')+'>'+(v.localService===false?'🌐 ':'')+(_vozFallidas[v.name]?'✗ ':'')+v.name.replace(/</g,'&lt;')+' <em>('+v.lang+')</em></span>'
         +'<span class="voz-acciones">'
         +'<button onclick="probarVoz(\''+n+'\',\'mirror\')" title="Probar con el matiz de MIRROR">▶</button>'
         +'<button class="'+(esM?'vsel':'')+'" onclick="usarVoz(\''+n+'\',\'mirror\')">'+(esM?'✓ MIRROR':'MIRROR')+'</button>'
@@ -3502,11 +3584,18 @@ function probarVoz(nombre,persona){
     : 'Hola, soy MIRROR, tu extensión digital. ¿Empezamos?';
   const u=new SpeechSynthesisUtterance(frase);
   u.voice=v; u.lang=v.lang; u.rate=matiz.rate; u.pitch=matiz.pitch;
+  /* v40-audit5: el ▶ ahora DICE si la voz sonó o no (antes, si no sonaba, no pasaba nada y no se sabía por qué). */
+  let ok=false;
+  vozDiag('▶ probando «'+v.name+'»…');
+  u.onstart=function(){ ok=true; delete _vozFallidas[v.name]; vozDiag('✓ «'+v.name+'» suena bien'+(v.localService===false?' (es de internet: necesita red)':' (vive en tu compu)')+'.', 'bien'); };
+  u.onerror=function(ev){ const er=(ev&&ev.error)||'error'; if(er==='interrupted'||er==='canceled') return; vozDiag('✗ «'+v.name+'» no sonó ('+er+')'+(v.localService===false?': es de internet y tu red no la deja pasar. Elegí una sin «Online».':'.'), 'mal'); };
+  setTimeout(function(){ if(!ok && !(speechSynthesis.speaking)) vozDiag('✗ «'+v.name+'» no arrancó'+(v.localService===false?': es de internet y tu red no la deja pasar. Elegí una sin «Online».':'.'), 'mal'); }, 6000);
   speechSynthesis.speak(u);
 }
 function usarVoz(nombre,persona){
   persona = persona || 'mirror';
   vozPorPersona[persona]=nombre;
+  try{ delete _vozFallidas[nombre]; _vozUltimaFalla=''; _vozFallaAvisada=false; }catch(e){} // v40-audit5: elegida a mano = se le da otra oportunidad (y si vuelve a fallar, se vuelve a avisar)
   try{ localStorage.setItem('mirror_voz_'+persona,nombre); }catch(e){}
   abrirSelectorVoz(); // re-render para marcar la activa
 }
@@ -6762,6 +6851,17 @@ function _tareaFecha(texto){
   if(/\bhoy\b/.test(t)) return _tareaISO(hoy);
   if(/pasado\s+ma[nñ]ana/.test(t)){ const d=new Date(hoy); d.setDate(d.getDate()+2); return _tareaISO(d); }
   if(/\bma[nñ]ana\b/.test(t)){ const d=new Date(hoy); d.setDate(d.getDate()+1); return _tareaISO(d); }
+  /* v40-audit5 (25/09/2026): «el 30 de septiembre», «3 de octubre de 2026». Antes solo entendía 30/09
+     y el calendario abría en HOY. Sin año = la PRÓXIMA vez que cae esa fecha (si ya pasó este año, el
+     que viene: nadie agenda para atrás a propósito). Con año explícito, se respeta tal cual (y si ya
+     pasó, el agente lo advierte). Fechas imposibles (31 de febrero) no se inventan: se descartan. */
+  const MESES={enero:0,febrero:1,marzo:2,abril:3,mayo:4,junio:5,julio:6,agosto:7,septiembre:8,setiembre:8,octubre:9,noviembre:10,diciembre:11};
+  const mn=t.match(/\b(\d{1,2})(?:°|º|ro)?\s+de\s+(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|setiembre|octubre|noviembre|diciembre)(?:\s+(?:de(?:l)?\s+)?(\d{4}))?\b/);
+  if(mn){ const dd=+mn[1], mo=MESES[mn[2]]; let yy=mn[3]?+mn[3]:hoy.getFullYear(); let d=new Date(yy,mo,dd);
+    if(d.getMonth()===mo && d.getDate()===dd){
+      if(!mn[3] && _tareaISO(d) < _tareaISO(hoy)){ d=new Date(yy+1,mo,dd); if(d.getMonth()!==mo) return ''; }
+      return _tareaISO(d); }
+    return ''; }
   const mm={domingo:0,lunes:1,martes:2,miercoles:3,'miércoles':3,jueves:4,viernes:5,sabado:6,'sábado':6};
   for(const dn in mm){ if(new RegExp('\\b'+dn+'\\b').test(t)){ const d=new Date(hoy); const delta=((mm[dn]-d.getDay())+7)%7||7; d.setDate(d.getDate()+delta); return _tareaISO(d); } }
   const m=t.match(/\b(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{2,4}))?\b/);
@@ -7377,7 +7477,18 @@ function actuaPintarTarjeta(){ if(actuaPend){ try{ actuaTarjeta.apply(null,actua
    texto trae algo más que la pregunta por el modelo, no se contesta SOLO el texto fijo (se perdía
    el informe): va al modelo como siempre y la app le ANTEPONE la línea de identidad fija. */
 const _OTRO_PEDIDO_RE = /(informe|detall|expl[ií]c|cont[aá]me|describ|arm[aá]me|hac[eé]me|dame|resum|arquitectura|c[oó]mo\s+funcion|qu[eé]\s+(?:sab[eé]s|pod[eé]s)\s+hacer)/i;
-function esPreguntaModeloSola(text){ try { return esPreguntaModelo(text) && !_OTRO_PEDIDO_RE.test(String(text||'')) && String(text||'').trim().length <= 60; } catch(e){ return false; } } // v40-audit2: si viene con charla («estoy cansado, vos cómo estás…»), contesta todo y antepone la identidad
+/* v40-audit3 (25/09/2026) — «Estoy cansado, ¿cómo estás? ¿cuál es tu modelo?» (47 letras) entraba como
+   pregunta SOLA por el tope de 60 caracteres y el «estoy cansado» quedaba sin respuesta. Ahora se saca
+   la pregunta por el modelo y se mira lo que SOBRA: si queda algo más que un saludo, es charla + modelo. */
+function _restoSinPreguntaModelo(text){
+  var t = ' ' + String(text||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[¿?¡!.,;:()«»"]/g,' ') + ' ';
+  t = t.replace(/\b(que|cual)\s+(es\s+)?(tu|su)\s+(modelo|motor)(\s+de\s+(ia|iag|inteligencia\s+artificial|lenguaje))?\b/g, ' ')
+       .replace(/\b(que|cual)\s+(modelo|motor)(\s+de\s+(ia|iag|inteligencia\s+artificial|lenguaje))?\s+(sos|eres|usas|utilizas|tenes|corres|funcionas|estas\s+usando)\b/g, ' ')
+       .replace(/\b(tu|su)\s+(modelo|motor)\b/g, ' ')
+       .replace(/\b(hola|che|buenas|buen\s+dia|decime|contame|y|vos|a\s+ver|bueno|dale|ok)\b/g, ' ');
+  return t.replace(/\s+/g, ' ').trim();
+}
+function esPreguntaModeloSola(text){ try { return esPreguntaModelo(text) && !_OTRO_PEDIDO_RE.test(String(text||'')) && _restoSinPreguntaModelo(text).split(' ').filter(Boolean).length < 2; } catch(e){ return false; } }
 function lineaIdentidadModelo(){
   try {
     var mp = (typeof CONFIG!=='undefined' && CONFIG.modeloPrincipal) || '';
@@ -7398,7 +7509,7 @@ function avisoSinMemoria(){
 setTimeout(avisoSinMemoria, 4500);
 function esPreguntaModelo(text){
   var t = ' ' + String(text||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'') + ' ';
-  var tema = /(modelo|motor)\s+(de\s+)?(ia|iag|inteligencia|lenguaje)/.test(t) || /(gpt-?oss|groq|cerebras|modelo de lenguaje)/.test(t) || /\b(que|cual)\s+modelo\s+(sos|eres)\b/.test(t); // v40-quien: «¿qué modelo sos?» a secas (24/09 lo contestaba el modelo)
+  var tema = /(modelo|motor)\s+(de\s+)?(ia|iag|inteligencia|lenguaje)/.test(t) || /(gpt-?oss|groq|cerebras|modelo de lenguaje)/.test(t) || /\b(que|cual)\s+(modelo|motor)\s+(sos|eres|usas|utilizas|tenes|corres)\b/.test(t); // v40-audit3: + «¿qué modelo usás?» // v40-quien: «¿qué modelo sos?» a secas (24/09 lo contestaba el modelo)
   var sobreVos = /\b(sos|usas|utilizas|tenes|corres|funcionas|estas usando)\b/.test(t);
   // v40-audit2: «…cómo es tu nueva versión, tu modelo?» (25/09 contestó el respaldo: «mi modelo es MANIFIESTOS»)
   var tuModelo = /\b(tu|su)\s+(modelo|motor)\b/.test(t) && !/\bmodelo\s+de\s+(negocio|examen|carta|nota|informe|mail|correo)/.test(t);
@@ -7600,11 +7711,18 @@ function agenteEjecutar(call, tarjetas, pasos, textoUsuario){
       const titulo = _agenteTxt(a.titulo, 80);
       if (!titulo) return { ok:false, motivo:'Falta qué anotar.' };
       const fecha = _tareaFecha(a.cuando) || _tareaFecha(textoUsuario);
+      /* v40-audit4 (25/09/2026) — FOTO DE UNA FACTURA VIEJA (auditoría de Darío): leyó bien el vencimiento
+         08/07/2021 y lo agendó «para el 08/07», sin año y sin avisar que ya pasó. Una fecha pasada se anota
+         igual (el usuario la pidió), pero se dice DE FRENTE en la tarjeta, en el rastro y al modelo. */
+      const _hoyISO = _tareaISO(new Date());
+      const _pasada = !!(fecha && fecha < _hoyISO);
+      const _anioDist = !!(fecha && fecha.slice(0,4) !== _hoyISO.slice(0,4));
+      const _fLinda = fecha ? (_tareaFechaLinda(fecha) + (_anioDist ? '/' + fecha.slice(0,4) : '')) : '';
       const nueva = tareaGuardar(titulo, fecha);
       try { renderTareas(); } catch(e){}
-      tarjetas.push(['actua', ['📅', 'Agendar: ' + titulo, fecha ? ('Para el ' + _tareaFechaLinda(fecha) + ' — la hora la ponés vos.') : 'Fecha y hora las confirmás vos.', actuaCalURL(titulo, fecha), '📅 abrir calendario']]);
-      pasos.push('📌 anoté «' + titulo + '»' + (fecha ? ' para el ' + _tareaFechaLinda(fecha) : ''));
-      return { ok:true, estado:(nueva ? 'anotada en tus tareas' : 'ya estaba anotada') + '; tarjeta de calendario lista', fecha: fecha || 'sin fecha' };
+      tarjetas.push(['actua', ['📅', 'Agendar: ' + titulo, fecha ? ((_pasada ? '⚠ Ojo: esa fecha YA PASÓ (' + _fLinda + '). Si es de una factura vieja, fijate la de este mes. ' : 'Para el ' + _fLinda + ' — ') + 'la hora la ponés vos.') : 'Fecha y hora las confirmás vos.', actuaCalURL(titulo, fecha), '📅 abrir calendario']]);
+      pasos.push('📌 anoté «' + titulo + '»' + (fecha ? ' para el ' + _fLinda : '') + (_pasada ? ' (⚠ ya pasó)' : ''));
+      return { ok:true, estado:(nueva ? 'anotada en tus tareas' : 'ya estaba anotada') + '; tarjeta de calendario lista', fecha: fecha || 'sin fecha', aviso: _pasada ? ('ESA FECHA YA PASÓ (' + _fLinda + '): decíselo al usuario en tu respuesta.') : undefined };
     }
     if (nombre === 'ver_tareas'){
       pasos.push('📋 miré tus pendientes');
@@ -7817,6 +7935,9 @@ async function semCargar(){
 }
 function _semMensajeRed(e, probeProxy){
   const m = String((e && e.message) || e || '');
+  // v40-audit3: el proxy EXISTE pero la ruta /hf no está bien puesta (405 = quedó después del «Usá POST»)
+  if (probeProxy && /\((40[345])\)/.test(m) && /\/hf\//.test(m))
+    return 'tu proxy respondió ' + (m.match(/\((40[345])\)/)||['',''])[1] + ': la ruta /hf todavía no está bien puesta en tu Worker (tiene que ir ARRIBA de la línea que dice «Usá POST» — ver WORKER_ruta_hf.md)';
   if (/fetch|network|cors|load failed/i.test(m))
     return probeProxy ? 'tu red no me deja bajar el modelo de Hugging Face, y tu proxy todavía no tiene la ruta /hf (la instrucción está en el LEEME, es pegar un bloque en tu Worker)'
                       : 'tu red no me deja bajar el modelo de Hugging Face, y sin proxy configurado no tengo otro camino';
@@ -8076,8 +8197,8 @@ async function fotoResolver(text){
      · la solapa «🔄 actualizar» del pie muestra la versión, lo nuevo y «buscar ahora».
    Actualizar = recargar con lo nuevo. La configuración, la memoria, los contactos y las tareas
    NO se tocan: no viven en el código. Nunca recarga sola ni a mitad de una respuesta. */
-const APP_BUILD = '2026-09-25.2';
-const APP_NOVEDADES = ["🔧 Arreglos de la auditoría: «mi perra se llama…» ya no se toma como «llamá a…»; si falta tu memoria (Firebase) te lo avisa de frente; y la memoria que entiende puede bajar por tu proxy si tu red bloquea Hugging Face.", "🧭 Tu MIRROR ahora actúa en varios pasos: «avisale a Juan que no llego y anotame reprogramar» — busca, prepara y te deja las tarjetas; el último toque es tuyo.", "🧠 Memoria que entiende (opcional): encuentra por significado, no solo por palabras. Corre en tu dispositivo.", "🎧 Charla por voz manos libres y Aa modo fácil, para usarla sin teclado.", "📷 Foto y resuelvo: foto de una factura o un turno + «agendame el vencimiento».", "🔄 Esta solapa: te avisa cuando hay una versión nueva."];
+const APP_BUILD = '2026-09-25.4';
+const APP_NOVEDADES = ["✦ Generación v40: tu MIRROR actúa en varios pasos, entiende por significado, te acompaña por voz y se actualiza solo.", "🔧 Arreglos de la auditoría: ninguna ventana queda sin salida (✕, Esc o tocando afuera); si una voz no suena, sigue con otra de tu compu y te avisa; «¿cómo estás? ¿cuál es tu modelo?» contesta las dos cosas; y si agendás una fecha que ya pasó, te lo advierte.", "🧭 Tu MIRROR ahora actúa en varios pasos: «avisale a Juan que no llego y anotame reprogramar» — busca, prepara y te deja las tarjetas; el último toque es tuyo.", "🧠 Memoria que entiende (opcional): encuentra por significado, no solo por palabras. Corre en tu dispositivo.", "🎧 Charla por voz manos libres y Aa modo fácil, para usarla sin teclado.", "📷 Foto y resuelvo: foto de una factura o un turno + «agendame el vencimiento».", "🔄 Esta solapa: te avisa cuando hay una versión nueva."];
 const ACT_CADA_MS = 6 * 60 * 60 * 1000;
 let _actUltimo = null;
 function _actCompara(a, b){ a = String(a || ''); b = String(b || ''); return a === b ? 0 : (a > b ? 1 : -1); }   // «AAAA-MM-DD.n» ordena como texto
@@ -11057,6 +11178,56 @@ try{
     }
   });
 }catch(e){ try{ regError('a11y', e); }catch(_){ } }
+})();
+</script>
+<script>
+/* ══ v40-audit5 (25/09/2026) — NINGUNA CAPA SIN SALIDA ══════════════════════════════════════════════
+   La capa de accesibilidad (arriba) cierra con Esc los 6 modales que conoce. La auditoría encontró 10
+   capas más que Esc no cerraba (contactos, compartir, estado, qué hago con lo tuyo, privacidad, memoria
+   que entiende, actualizar, ordenar el pie…). Esto las cubre a TODAS sin conocerlas una por una: busca
+   la capa abierta de más arriba y aprieta SU botón de cierre real (el que dice «cerrar»/«✕»). Nunca un
+   click a ciegas: en el panel de memoria el botón «cancel» es «borrar todo» — por eso se busca por el
+   TEXTO de cierre, y si la capa ya la cerró la capa de accesibilidad (defaultPrevented), no se toca.
+   El PIN y el constructor quedan afuera a propósito (tienen su propio manejo). Tocar el FONDO cierra
+   solo las capas que son de lectura (voces, qué hago con lo tuyo, memoria que entiende, actualizar):
+   en las que tienen formularios, un toque de más no te puede hacer perder lo escrito. */
+(function(){
+'use strict';
+try{
+  var CIERRE_RE = /^\s*(?:(?:✕|×)(?:\s*(?:cerrar|salir))?|cerrar|salir)\s*$/i;
+  var FONDO_OK = { 'voz-modal':1, 'cumpli-modal':1, 'sem-modal':1, 'act-modal':1 };
+  function visible(el){ try { var cs = getComputedStyle(el); return cs.display !== 'none' && cs.visibility !== 'hidden'; } catch(e){ return false; } }
+  function capasAbiertas(){
+    var sel = '.modal-overlay.visible, .v40-modal, #share-ov, #legal-ov, #guia-ov, #premium-ov, #gmail-ov, #polli-ov';
+    return Array.prototype.filter.call(document.querySelectorAll(sel), function(el){ return el.id !== 'pin-modal' && visible(el); });
+  }
+  function botonCierre(capa){
+    var bots = capa.querySelectorAll('button, [onclick]');
+    for (var i = 0; i < bots.length; i++){
+      var b = bots[i];
+      if (b.classList.contains('modal-x') || CIERRE_RE.test(b.textContent || '')) return b;
+    }
+    return null;
+  }
+  function deArriba(){
+    var capas = capasAbiertas(); if (!capas.length) return null;
+    var z = function(el){ return parseInt(getComputedStyle(el).zIndex, 10) || 0; };
+    var mejor = capas[0];
+    capas.forEach(function(c){ if (z(c) >= z(mejor)) mejor = c; });
+    return mejor;
+  }
+  window.cerrarCapaDeArriba = function(){ var c = deArriba(); if (!c) return false; var b = botonCierre(c); if (!b) return false; b.click(); return true; };
+  document.addEventListener('keydown', function(e){
+    if (e.key !== 'Escape' || e.defaultPrevented) return;
+    try { var cons = document.getElementById('cons-ov'); var c = deArriba(); if (!c) return;
+      if (cons && cons.classList.contains('show') && !/-ov$/.test(c.id || '')) return;  // en el constructor, solo sus guías
+      var b = botonCierre(c); if (b){ e.preventDefault(); b.click(); } } catch(err){ try{ regError('audit5:esc', err); }catch(_){ } }
+  });
+  document.addEventListener('click', function(e){
+    try { var t = e.target; if (!t || !t.id) return;
+      if (FONDO_OK[t.id]){ var b = botonCierre(t); if (b) b.click(); } } catch(err){}
+  });
+}catch(e){ try{ regError('audit5', e); }catch(_){ } }
 })();
 </script>
 <script>
