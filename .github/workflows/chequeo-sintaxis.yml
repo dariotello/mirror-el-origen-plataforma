@@ -1,0 +1,32 @@
+# Chequeo de sintaxis de los <script> del index.html en cada pull request.
+# Por qué: main es producción y Cloudflare publica solo lo que entra ahí.
+# Un error de sintaxis en un bloque <script> deja la plataforma muerta en el
+# navegador; esto lo frena antes del Merge. Solo revisa sintaxis (node --check):
+# no prueba diseño, micrófono ni nada del navegador — eso sigue siendo la
+# auditoría en vivo.
+name: Chequeo de sintaxis
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  node-check:
+    name: node --check de los <script>
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Revisar los <script> de index.html
+        run: node .github/scripts/check-scripts.js index.html
+      - name: Revisar los .js sueltos (proxy y service workers)
+        run: |
+          for f in mirror-proxy.js mirror-sw.js sw.js; do
+            if [ -f "$f" ]; then node --check "$f" && echo "OK    $f"; fi
+          done

@@ -112,6 +112,17 @@ Viven como *secrets* cifrados de tu Worker. El `index.html` solo conoce el
 
 ---
 
+## Publicación
+
+La plataforma se publica sola desde este repo, con Cloudflare:
+
+- **`main` = producción.** Lo que entra a `main` es lo que ve todo el mundo.
+  A `main` solo se entra por *pull request*, y el botón de Merge lo toca Darío.
+- **Cualquier otra rama = versión de prueba.** Cloudflare arma una dirección
+  aparte para cada rama, para probarla en vivo sin tocar producción.
+
+---
+
 ## Licencia y autoría
 
 Código bajo **Apache License 2.0** — podés usarlo, modificarlo y redistribuirlo.
