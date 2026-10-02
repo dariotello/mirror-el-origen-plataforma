@@ -618,7 +618,7 @@ body.tars .mono-title em{color:var(--tars);}
 .v40-btn.prim{background:rgba(112,112,255,.22);border-color:rgba(140,140,255,.8)}
 .act-cartel{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;z-index:9980;max-width:560px;width:calc(100% - 32px);background:#0d0d1f;border:1px solid rgba(140,140,255,.6);border-radius:12px;padding:14px 16px;color:#e8e8ff;font:12px 'Space Mono',monospace;box-shadow:0 8px 30px rgba(0,0,0,.6)}
 .act-tit{font-family:Georgia,serif;font-size:16px;margin-bottom:6px}
-.act-nov{margin:6px 0 6px 18px;padding:0;line-height:1.6}
+.act-nov{margin:6px 0 6px 18px;padding:0 6px 0 0;line-height:1.6;max-height:38vh;overflow-y:auto} /* v40-octubre: la lista crece cada semana; el «Cerrar» no puede quedar abajo del pliegue (t_modales, 1366×640) */
 .act-nota{opacity:.7;margin:6px 0}
 .act-bots{display:flex;gap:8px;flex-wrap:wrap}
 body.modo-facil .bubble,body.modo-facil .tbubble,body.modo-facil .dbbubble,body.modo-facil .msg.user .bubble{font-size:19px!important;line-height:1.7!important}
@@ -2391,6 +2391,7 @@ CAPACIDADES TRANSVERSALES:
 • 📋 MIRROR ENCUESTA (botón «📋 encuestas»): genera formularios HTML AUTOCONTENIDOS (estética propia, sin Google ni rastreo) cuyas respuestas llegan por REST a la rama encuestas/ del Firebase del usuario (POST con id propio: sin pisado). El panel lista encuestas, muestra respuestas, exporta CSV y las manda al ANALISTA con un botón. HONESTIDAD: la app GENERA el archivo; publicarlo (Pages/Netlify) lo hace el usuario. El modelo puede PROPONER encuestas por chat (tarjeta de un toque que precarga el creador), jamás crearlas solo.
 • FACHADA: logo MIR[Я]OR con monolito giratorio (homenaje a 2001), música ambiental original "El Origen" (Web Audio, botón 🔊 sonido), cinemática de nacimiento al abrir, y modo presentación a pantalla completa (◬). La música baja sola cuando la app habla.
 • Seguridad: las claves de API (Groq, Cerebras, Tavily) NUNCA están en el navegador: viven como secrets del Worker proxy propio en Cloudflare.
+• 🔒 DÓNDE GUARDO LO TUYO, QUÉ SALE Y MIS LÍMITES (para «¿dónde guardás lo mío?», «¿quién ve lo que te cuento?», «¿es privado?», «¿tenés límites?», «¿qué no podés hacer?», «¿sos gratis?»): LO TUYO — la charla, los recuerdos, el perfil, los documentos y las respuestas de encuestas se guardan en TU base Firebase (la que pusiste en el constructor; sin esa base configurada, la charla NO queda guardada para la próxima vez). Los contactos, las tareas y la configuración quedan en el navegador de ESTE dispositivo; los vectores de la memoria que entiende, también en el dispositivo. Las claves de la IA viven en tu proxy (Cloudflare), no en el navegador. LO QUE SALE — para contestarte, el texto de cada consulta (con el contexto que haga falta: memoria, fragmentos de documentos, la foto o el audio) viaja por tu proxy al motor de IA (el principal y, si está ocupado, el respaldo de Cloudflare); la búsqueda web va a Tavily solo si la usás. Lo que cada proveedor hace con eso lo dicen SUS condiciones, no esta app: no lo afirmes ni lo niegues. LÍMITES REALES — no envío ni llamo solo (el último toque es tuyo); no leo tu bandeja de entrada ni la agenda del teléfono por mi cuenta (los contactos se importan con un .vcf); no hago trámites con claves ni pagos; no veo las imágenes de un video (solo transcribo su audio); con planes gratis hay un cupo por minuto (si se llena, espero o contesta el respaldo, que es más chico y se equivoca más); y me puedo equivocar: si no sé algo, lo digo. GRATIS — el código es libre (Apache 2.0) y la app corre sobre planes gratuitos (Groq, Cloudflare, Firebase) cuyos topes ponen ellos.
 • ¿QUÉ MODELO / MOTOR DE IA SOS? — contestá SIEMPRE en DOS CAPAS, igual cada vez, sin contradecirte ni desvariar: (1) QUIÉN sos: la entidad digital de tu usuario (su doble), no un chatbot genérico; (2) QUÉ te hace funcionar POR DEBAJO: el modelo «${CONFIG.modeloPrincipal}» a través de «${CONFIG.motorPrincipal}» (respaldo «${CONFIG.motorRespaldo}»/Cloudflare). Molde EXACTO: «Soy [tu entidad], tu extensión digital; por debajo corro sobre ${CONFIG.modeloPrincipal} vía ${CONFIG.motorPrincipal}.» PROHIBIDO: inventar que sos «GPT-4» u otro modelo distinto del de arriba; decir «no soy un modelo de IA» (sí hay uno, por debajo); o quedarte solo en «MIRROR ${(typeof PLATFORM_VERSION!=='undefined')?PLATFORM_VERSION:'v40'}» — eso es la VERSIÓN de la app, no el modelo.
 • 💤 SOÑAR (v39-sonar): con la app abierta y ociosa (o al reabrirla tras un rato), la entidad cruza tus recuerdos EN EL DISPOSITIVO —sin mandar un byte a ningún lado y sin llamar a ningún modelo— y arma un «cruce»: patrones que te vuelven, cosas que se tocan, posibles tironeos y lo que repetís. Se abre con el botón «💤 lo que crucé» del panel de memoria o preguntándole «¿soñaste algo?». HONESTIDAD (y Art. 50 del EU AI Act): NO es una experiencia ni la entidad siente nada —«sueño» es una metáfora—: es cómputo real e inspeccionable sobre lo que vos ya guardaste.
 • 🧠 MEMORIA QUE ENTIENDE (v40, opcional, pie «🧠 memoria que entiende»): además de buscar por palabras, encuentra recuerdos y fragmentos de documentos por SIGNIFICADO (y entre idiomas). Corre DENTRO del dispositivo con un modelo libre (e5 multilingüe, ~118 MB, se baja una sola vez); los textos no salen de acá para esto y no gasta cupo de IA. Si falla o está apagada, todo sigue por palabras.
@@ -2401,6 +2402,15 @@ Si te preguntan algo de la app que NO figura acá, decí honestamente que no lo 
 // Nota técnica: sin \b al final — en JS \b falla tras vocales con tilde ("exportá").
 // Usamos raíces: "export" cubre exporto/exportá/exportar; "informe" cubre informes.
 const PREGUNTA_POR_APP = /\b(mirror|tars|jurado|examinador|conex|esta app|la app|aplicaci[oó]n|el sistema|arquitectura|funcionamiento|c[oó]mo funcion|qu[ée] pod[eé]s hacer|tus (modos|funciones|capacidades)|informe|export|dictado|micr[oó]fono|pwa|proxy|firebase|biblioteca de (pdf|documentos)|(?:modelo|motor)\s+(?:de\s+)?(?:ia\b|iag\b|inteligencia)|qu[ée]\s+(?:modelo|motor)\s+(?:sos\b|us[áa]s|ten[ée]s|corr[eé]s|est[áa]s)|(?:por\s+qu[ée]|c[óo]mo).{0,25}\b(?:voz|lectura)\b)/i; // v39-autofix (19/09): + preguntas por el modelo/motor de IA y por la voz — antes no disparaban el autoconocimiento (hallazgo en vivo de Darío)
+/* v40-autoconoc2 (2/10/2026) — AUTOCONOCIMIENTO SIN HUECOS (backlog 25/09, punto 3).
+   El 25/09 «¿alguna novedad?» no nombraba la app, no entraba la arquitectura y el modelo rellenó
+   con humo. Lo mismo pasa con las preguntas que se le hacen A LA ENTIDAD en segunda persona sin
+   decir «app»: «¿qué sabés hacer?», «¿tenés límites?», «¿dónde guardás lo mío?», «¿quién ve lo que
+   te cuento?», «¿sos gratis?», «¿quién te hizo?». Ahora esas también llevan la fuente de verdad.
+   Acotado a propósito: «¿sabés hacer asado?» o «¿dónde guardaste las llaves?» NO disparan (no
+   preguntan por la entidad); eso lo amarra TEST_v40_octubre.js. */
+const PREGUNTA_A_LA_ENTIDAD = /(\bqu[eé]\s+(?:m[aá]s\s+|otras?\s+cosas\s+)?(?:sab[eé]s|pod[eé]s)\s+hacer\s*\??\s*$|\ben\s+qu[eé]\s+(?:m[aá]s\s+)?(?:me\s+)?pod[eé]s\s+(?:ayudar|dar\s+una\s+mano)|\bpara\s+qu[eé]\s+(?:serv[ií]s|sirve[sn]?\s+(?:esto|vos))|\bqu[eé]\s+cosas\s+(?:hac[eé]s|sab[eé]s|pod[eé]s)|\bqu[eé]\s+no\s+(?:pod[eé]s|sab[eé]s)\s+hacer|\b(?:ten[eé]s|cu[aá]les\s+son\s+tus)\s+l[ií]mites|\bhasta\s+d[oó]nde\s+(?:lleg[aá]s|pod[eé]s)|\bd[oó]nde\s+(?:guard[aá]s|ten[eé]s|qued[aá]n?|se\s+guarda[n]?|viven?)\s+(?:lo\s+m[ií]o|lo\s+que\s+(?:te\s+)?(?:cuento|digo|hablamos|escribo|subo)|mis\s+(?:datos|cosas|recuerdos|charlas|documentos|archivos|contactos|tareas)|la\s+(?:charla|memoria|info)|los\s+datos|todo\s+esto)|\bqui[eé]n\s+(?:ve|lee|tiene\s+acceso\s+a|se\s+entera\s+de)\s+(?:lo\s+que\s+te|mis\s+(?:datos|charlas|cosas|mensajes))|\b(?:es|son|est[aá]n?)\s+(?:privad[oa]s?|segur[oa]s?)\s+(?:lo\s+que\s+te|mis\s+(?:datos|charlas|cosas))|\bmis\s+(?:datos|charlas|cosas)\s+(?:son|est[aá]n)\s+(?:privad|segur|a\s+salvo)|\bsos\s+gratis|\bcu[aá]nto\s+(?:me\s+)?(?:cost[aá]s|sale\s+usarte|cuesta\s+usarte)|\bqui[eé]n\s+te\s+(?:hizo|cre[oó]|program[oó]|construy[oó]|invent[oó]|dise[nñ][oó]))/i;
+function esPreguntaPorApp(t){ try { return PREGUNTA_POR_APP.test(String(t || '')) || PREGUNTA_A_LA_ENTIDAD.test(String(t || '').trim()); } catch(e){ return false; } }
 
 // ══════════ VOZ (v2.3) — dictado + lectura en voz alta (Web Speech API, gratis y local) ══════════
 // v2.3 — BLINDAJE DEL DICTADO (fix de los dos bugs vistos en producción el 10/6):
@@ -4819,6 +4829,25 @@ function getBibliotecaManifiesto(){
 const CUPO_TPM_GRATIS = 8000;
 const CUPO_MARGEN = 500;
 function estimarTokens(t){ return Math.ceil(String(t || '').length / 3.4); }
+/* ══ v40-cupo (2/10/2026) — LA SALIDA QUE SE MIDE TIENE QUE SER LA QUE SE PIDE ═════════════════
+   HALLAZGO (portado del MIRROR v5.0, 30/09 — acá verificado leyendo ESTE código, no copiado):
+   ajustarAlCupo medía el pedido con la salida del modo (700 en el espejo, 1500 en el analista con
+   base), pero llamarMotor, para gpt-oss (el principal por defecto), la subía a un PISO FIJO de 2500.
+   Groq cuenta la salida pedida dentro del cupo del minuto: un pedido «medido» en 7900 salía en
+   ~9700 → rebote → respaldo. Y la expansión de búsqueda (60 tokens) pedía también 2500.
+   ARREGLO: una sola función dice cuánta salida se pide DE VERDAD y la usan las dos puntas —el que
+   mide y el que manda—. El margen para que gpt-oss razone pasa de «piso 2500» a «lo pedido + 800»
+   (con esfuerzo 'low' razona poco); si igual vuelve vacío, callGroq le da UNA vuelta más al
+   principal con más margen antes de soltarlo al respaldo. */
+const RAZONADOR_MARGEN = 800;   // tokens extra para que gpt-oss piense antes de contestar
+const RAZONADOR_PISO   = 1500;  // una respuesta normal nunca baja de esto
+function esModeloRazonador(m){ return /gpt-oss/i.test(String(m || '')); }
+function salidaEfectiva(modelo, maxTokens){
+  const n = Math.max(0, Number(maxTokens) || 0);
+  if (!esModeloRazonador(modelo)) return n;
+  if (n <= 120) return n + 400;               // pedidos chiquitos (palabras de búsqueda): margen chico
+  return Math.max(n + RAZONADOR_MARGEN, RAZONADOR_PISO);
+}
 function cortarLimpio(texto, largoMax){
   const s = String(texto || '');
   if (s.length <= largoMax) return s;
@@ -5486,7 +5515,9 @@ async function llamarMotor(url, key, modelo, messages, systemPrompt, maxTokens, 
     // presupuesto "pensando" y devuelve content VACÍO (era la causa del bug). Con
     // reasoning_effort:'low' + un piso de tokens, siempre le queda lugar para la respuesta.
     body.reasoning_effort = 'low';
-    body.max_completion_tokens = Math.max(maxTokens, 2500);
+    // v40-cupo: gpt-oss pide lo que de verdad se midió (salidaEfectiva); el piso viejo de 2500 queda
+    // solo para un modelo NO razonador en Cerebras, donde nunca se midió de otra forma.
+    body.max_completion_tokens = esRazonador ? salidaEfectiva(modelo, maxTokens) : Math.max(maxTokens, 2500);
   } else {
     body.max_tokens = maxTokens;
   }
@@ -5651,11 +5682,49 @@ async function llamarMotorVigente(url, key, modelo, messages, systemPrompt, maxT
   }
 }
 
+/* ══ v40-paciente (2/10/2026) — PRIMERO EL PRINCIPAL, DESPUÉS EL RESPALDO ══════════════════════
+   El respaldo (Llama en Cloudflare) es más chico y se equivoca más. Antes, ante CUALQUIER «ocupado»
+   del principal se saltaba al respaldo en el acto, aunque el motor hubiera dicho «probá en 6 s».
+   Ahora: (a) si el principal pide una espera CORTA (≤ PRINCIPAL_ESPERA_MAX s) por el cupo del minuto,
+   se espera eso —con la cuenta a la vista— y se le da UNA oportunidad más; (b) si gpt-oss contestó
+   vacío (se le fue el margen pensando), UNA vez más con más margen. Si igual no sale, sigue la
+   cadena de respaldo de siempre. Un pedido que solo ya es más grande que el cupo («Requested» >
+   «Limit») NO se espera: esperar no lo arregla. */
+const PRINCIPAL_ESPERA_MAX = 20;
+function pedidoMasGrandeQueCupo(msg){
+  const m = /Limit\s*(\d+)[^\d]+(?:Used\s*\d+[^\d]+)?Requested\s*(\d+)/i.exec(String(msg || ''));
+  return !!(m && Number(m[2]) > Number(m[1]));
+}
+function principalConvieneEsperar(e){
+  if (!e || !(e.tipo === 'rate_limit' || e.tipo === 'cupo_excedido')) return 0;
+  if (pedidoMasGrandeQueCupo(e.message)) return 0;
+  const s = Math.ceil(Number(e.esperaSug) || 0);
+  return (s > 0 && s <= PRINCIPAL_ESPERA_MAX) ? s : 0;
+}
+async function llamarPrincipalPaciente(messages, systemPrompt, maxTokens, temp){
+  try {
+    return await llamarMotorVigente(GROQ_URL, GROQ_KEY, MODELO_GROQ, messages, systemPrompt, maxTokens, temp, 'principal');
+  } catch(e){
+    const s = principalConvieneEsperar(e);
+    if (s){
+      for (let k = s; k > 0; k--){
+        try { setTypingNote('⏳ el motor principal pidió ' + s + ' s para liberar el cupo del minuto — espero así contesta él (' + k + ' s)'); } catch(_){}
+        await new Promise(function(r){ setTimeout(r, 1000); });
+      }
+      try { setTypingNote(''); } catch(_){}
+      return await llamarMotorVigente(GROQ_URL, GROQ_KEY, MODELO_GROQ, messages, systemPrompt, maxTokens, temp, 'principal');
+    }
+    if (e && e.tipo === 'vacio' && esModeloRazonador(MODELO_GROQ)){
+      return await llamarMotorVigente(GROQ_URL, GROQ_KEY, MODELO_GROQ, messages, systemPrompt, Number(maxTokens || 0) + 1200, temp, 'principal');
+    }
+    throw e;
+  }
+}
 async function callGroq(messages, systemPrompt, maxTokens, temp) {
-  // Motor 1: Groq (rápido)
+  // Motor 1: Groq (rápido) — v40-paciente: con una espera corta o un reintento antes de soltarlo
   try {
     motorActivo = 'groq';
-    return await llamarMotorVigente(GROQ_URL, GROQ_KEY, MODELO_GROQ, messages, systemPrompt, maxTokens, temp, 'principal');
+    return await llamarPrincipalPaciente(messages, systemPrompt, maxTokens, temp);
   } catch(e) {
     // Si el problema es que la consulta es muy grande, reducir contexto no se arregla
     // cambiando de motor — propagamos para que el reintento liviano actúe.
@@ -5686,7 +5755,8 @@ async function callGroq(messages, systemPrompt, maxTokens, temp) {
     for (const rsp of respaldos) {
       console.warn('Groq falló ('+(e.tipo||'?')+') → probando '+rsp.id);
       try {
-        const r = await llamarMotorVigente(rsp.url, rsp.key, rsp.modelo, messages, systemPrompt, maxTokens, temp, 'respaldo');
+        // v40-respaldo: el respaldo contesta más frío y con la orden de no rellenar huecos (RESPALDO_HONESTO)
+        const r = await llamarMotorVigente(rsp.url, rsp.key, rsp.modelo, messages, respaldoSystem(systemPrompt), maxTokens, respaldoTemp(temp), 'respaldo');
         motorActivo = rsp.id;
         try { avisarRespaldoUnaVez(rsp.id); } catch(_){}   // transparencia: qué red de seguridad actuó
         diagRespaldos = [];   // salió bien: no hay nada que explicar
@@ -5708,6 +5778,22 @@ async function callGroq(messages, systemPrompt, maxTokens, temp) {
   }
 }
 let motorActivo = 'groq'; // para mostrar qué motor respondió, si hace falta
+/* ══ v40-respaldo (2/10/2026) — EL MOTOR DE RESPALDO, MÁS HONESTO (backlog 25/09, punto 2) ══════════
+   HALLAZGO EN VIVO (25/09, 19:33): las novedades inventadas («barra de acciones rápidas», «cifrado
+   actualizado») salieron cuando contestaba el respaldo — un modelo más chico que, ante un hueco,
+   completa con lo que suena bien. ARREGLO, solo cuando contesta el respaldo:
+   (1) temperatura recortada (≤ 0,35): menos creatividad, menos relleno;
+   (2) una orden corta al final del system: lo que no está en el contexto, «no lo sé con certeza»;
+   (3) la respuesta lleva el chip «↺ respaldo» — el usuario sabe que contestó la red de seguridad.
+   El principal no cambia en nada: esto vive SOLO en la rama del respaldo. */
+const RESPALDO_TEMP_MAX = 0.35;
+const RESPALDO_HONESTO = '\n\n=== MODO RESPALDO (honestidad reforzada) ===\nAhora contestás como MOTOR DE RESPALDO (un modelo más chico que el principal). Regla dura: afirmá SOLO lo que está escrito en este system o en el contexto del mensaje, o conocimiento general seguro. Sobre esta app, su versión, tus funciones, el usuario, sus datos, su memoria o sus documentos: si no está escrito acá, decí «eso no lo sé con certeza» y no lo completes. No inventes funciones, nombres, cifras, fechas ni citas. Mejor corto y cierto que largo y dudoso.';
+function respaldoSystem(sp){ return String(sp || '') + RESPALDO_HONESTO; }
+function respaldoTemp(t){ const n = Number(t); return isFinite(n) ? Math.min(n, RESPALDO_TEMP_MAX) : RESPALDO_TEMP_MAX; }
+function respaldoChip(){
+  if (!motorActivo || motorActivo === 'groq') return '';
+  return '↺ respaldo (' + (motorActivo === 'cloudflare' ? 'Cloudflare' : (motorActivo === 'cerebras' ? 'Cerebras' : motorActivo)) + ')';
+}
 /* v41-cloudflare: el aviso nombra el motor que REALMENTE salió a la cancha. Decir «Cerebras»
    cuando contestó Cloudflare sería la misma deshonestidad chica que el sello vino a evitar.
    Una vez por sesión: es información, no un nag. */
@@ -6682,9 +6768,9 @@ const ACTUA_CMDS = [
   },
   { // ★N2: agendar evento → Google Calendar con el título puesto (fecha/hora las pone el usuario)
     re: /agend[aá](?:me)?\s+(?!.*n[uú]mero)(.{3,80})/i,
-    run(m){ const t=m[1].trim().replace(/[?.!]+$/,'');
-            const ok=actuaTarjeta('📅','Agendar: '+t,'Se abre tu calendario con el título puesto — fecha y hora las confirmás vos.',actuaCalURL(t,_tareaFecha(m.input||t)),'📅 abrir calendario'); // v59-caldate: misma fecha que se guarda
-            try{ tareaGuardar(t, _tareaFecha(m.input||t)); }catch(e){} // v39-tareas
+    run(m){ const _f=_tareaFecha(m.input||m[1]); const t=tituloSinFecha(m[1].trim().replace(/[?.!]+$/,''), _f); // v40-agendar: la fecha va al calendario, no al título
+            const ok=actuaTarjeta('📅','Agendar: '+t,(_f?'Para el '+_tareaFechaTarjeta(_f)+' — ':'')+'Se abre tu calendario con el título puesto — '+(_f?'la hora la ponés vos.':'fecha y hora las confirmás vos.'),actuaCalURL(t,_f),'📅 abrir calendario'); // v59-caldate: misma fecha que se guarda
+            try{ tareaGuardar(t, _f); }catch(e){} // v39-tareas
             return ok?'Evento pre-armado ✅ — ajustá fecha y hora y guardalo.':'No pude armar la tarjeta — quedó en mi diagnóstico.'; }
   },
   { // música: prender
@@ -6873,8 +6959,42 @@ function _tareaFecha(texto){
   const mm={domingo:0,lunes:1,martes:2,miercoles:3,'miércoles':3,jueves:4,viernes:5,sabado:6,'sábado':6};
   for(const dn in mm){ if(new RegExp('\\b'+dn+'\\b').test(t)){ const d=new Date(hoy); const delta=((mm[dn]-d.getDay())+7)%7||7; d.setDate(d.getDate()+delta); return _tareaISO(d); } }
   const m=t.match(/\b(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{2,4}))?\b/);
-  if(m){ const dd=+m[1], mo=+m[2]-1, yy=m[3]?(+m[3]<100?2000+ +m[3]:+m[3]):hoy.getFullYear(); const d=new Date(yy,mo,dd); if(!isNaN(d.getTime())) return _tareaISO(d); }
+  if(m){ const dd=+m[1], mo=+m[2]-1, yy=m[3]?(+m[3]<100?2000+ +m[3]:+m[3]):hoy.getFullYear(); const d=new Date(yy,mo,dd); if(!isNaN(d.getTime()) && d.getMonth()===mo && d.getDate()===dd) return _tareaISO(d); } // v40-agendar: «cuota 12/24» no es el 12 del mes 24 (antes rodaba a otro año)
   return '';
+}
+/* ══ v40-agendar (2/10/2026) — LA FECHA VA AL CALENDARIO, NO AL TÍTULO (backlog 25/09, punto 4) ══
+   En vivo: «agendame pagar la luz el 30 de septiembre» dejaba el evento titulado «pagar la luz el 30
+   de septiembre» — la fecha dos veces (en el título y en el día del calendario) y la tarea con la
+   fecha pegada. Ahora, SOLO si la fecha se entendió (si no, el título queda entero: no se pierde
+   nada), se saca del título: «el 30 de septiembre», «el 30/09», «mañana», «el jueves que viene»…
+   De paso, lo que quedó de las auditorías de MIRROR: un «gracias»/«por favor» del final no es parte
+   de la tarea, y un pedido dictado TODO EN MAYÚSCULAS se guarda en minúsculas. «A la mañana» NO es
+   una fecha (es un momento del día) y queda. */
+const _TF_MES = '(?:enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|setiembre|octubre|noviembre|diciembre)';
+const _TF_DIA = '(?:lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo)';
+const _TF_PRE = '(?:\\s*,?\\s*(?:(?:para|hasta|desde)\\s+)?(?:(?:el|este|esta)\\s+)?(?:pr[oó]ximo\\s+)?)';
+function tituloSinFecha(titulo, fechaISO){
+  const orig = String(titulo || '').replace(/\s+/g, ' ').trim();
+  let s = orig;
+  try {
+    // 1) mayúsculas sostenidas → minúsculas (con la primera en mayúscula)
+    const letras = s.replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ]/g, '');
+    if (letras.length >= 6 && letras === letras.toUpperCase()) { s = s.toLowerCase(); s = s.charAt(0).toUpperCase() + s.slice(1); }
+    // 2) cortesías del final
+    s = s.replace(/[\s,.;!]*(?:muchas\s+)?(?:gracias|por\s+favor|porfa|plis)[\s.!]*$/i, '').trim();
+    if (fechaISO) {
+      const proteg = [];
+      s = s.replace(/\b(?:a|de|por|en)\s+la\s+ma[nñ]ana\b/gi, function(m){ proteg.push(m); return '\u0001' + (proteg.length - 1) + '\u0001'; });
+      s = s.replace(new RegExp(_TF_PRE + '(?:' + _TF_DIA + '\\s+)?\\d{1,2}(?:°|º)?\\s+de\\s+' + _TF_MES + '(?:\\s+(?:de(?:l)?\\s+)?\\d{4})?', 'gi'), ' ');
+      s = s.replace(new RegExp(_TF_PRE + '(?:' + _TF_DIA + '\\s+)?(\\d{1,2})[\\/\\-](\\d{1,2})(?:[\\/\\-]\\d{2,4})?(?![\\d\\/])', 'gi'), function(m, d, mo){ return (+d >= 1 && +d <= 31 && +mo >= 1 && +mo <= 12) ? ' ' : m; });
+      s = s.replace(new RegExp(_TF_PRE + '(?:pasado\\s+)?ma[nñ]ana\\b', 'gi'), ' ');
+      s = s.replace(new RegExp(_TF_PRE + 'hoy\\b', 'gi'), ' ');
+      s = s.replace(new RegExp('(?:\\s*,?\\s*(?:(?:para|hasta)\\s+)?(?:el|este)\\s+(?:pr[oó]ximo\\s+)?)' + _TF_DIA + '(?:\\s+(?:que\\s+viene|pr[oó]ximo))?\\b', 'gi'), ' ');
+      s = s.replace(/\u0001(\d+)\u0001/g, function(_, k){ return proteg[+k]; });
+    }
+    s = s.replace(/\s+/g, ' ').replace(/\s+([,.;:!?])/g, '$1').replace(/(?:\s*[,;:\-–]\s*|\s+(?:para|el|de|que|y))+\s*$/i, '').replace(/^[\s,;:\-–]+/, '').trim();
+    return s.length >= 3 ? s : orig;
+  } catch(e){ return orig; }
 }
 function _tareaNorm(s){ return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,' ').trim(); }
 function tareaGuardar(titulo, fechaISO){
@@ -6888,6 +7008,8 @@ function tareasActivas(){ return tareasCargar().filter(x=>!x.hecha).sort((p,q)=>
 function tareaHecha(id){ const a=tareasCargar(); const x=a.find(t=>t.id===id); if(x){ x.hecha=true; tareasGuardarTodas(a); } try{ renderTareas(); }catch(e){} }
 function tareaBorrar(id){ tareasGuardarTodas(tareasCargar().filter(t=>t.id!==id)); try{ renderTareas(); }catch(e){} }
 function _tareaFechaLinda(iso){ if(!iso) return ''; const p=String(iso).split('-'); return p.length===3?(p[2]+'/'+p[1]):iso; }
+// v40-agendar: en la TARJETA, si la fecha cae en otro año se dice («30/09/2027»): «el 30 de septiembre» ya pasado es el del año que viene
+function _tareaFechaTarjeta(iso){ if(!iso) return ''; const y=String(iso).slice(0,4); return _tareaFechaLinda(iso)+(y!==String(new Date().getFullYear())?'/'+y:''); }
 function _tareaVence(iso){ if(!iso) return false; return iso <= _tareaISO(new Date()); }
 function tareasTexto(){ const a=tareasActivas(); if(!a.length) return ''; return a.map(x=>'• '+x.titulo+(x.fecha?' ('+_tareaFechaLinda(x.fecha)+')':'')).join('\n'); }
 function getTareasContext(text){
@@ -7447,8 +7569,9 @@ function actuaProcesarReply(reply){
          — la respuesta de texto queda igual. Hallazgo en vivo de Darío. */
       const _ped = (typeof ultimoPedidoUsuario === 'string') ? ultimoPedidoUsuario : '';
       if (/\b(agend[a\u00e1]|record[a\u00e1]|anot[a\u00e1]|recordatorio|calendario|en\s+(?:la\s+)?agenda)\b/i.test(_ped))
-        actuaPend=['📅','Agendar: '+String(a.titulo).slice(0,80),'Fecha y hora las confirmás vos.',actuaCalURL(String(a.titulo).slice(0,80),_tareaFecha(typeof ultimoPedidoUsuario==='string'?ultimoPedidoUsuario:'')),'📅 abrir calendario']; // v59-caldate
-        try{ tareaGuardar(String(a.titulo).slice(0,80), _tareaFecha(typeof ultimoPedidoUsuario==='string'?ultimoPedidoUsuario:'')); }catch(e){} // v39-tareas
+      { const _f=_tareaFecha(_ped)||_tareaFecha(String(a.titulo)); const _t=tituloSinFecha(String(a.titulo).slice(0,80), _f); // v40-agendar
+        actuaPend=['📅','Agendar: '+_t,_f?('Para el '+_tareaFechaTarjeta(_f)+' — la hora la ponés vos.'):'Fecha y hora las confirmás vos.',actuaCalURL(_t,_f),'📅 abrir calendario']; // v59-caldate
+        try{ tareaGuardar(_t, _f); }catch(e){} } // v39-tareas
     }
     // v37-agenda (A2): si el modelo no trae una dirección válida, se busca en la agenda LOCAL.
     // Cierra el hueco del redactor («destinatario a completar»). Nunca inventada.
@@ -7632,7 +7755,7 @@ const AGENTE_HERRAMIENTAS = [
   { type:'function', function:{ name:'preparar_mail', description:'Deja listo un borrador de mail en una tarjeta. NO envía nada.',
     parameters:{ type:'object', properties:{ para:{ type:'string', description:'Nombre o dirección' }, asunto:{ type:'string' }, cuerpo:{ type:'string' } }, required:['para','cuerpo'] } } },
   { type:'function', function:{ name:'agendar', description:'Anota una tarea/recordatorio en el dispositivo y deja lista la tarjeta del calendario. Solo si el usuario pidió agendar, anotar o recordar.',
-    parameters:{ type:'object', properties:{ titulo:{ type:'string' }, cuando:{ type:'string', description:'Como lo dijo el usuario: hoy, mañana, el jueves, 12/10…' } }, required:['titulo'] } } },
+    parameters:{ type:'object', properties:{ titulo:{ type:'string', description:'Qué hay que hacer, SIN la fecha (la fecha va en «cuando»)' }, cuando:{ type:'string', description:'Como lo dijo el usuario: hoy, mañana, el jueves, 12/10…' } }, required:['titulo'] } } },
   { type:'function', function:{ name:'ver_tareas', description:'Lista las tareas pendientes guardadas en el dispositivo.', parameters:{ type:'object', properties:{} } } },
   { type:'function', function:{ name:'buscar_memoria', description:'Busca en la memoria personal del usuario (charlas y datos anteriores).',
     parameters:{ type:'object', properties:{ consulta:{ type:'string' } }, required:['consulta'] } } }
@@ -7716,9 +7839,10 @@ function agenteEjecutar(call, tarjetas, pasos, textoUsuario){
     }
     if (nombre === 'agendar'){
       if (!AGENTE_PIDE_AGENDA.test(String(textoUsuario || ''))) return { ok:false, motivo:'El usuario no pidió agendar, anotar ni recordar nada.' };
-      const titulo = _agenteTxt(a.titulo, 80);
-      if (!titulo) return { ok:false, motivo:'Falta qué anotar.' };
-      const fecha = _tareaFecha(a.cuando) || _tareaFecha(textoUsuario);
+      const _tituloCrudo = _agenteTxt(a.titulo, 80);
+      if (!_tituloCrudo) return { ok:false, motivo:'Falta qué anotar.' };
+      const fecha = _tareaFecha(a.cuando) || _tareaFecha(textoUsuario) || _tareaFecha(_tituloCrudo);
+      const titulo = tituloSinFecha(_tituloCrudo, fecha);   // v40-agendar: la fecha va al calendario, no al título
       /* v40-audit4 (25/09/2026) — FOTO DE UNA FACTURA VIEJA (auditoría de Darío): leyó bien el vencimiento
          08/07/2021 y lo agendó «para el 08/07», sin año y sin avisar que ya pasó. Una fecha pasada se anota
          igual (el usuario la pidió), pero se dice DE FRENTE en la tarjeta, en el rastro y al modelo. */
@@ -8205,8 +8329,8 @@ async function fotoResolver(text){
      · la solapa «🔄 actualizar» del pie muestra la versión, lo nuevo y «buscar ahora».
    Actualizar = recargar con lo nuevo. La configuración, la memoria, los contactos y las tareas
    NO se tocan: no viven en el código. Nunca recarga sola ni a mitad de una respuesta. */
-const APP_BUILD = '2026-09-25.7';
-const APP_NOVEDADES = ["✦ Generación v40: tu MIRROR actúa en varios pasos, entiende por significado, te acompaña por voz y se actualiza solo.", "🔧 Arreglos de la auditoría: tu MIRROR ya sabe qué trae su versión y que se actualiza (antes lo inventaba, y hasta se lo acordaba mal: ahora la verdad le gana a la memoria); ninguna ventana queda sin salida (✕, Esc o tocando afuera); si una voz no suena, sigue con otra de tu compu y te avisa; «¿cómo estás? ¿cuál es tu modelo?» contesta las dos cosas; y si agendás una fecha que ya pasó, te lo advierte.", "🧭 Tu MIRROR ahora actúa en varios pasos: «avisale a Juan que no llego y anotame reprogramar» — busca, prepara y te deja las tarjetas; el último toque es tuyo.", "🧠 Memoria que entiende (opcional): encuentra por significado, no solo por palabras. Corre en tu dispositivo.", "🎧 Charla por voz manos libres y Aa modo fácil, para usarla sin teclado.", "📷 Foto y resuelvo: foto de una factura o un turno + «agendame el vencimiento».", "🔄 Esta solapa: te avisa cuando hay una versión nueva."];
+const APP_BUILD = '2026-10-02.1';
+const APP_NOVEDADES = ["✦ Generación v40: tu MIRROR actúa en varios pasos, entiende por significado, te acompaña por voz y se actualiza solo.", "🔧 Pulido de octubre: el motor principal espera unos segundos antes de pasarle la posta al respaldo; cuando contesta el respaldo lo ves con el chip «↺ respaldo» y se cuida más de no inventar; tu MIRROR ya contesta bien «¿qué sabés hacer?», «¿tenés límites?» y «¿dónde guardás lo mío?»; y al agendar, la fecha va al calendario y no se repite en el título.", "🔧 Arreglos de la auditoría: tu MIRROR ya sabe qué trae su versión y que se actualiza (antes lo inventaba, y hasta se lo acordaba mal: ahora la verdad le gana a la memoria); ninguna ventana queda sin salida (✕, Esc o tocando afuera); si una voz no suena, sigue con otra de tu compu y te avisa; «¿cómo estás? ¿cuál es tu modelo?» contesta las dos cosas; y si agendás una fecha que ya pasó, te lo advierte.", "🧭 Tu MIRROR ahora actúa en varios pasos: «avisale a Juan que no llego y anotame reprogramar» — busca, prepara y te deja las tarjetas; el último toque es tuyo.", "🧠 Memoria que entiende (opcional): encuentra por significado, no solo por palabras. Corre en tu dispositivo.", "🎧 Charla por voz manos libres y Aa modo fácil, para usarla sin teclado.", "📷 Foto y resuelvo: foto de una factura o un turno + «agendame el vencimiento».", "🔄 Esta solapa: te avisa cuando hay una versión nueva."];
 const ACT_CADA_MS = 6 * 60 * 60 * 1000;
 let _actUltimo = null;
 function _actCompara(a, b){ a = String(a || ''); b = String(b || ''); return a === b ? 0 : (a > b ? 1 : -1); }   // «AAAA-MM-DD.n» ordena como texto
@@ -8332,10 +8456,12 @@ function arquitecturaRelevante(pregunta){
     if (!P.items.length) return ARQUITECTURA_MIRROR;
     const terms = _arqNorm(pregunta).split(/[^a-z0-9ñ]+/).filter(function(w){ return w.length >= 4 && !_ARQ_STOP.has(w); }).map(function(w){ return w.slice(0,5); });
     const pideModelo = /\b(modelo|motor|llm|groq|gpt|qwen)/i.test(pregunta||'');
+    const pideLoMio = /(guard|privad|segur|l[ií]mite|no\s+pod[eé]s|qui[eé]n\s+(?:ve|lee|tiene)|gratis|cost[aá]s|cuesta|d[oó]nde\s+(?:ten|qued|viv))/i.test(pregunta||''); // v40-autoconoc2
     const puntaje = P.items.map(function(it, i){
       const n = _arqNorm(it); let s = 0;
       terms.forEach(function(t){ if (n.indexOf(t) >= 0) s++; });
       if (pideModelo && /MODELO \/ MOTOR/.test(it)) s += 5;
+      if (pideLoMio && /DÓNDE GUARDO LO TUYO/.test(it)) s += 5;   // v40-autoconoc2
       return { i: i, s: s };
     });
     let elegidos = puntaje.filter(function(x){ return x.s > 0; }).sort(function(a,b){ return b.s - a.s || a.i - b.i; }).slice(0, ARQ_DETALLE_K).map(function(x){ return x.i; });
@@ -8377,6 +8503,66 @@ function bloqueVersion(){
       + 'REGLAS: contestá con ESTO, en tus palabras y con calidez, sin listas eternas. NO inventes funciones, mejoras, cifras ni cambios de seguridad que no estén acá. Si te piden un detalle que no figura, decí que no lo sabés con certeza y ofrecé abrir «🔄 actualizar». Si comparan con la versión anterior, lo que cambió es exactamente esta lista. Si la pregunta NO es sobre esta app (p. ej. la versión de un documento), ignorá este bloque.\n'
       + '=== FIN VERSIÓN ===\n\n';
   } catch(e){ return ''; }
+}
+
+/* ══ v40-novedad (2/10/2026) — «CREAR ENCUESTAS» NO ES NOVEDAD DE LA v40 (auditoría 25/09, 20:20) ══════
+   Con la .7 la respuesta a «¿qué tiene de bueno la v40?» salió real… salvo un matiz: presentó «crear
+   encuestas» como si fuera nuevo. La orden ya estaba en bloqueVersion y el modelo igual la coló: por
+   prompt no alcanza (la misma lección de v39-modelsano). Se corrige la SALIDA, determinístico y acotado:
+     · solo en respuestas a preguntas por la versión/novedades;
+     · solo renglones u oraciones que nombran algo que la app YA tenía (encuestas, informes, tarjetas de
+       un toque, panel de estado) y que NO figura en APP_NOVEDADES, o algo inventado que ya se vio
+       («barra de acciones rápidas», «cifrado actualizado»);
+     · si el usuario mismo preguntó por eso («¿la v40 tiene encuestas?»), no se toca;
+     · nunca deja la respuesta vacía, y AVISA al pie que corrigió (honestidad radical). */
+const NOVEDAD_AJENA = [
+  { re: /\bencuestas?\b/i, nombre: 'las encuestas', previa: true },
+  { re: /\binformes?\b/i, nombre: 'los informes', previa: true },
+  { re: /\btarjetas?\s+de\s+un\s+(?:solo\s+)?toque\b/i, nombre: 'las tarjetas de un toque', previa: true },
+  { re: /\bpanel\s+de\s+estado\b/i, nombre: 'el panel de estado', previa: true },
+  { re: /\bbarra\s+de\s+acciones(?:\s+r[aá]pidas)?\b/i, nombre: 'una «barra de acciones rápidas»', previa: false },
+  { re: /\bcifrado\s+(?:actualizado|mejorado|nuevo|de\s+extremo)/i, nombre: 'un «cifrado nuevo»', previa: false }
+];
+const _NOVEDAD_MARCA = /(nuev|novedad|ahora(?:\s+tambi[eé]n)?\s+(?:pod[eé]s|puede|ten[eé]s|tiene|tra[eé])|incorpor|se\s+sum|sum[oó]|agreg|estren|trae|v\s?\d{2}\b)/i;
+// lo que se nombra COMO de antes («los informes de siempre», «seguís teniendo…») no es venderlo como nuevo
+const _PREVIA_MARCA = /(de\s+siempre|como\s+antes|igual\s+que\s+antes|de\s+antes|ya\s+(?:ten[ií]|exist|estaba|ven[ií])|segu[ií]s\s+teniendo|sigue[n]?\s+(?:estando|igual|ah[ií]))/i;
+function corregirNovedadAjena(reply, pregunta){
+  try {
+    if (typeof reply !== 'string' || !reply) return reply;
+    const nov = ((typeof APP_NOVEDADES !== 'undefined' && Array.isArray(APP_NOVEDADES)) ? APP_NOVEDADES : []).join(' ');
+    const activos = NOVEDAD_AJENA.filter(function(x){ return !x.re.test(nov) && !x.re.test(String(pregunta || '')); });
+    if (!activos.length) return reply;
+    const lineas = reply.split('\n');
+    const sacados = [];
+    const esItem = function(l){ return /^\s*(?:[-•*·]|\d+[.)])\s+/.test(l); };
+    const hayLista = lineas.some(esItem);
+    for (let i = 0; i < lineas.length; i++){
+      const l = lineas[i];
+      const hit = activos.filter(function(x){ return x.re.test(l); });
+      if (!hit.length) continue;
+      if (esItem(l) && !_PREVIA_MARCA.test(l) && (hayLista || _NOVEDAD_MARCA.test(l))) { hit.forEach(function(x){ if (sacados.indexOf(x.nombre) < 0) sacados.push(x.nombre); }); lineas[i] = null; continue; }
+      // dentro de un párrafo: solo la ORACIÓN que lo presenta como nuevo
+      const orac = l.split(/(?<=[.!?])\s+/);
+      let tocado = false;
+      for (let k = 0; k < orac.length; k++){
+        const _venta = _NOVEDAD_MARCA.test(orac[k]) && !_PREVIA_MARCA.test(orac[k]);
+        if (activos.some(function(x){ return x.re.test(orac[k]); }) && (_venta || activos.some(function(x){ return !x.previa && x.re.test(orac[k]); }))){
+          activos.forEach(function(x){ if (x.re.test(orac[k]) && sacados.indexOf(x.nombre) < 0) sacados.push(x.nombre); });
+          orac[k] = null; tocado = true;
+        }
+      }
+      if (tocado) lineas[i] = orac.filter(function(o){ return o !== null; }).join(' ');
+    }
+    if (!sacados.length) return reply;
+    const limpio = lineas.filter(function(l){ return l !== null; }).join('\n').replace(/\n{3,}/g, '\n\n').trim();
+    if (limpio.replace(/[\s\W]/g, '').length < 40) return reply;   // nunca dejar la respuesta hueca
+    const previas = sacados.filter(function(n){ return NOVEDAD_AJENA.some(function(x){ return x.nombre === n && x.previa; }); });
+    const inventadas = sacados.filter(function(n){ return previas.indexOf(n) < 0; });
+    return limpio + '\n\n✎ Nota de la app: '
+      + (previas.length ? 'saqué ' + previas.join(', ') + ' de lo nuevo: eso ya estaba de antes' : '')
+      + (previas.length && inventadas.length ? '; y ' : '') + (inventadas.length ? 'saqué ' + inventadas.join(', ') + ', que la app no tiene' : '')
+      + '. Lo nuevo de verdad está en «🔄 actualizar».';
+  } catch(e){ try{ regError('novedad', e); }catch(_){} return reply; }
 }
 
 async function send() {
@@ -8519,7 +8705,13 @@ async function send() {
      la Regla de Oro: la app SÍ persiste la conversación (se restaura al reabrir) y trae recuerdos
      por relevancia. Se inyecta una nota honesta para que NUNCA niegue su memoria. Hallazgo en vivo de Darío. */
   const preguntaPorMemoria = (mode === 'mirror') && /\b(me\s+repet[íi]s|te\s+repet[íi]s|ten[ée]s\s+memoria|ten[ée]s\s+registro|record[áa]s|te\s+acord[áa]s|me\s+olvid[áa]s|te\s+olvid[áa]s|empez[áa]s\s+de\s+cero|arranc[áa]s\s+de\s+cero|de\s+cero\s+cada|guard[áa]s\s+(?:lo|la\s+charla|la\s+conversaci))/i.test(text);
-  const avisoMemoria = preguntaPorMemoria ? 'NOTA DE HONESTIDAD (obligatoria): SÍ tenés memoria persistente de esta conversación — se guarda en el dispositivo del usuario y se restaura cuando reabre la app; además traés recuerdos por RELEVANCIA (no recitás todo). NUNCA digas que «no tenés memoria» ni que «cada charla empieza de cero»: es falso. Si justo ahora no te llegó un recuerdo puntual, decí que no lo tenés a mano y pedile el dato, SIN negar que tenés memoria.\n\n' : '';
+  /* v40-autoconoc2 (2/10/2026): la nota decía «se guarda en el dispositivo» y NO es así — la charla y los recuerdos
+     viven en la Firebase PROPIA del usuario (lo verificó la auditoría del 25/09: sin esa base, nada se guardaba entre
+     sesiones). La nota dice ahora dónde está de verdad, y si la base no está configurada, lo dice de frente. */
+  const _sinBaseMem = (typeof FB_URL !== 'undefined') && !FB_URL;
+  const avisoMemoria = !preguntaPorMemoria ? '' : _sinBaseMem
+    ? 'NOTA DE HONESTIDAD (obligatoria): en ESTA instalación la base de memoria (Firebase) NO está configurada. Mientras la app esté abierta te acordás de lo que se habló, pero al cerrarla la charla NO queda guardada para la próxima vez. Decilo así, de frente, y sugerí cargar la Firebase en el constructor para tener memoria entre sesiones. No inventes recuerdos de otras sesiones.\n\n'
+    : 'NOTA DE HONESTIDAD (obligatoria): SÍ tenés memoria persistente de esta conversación — se guarda en la base Firebase PROPIA del usuario (la que configuró) y se restaura cuando reabre la app; además traés recuerdos por RELEVANCIA (no recitás todo). NUNCA digas que «no tenés memoria» ni que «cada charla empieza de cero»: es falso. Si justo ahora no te llegó un recuerdo puntual, decí que no lo tenés a mano y pedile el dato, SIN negar que tenés memoria.\n\n';
   let contextoActual = text;
   if (avisoSinBase) {
     contextoActual = avisoSinBase + 'PREGUNTA: ' + text;
@@ -8531,7 +8723,7 @@ async function send() {
     let partes = '';
     // v2.3: si la pregunta es sobre la PROPIA APP (MIRROR/TARS/funcionamiento), va la
     // arquitectura real al contexto — autoconocimiento sin inventos, en cualquier modo.
-    if (PREGUNTA_POR_APP.test(text)) partes += arquitecturaRelevante(text) + resumenErrores() + '\n\n'; // v35-diag (Etapa 6) · v40-audit: por relevancia
+    if (esPreguntaPorApp(text)) partes += arquitecturaRelevante(text) + resumenErrores() + '\n\n'; // v35-diag (Etapa 6) · v40-audit: por relevancia · v40-autoconoc2: + preguntas a la entidad sin nombrar la app
     try { if (PREGUNTA_POR_VERSION.test(text)) _versionTurnos = 3; if (_versionTurnos > 0){ partes += bloqueVersion(); _versionTurnos--; } } catch(e){} // v40-audit6: la versión real, no inventada
     // v35-mem: memoria personal relevante (solo trae algo en modo espejo; en otros modos memoriaRelevante='').
     if (avisoMemoria) partes += avisoMemoria; // v39-memfix: nota de honestidad sobre la memoria
@@ -8584,7 +8776,7 @@ async function send() {
   const _cebP = (typeof cebActiva==='function' && cebActiva() && mode==='mirror') ? cebPerillas() : null; // v52-cebolla
   const _maxSalida = _cebP ? _cebP.tok : (mode==='jurado'?1100:(isTarsDB?1500:700));
   const _temp = _cebP ? _cebP.temp : ((mode==='tars')?0.3:(mode==='jurado'?0.4:0.7));
-  const _ajuste = ajustarAlCupo(contextoActual, systemPrompt, previos, _maxSalida); // v39-cupo: mide y recorta ANTES de mandar
+  const _ajuste = ajustarAlCupo(contextoActual, systemPrompt, previos, salidaEfectiva(MODELO_GROQ, _maxSalida)); // v39-cupo: mide y recorta ANTES de mandar · v40-cupo: con la salida que de verdad se pide
   const mensajesGroq = _ajuste.mensajes;
   semCerrarConsulta(); // v40-comprende: el contexto ya está armado; la fusión vale solo para ESTE turno
 
@@ -8619,7 +8811,9 @@ async function send() {
     : 'Che, no me llegó bien eso. ¿Me lo repetís?');
 
   try{ reply = actuaProcesarReply(reply); }catch(e){ console.error(e); } // v36-actua: ¿el modelo pidió una tarjeta?
-  try{ if (!errorMsg && PREGUNTA_POR_APP.test(text) && !preguntaNombraModeloAjeno(text)) reply = corregirModeloAjeno(reply); }catch(e){ console.error(e); } // v39-modelsano
+  try{ if (!errorMsg && esPreguntaPorApp(text) && !preguntaNombraModeloAjeno(text)) reply = corregirModeloAjeno(reply); }catch(e){ console.error(e); } // v39-modelsano · v40-autoconoc2: mismo disparador que la arquitectura
+  try{ const _rc = (!errorMsg) ? respaldoChip() : ''; if (_rc) ultimaProcedencia.push(_rc); }catch(e){} // v40-respaldo: se ve quién contestó
+  try{ if (!errorMsg && _preguntaVersion) reply = corregirNovedadAjena(reply, text); }catch(e){ console.error(e); } // v40-novedad: lo de antes no se vende como nuevo
   try{ if (!errorMsg && _antepIdentidad){ const _li = lineaIdentidadModelo(); if (_li) reply = _li + '\n\n' + reply; } }catch(e){ console.error(e); } // v40-audit
   try{ addMsg('mirror', reply, msgStyle); }catch(e){ console.error(e); }
   try{ actuaPintarTarjeta(); }catch(e){ console.error(e); } // v36-actua
