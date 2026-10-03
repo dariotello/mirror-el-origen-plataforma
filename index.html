@@ -8573,7 +8573,7 @@ async function fotoResolver(text){
      · la solapa «🔄 actualizar» del pie muestra la versión, lo nuevo y «buscar ahora».
    Actualizar = recargar con lo nuevo. La configuración, la memoria, los contactos y las tareas
    NO se tocan: no viven en el código. Nunca recarga sola ni a mitad de una respuesta. */
-const APP_BUILD = '2026-10-03.2';
+const APP_BUILD = '2026-10-03.3';
 const APP_NOVEDADES = ["✦ Generación v40: tu MIRROR actúa en varios pasos, entiende por significado, te acompaña por voz y se actualiza solo.", "🎧 La charla por voz ya no te corta a la mitad: te deja hacer pausas y contesta cuando terminás de hablar. Y tu MIRROR contesta con datos fijos, sin inventar, quién es, qué versión es, qué hora es, dónde está lo tuyo, qué es el chip «↺ respaldo» y cómo se usan el modo fácil, la charla por voz y la memoria que entiende; ya no niega lo que sí tiene. Y lo hace directo: «buscá en internet…», «dibujame…», «activá el modo fácil» o «buscá a Juan en mis contactos».", "🔧 Pulido de octubre: el motor principal espera unos segundos antes de pasarle la posta al respaldo; cuando contesta el respaldo lo ves con el chip «↺ respaldo» y se cuida más de no inventar; tu MIRROR ya contesta bien «¿qué sabés hacer?», «¿tenés límites?» y «¿dónde guardás lo mío?»; y al agendar, la fecha va al calendario y no se repite en el título (se entiende aunque escribas «15 de dic» o te comas una letra). Lo que es un dato de la app (dónde está lo tuyo, cuál es el motor de respaldo, otras versiones) lo contesta la app misma, sin inventos, aunque lo preguntes todo junto. La letra ya no salta de chica a grande mientras contesta, y la memoria que entiende aprende cuando no la estás usando.", "🔧 Arreglos de la auditoría: tu MIRROR ya sabe qué trae su versión y que se actualiza (antes lo inventaba, y hasta se lo acordaba mal: ahora la verdad le gana a la memoria); ninguna ventana queda sin salida (✕, Esc o tocando afuera); si una voz no suena, sigue con otra de tu compu y te avisa; «¿cómo estás? ¿cuál es tu modelo?» contesta las dos cosas; y si agendás una fecha que ya pasó, te lo advierte.", "🧭 Tu MIRROR ahora actúa en varios pasos: «avisale a Juan que no llego y anotame reprogramar» — busca, prepara y te deja las tarjetas; el último toque es tuyo.", "🧠 Memoria que entiende (opcional): encuentra por significado, no solo por palabras. Corre en tu dispositivo.", "🎧 Charla por voz manos libres y Aa modo fácil, para usarla sin teclado.", "📷 Foto y resuelvo: foto de una factura o un turno + «agendame el vencimiento».", "🔄 Esta solapa: te avisa cuando hay una versión nueva."];
 const ACT_CADA_MS = 6 * 60 * 60 * 1000;
 let _actUltimo = null;
@@ -11427,6 +11427,20 @@ function duckMusic(){
       const set=(id,txt)=>{ const e=document.getElementById(id); if(e) e.textContent=txt; };
       set('btn-mirror', M.mirror); set('btn-tars', M.tars);
       set('btn-jurado', '⚖ '+M.jurado); set('btn-conn', '⬡ '+M.conn);
+      /* v40-saludo (3/10, captura de Darío con la 03.2): al abrir, la pestaña decía «ATIS» pero el encabezado «MIRROR activo» y el
+         saludo «Hola. Soy MIRROR.» — y la entidad se llama «MANIFIESTOS». Ahora el arranque usa los nombres de la instalación. */
+      if (typeof mode === 'undefined' || mode === 'mirror'){
+        set('hstatus', (M.mirror || 'MIRROR') + ' activo');
+        if (CONFIG.configurado && M.mirror && M.mirror !== 'MIRROR') set('htitle', M.mirror);
+      }
+      const _app = String(CONFIG.appName || '').trim();
+      const _sal = document.querySelector('#chat .msg .bubble');
+      if (_app && _app !== 'MIRROR' && _sal && /^\s*Hola\. Soy MIRROR\./.test(_sal.textContent || '')){
+        _sal.textContent = '';
+        _sal.appendChild(document.createTextNode('Hola. Soy ' + _app + '.'));
+        _sal.appendChild(document.createElement('br'));
+        _sal.appendChild(document.createTextNode('Preguntame lo que quieras.'));
+      }
     } catch(e){}
   };
 
