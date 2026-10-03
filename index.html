@@ -4657,7 +4657,11 @@ function showTyping(label) {
   const div = document.createElement('div');
   div.className = 'msg'; div.id = 'typing';
   const color = label==='web'?'#ffd700':label==='db'?'var(--conn-on)':label==='jurado'?'#ffb86b':(mode==='tars'?'var(--tars)':'var(--accent)');
-  div.innerHTML = '<div class="av mav">◈</div><div class="bubble"><div class="dots" id="typing-dots"><span style="background:'+color+'"></span><span style="background:'+color+'"></span><span style="background:'+color+'"></span></div><div id="typing-stream" style="display:none;font-size:13px;line-height:1.7;"></div><div id="typing-note" style="font-size:10px;opacity:0.55;margin-top:6px;display:none;"></div></div>'; // v35-stream (Etapa 7)
+  /* v40-letra (2/10, en vivo: «las letras aparecen chicas y después se agrandan de golpe»): el texto que llega en vivo
+     se pintaba a 13 px con la letra común, y la respuesta final del espejo va en Cormorant 16 px (y 19 en modo fácil).
+     Ahora la burbuja «escribiendo» usa EXACTAMENTE el mismo estilo que va a tener la respuesta: no salta nada. */
+  const _bTyp = (label==='mirror') ? '" style="font-family:\'Cormorant Garamond\', Georgia, \'Times New Roman\', serif;font-size:16px;font-weight:300;line-height:1.85;' : ((label==='tars'||label==='jurado') ? ' tbubble' : (label==='db' ? ' dbbubble' : (label==='web' ? ' wbubble' : '')));
+  div.innerHTML = '<div class="av mav">◈</div><div class="bubble' + _bTyp + '"><div class="dots" id="typing-dots"><span style="background:'+color+'"></span><span style="background:'+color+'"></span><span style="background:'+color+'"></span></div><div id="typing-stream" style="display:none;"></div><div id="typing-note" style="font-size:10px;opacity:0.55;margin-top:6px;display:none;"></div></div>'; // v35-stream (Etapa 7)
   chat.appendChild(div);
   chat.scrollTop = chat.scrollHeight;
   hdrThinking = true; // v3.0: el logo se agita mientras piensa
@@ -7641,6 +7645,95 @@ function lineaIdentidadModelo(){
     return 'Sobre mi modelo, de frente: por debajo corro sobre «' + mp + '»' + (motp ? ' a través de «' + motp + '»' : '') + ((typeof PLATFORM_VERSION!=='undefined') ? ' («' + PLATFORM_VERSION + '» es la versión de la app, no el modelo)' : '') + '.';
   } catch(e){ return ''; }
 }
+/* ══ v40-hechos (2/10/2026, 11:04 — auditoría en vivo de la .2) — LO QUE ES UN DATO, LO CONTESTA LA APP ══════════
+   HALLAZGO: con las TRES preguntas juntas («¿dónde guardo lo mío?, ¿cuál es tu motor de respaldo?, ¿por qué la v5.0 es
+   mejor que la v4.5?») el modelo RECIBIÓ la información real (citó hasta los títulos de los renglones) y aun así
+   inventó: «almacenamiento local cifrado», «el respaldo guarda copias de seguridad en la nube», «la v5.0 incorpora…».
+   Es la misma lección que «¿qué modelo sos?» (v39-modelfijo): cuando la respuesta es un DATO de la app, el prompt no
+   alcanza con este modelo gratis. Ahora la app lo contesta SOLA, desde su configuración, sin pasar por el modelo:
+     · dónde está lo tuyo · cuál es el motor de respaldo · versiones que no son la tuya.
+   Si en el mismo mensaje hay algo más (charla, un pedido), eso sigue al modelo o al agente SIN esas preguntas, y lo
+   que el modelo diga de esos temas se descarta (ya los contestó la app). Nada de esto toca TARS ni la memoria. */
+const HECHO_GUARDO_RE = /\bd[oó]nde\s+(?:(?:se\s+)?guard(?:[aá]s|o|amos|an?|[aá]s?te)|ten[eé]s|qued[aá]n?|est[aá]n?|se\s+guarda[n]?|viven?)\s+(?:lo\s+m[ií]o|lo\s+que\s+(?:te\s+)?(?:cuento|digo|hablamos|escribo|subo)|mis\s+(?:datos|cosas|recuerdos|charlas|documentos|archivos|contactos|tareas)|la\s+(?:charla|memoria|info)|los\s+datos|todo\s+esto)/i;
+const HECHO_RESPALDO_RE = /\b(?:motor|modelo)\s+de\s+respaldo|\bten[eé]s\s+(?:un\s+)?respaldo\b|\b(?:cu[aá]l|qu[eé])\s+(?:es|son)\s+(?:el|ese|tu)\s+respaldo\b/i;
+function _hechoVersionesAjenas(t){
+  const s = String(t || ''), mias = String((typeof PLATFORM_VERSION !== 'undefined' && PLATFORM_VERSION) || 'v40').replace(/[^\d]/g, '');
+  const out = []; let m;
+  /* Solo versiones CON PUNTO («v5.0», «versión 4.5»): la plataforma numera entero (v38, v40) y «¿por qué la v40 es mejor
+     que la v38?» tiene respuesta real en su fuente de verdad (bloqueVersion). Las de punto no son de esta app. */
+  const re = /\b(?:v\s?|versi[oó]n\s+)(\d{1,2}[.,]\d{1,2})\b/gi;
+  while ((m = re.exec(s))){ const n = m[1].replace(',', '.'); if (n.replace('.', '') !== mias && out.indexOf(n) < 0) out.push(n); }
+  return out;
+}
+function hechosDeLaApp(text){
+  const t = String(text || ''), h = [];
+  try {
+    if (HECHO_GUARDO_RE.test(t)) h.push('guardo');
+    if (HECHO_RESPALDO_RE.test(t)) h.push('respaldo');
+    if (_hechoVersionesAjenas(t).length) h.push('version');
+  } catch(e){}
+  return h;
+}
+function textoHechos(h, text){
+  const C = (typeof CONFIG !== 'undefined' && CONFIG) || {};
+  const mp = C.modeloPrincipal || 'el modelo configurado', motp = C.motorPrincipal || 'tu motor';
+  const L = [];
+  if (h.indexOf('guardo') >= 0){
+    L.push((typeof FB_URL !== 'undefined' && FB_URL)
+      ? '📍 Dónde está lo tuyo: la charla, los recuerdos, tu perfil y tus documentos están en TU Firebase (en la nube de Google, en tu cuenta). Los contactos, las tareas y la configuración quedan en este navegador. Para contestarte, cada consulta viaja por tu proxy al motor de IA («' + mp + '» vía «' + motp + '»); lo que el proveedor haga con eso lo dicen sus condiciones, no esta app.'
+      : '📍 Dónde está lo tuyo: todavía no cargaste tu Firebase, así que la charla NO queda guardada cuando cerrás la app. Los contactos, las tareas y la configuración sí quedan en este navegador. Para contestarte, cada consulta viaja por tu proxy al motor de IA («' + mp + '» vía «' + motp + '»).');
+  }
+  if (h.indexOf('respaldo') >= 0){
+    const cf = (typeof MODELO_CLOUDFLARE !== 'undefined' && MODELO_CLOUDFLARE) || 'Llama de Cloudflare';
+    // CEREBRAS_KEY vale 'proxy' en toda instalación: el intento se hace siempre, pero solo contesta si el proxy tiene esa ruta con su clave
+    const otro = (typeof CEREBRAS_KEY !== 'undefined' && CEREBRAS_KEY && C.motorRespaldo) ? '; y si tampoco puede, la app prueba «' + C.motorRespaldo + '» (solo contesta si tu proxy tiene esa ruta con su clave)' : '';
+    L.push('↺ Mi motor de respaldo: si «' + mp + '» (vía «' + motp + '») está lleno o falla, primero espero unos segundos; si sigue sin poder, contesta Cloudflare Workers AI con «' + cf + '», gratis, a través de tu proxy' + otro + '. Es un modelo más chico y se equivoca más: cuando contesta él, lo ves con el chip «↺ respaldo». No es una copia de seguridad de tus datos.');
+  }
+  if (h.indexOf('version') >= 0){
+    const aj = _hechoVersionesAjenas(text).map(function(v){ return '«v' + v + '»'; });
+    const ver = (typeof PLATFORM_VERSION !== 'undefined' && PLATFORM_VERSION) || 'v40', bld = (typeof APP_BUILD !== 'undefined' && APP_BUILD) ? ' · build ' + APP_BUILD : '';
+    L.push('🔄 Versiones: yo soy la ' + ver + bld + '. De ' + aj.join(' y de ') + ' no tengo información, así que no te las voy a describir ni comparar inventando. Lo que trae la mía está en «🔄 actualizar».');
+  }
+  return L.join('\n\n');
+}
+/* Lo que queda del mensaje sin las preguntas que ya contestó la app. */
+function textoSinHechos(text){
+  const partes = String(text || '').split(/[¿?!\n]+/);
+  const quedan = partes.map(function(p){ return p.replace(/^[\s,;.]*(?:y\s+)?/i, '').replace(/[\s,;.]+$/, ''); })
+    .filter(function(p){ return p && !HECHO_GUARDO_RE.test(p) && !HECHO_RESPALDO_RE.test(p) && !_hechoVersionesAjenas(p).length; });
+  return quedan.join('. ').trim();
+}
+function _restoTrivial(r){
+  const t = String(r || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zñ\s]/g, ' ')
+    .replace(/\b(hola|che|buenas|bueno|dale|ok|y|gracias|porfa|por favor|decime|contame)\b/g, ' ').replace(/\s+/g, ' ').trim();
+  return t.split(' ').filter(Boolean).length < 2;
+}
+/* Lo que el modelo diga de esos temas se descarta: ya los contestó la app (y es justo donde inventaba). */
+function sacarTemasDeHechos(reply, h){
+  try {
+    if (!h || !h.length || typeof reply !== 'string') return reply;
+    const tema = [];
+    if (h.indexOf('guardo') >= 0) tema.push(/(guard|almacen|cifrad|firebase|\bnube\b|d[oó]nde\s+(?:est|qued|viv))/i);
+    if (h.indexOf('respaldo') >= 0) tema.push(/respaldo|copias?\s+de\s+seguridad|backup/i);
+    if (h.indexOf('version') >= 0) tema.push(/\bv\s?\d{1,2}(?:[.,]\d)?\b|versi[oó]n/i);
+    const lineas = reply.split('\n').map(function(l){
+      const o = l.split(/(?<=[.!?])\s+/).filter(function(x){ return !tema.some(function(re){ return re.test(x); }); });
+      return o.join(' ');
+    });
+    const limpio = lineas.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+    return limpio;
+  } catch(e){ return reply; }
+}
+function responderHechosFijo(text, h){
+  try {
+    const msg = textoHechos(h, text);
+    if (typeof addMsg === 'function'){ addMsg('user', text); addMsg('mirror', msg); }
+    try { history.push({ role:'user', content:text }, { role:'assistant', content:msg }); } catch(e){}
+    try { memorySet(history); } catch(e){}
+    try { hablar(msg); } catch(e){}
+    try { setButtonsBusy(false); } catch(e){}
+  } catch(e){ try { regError('hechos', e); } catch(_){} }
+}
 /* v40-audit2: aviso honesto una vez por sesión si la memoria no está configurada */
 function avisoSinMemoria(){
   try {
@@ -7663,7 +7756,9 @@ function responderModeloFijo(text){
   try {
     var mp = (typeof CONFIG!=='undefined' && CONFIG.modeloPrincipal) || 'el modelo configurado';
     var motp = (typeof CONFIG!=='undefined' && CONFIG.motorPrincipal) || 'su motor';
-    var resp = (typeof CONFIG!=='undefined' && CONFIG.motorRespaldo) ? (', con «'+CONFIG.motorRespaldo+'» de respaldo') : '';
+    /* v40-hechos: decía «con «cerebras» de respaldo» por el valor de fábrica de CONFIG, aunque nadie cargó clave de Cerebras:
+       el respaldo que de verdad actúa es Cloudflare (y Cerebras solo si hay clave). */
+    var resp = ', con Cloudflare Workers AI de respaldo' + ((typeof CEREBRAS_KEY!=='undefined' && CEREBRAS_KEY && CONFIG && CONFIG.motorRespaldo) ? (' (y «'+CONFIG.motorRespaldo+'» después, si tu proxy lo tiene)') : '');
     var ver = (typeof PLATFORM_VERSION!=='undefined') ? PLATFORM_VERSION : '';
     var msg = 'Soy una entidad digital —la extensión de mi usuario, su doble—, no un chatbot genérico. '
             + 'Por debajo corro sobre el modelo «'+mp+'» a través de «'+motp+'»'+resp+'. '
@@ -8031,6 +8126,7 @@ const SEM_LOTE = 8;
 const SEM_UMBRAL = 0.80;         // e5 da cosenos altos de base: por debajo de esto no se considera «parecido»
 const SEM_MARGEN = 0.06;         // y además tiene que estar cerca del mejor (evita colar recuerdos que no vienen al caso)
 const SEM_ESPERA_MS = 1500;      // la pregunta nunca espera más que esto por su vector
+try { document.addEventListener('input', function(ev){ try { if (ev && ev.target && ev.target.id === 'inp') _sem.ultTecla = Date.now(); } catch(_){} }, true); } catch(e){} // v40-pausa
 var _sem = { on:false, estado:'apagado', extractor:null, vecs:new Map(), cargando:null, indexando:false, hechos:0, total:0, pct:0, q:null, err:'', enFusion:false, usada:0 };
 function semOnGuardado(){ try { return localStorage.getItem('mirror_sem_on') === '1'; } catch(e){ return false; } }
 function semListo(){ return !!(_sem.on && _sem.extractor && _sem.q && _sem.q.activo && (Date.now() - _sem.q.ts) < 60000); }
@@ -8108,6 +8204,9 @@ async function semIndexar(){
     _sem.total = todos.length; _sem.hechos = todos.length - pend.length; semPintar();
     for (let i = 0; i < pend.length; i += SEM_LOTE){
       if (!_sem.on) break;
+      /* v40-pausa (2/10, en vivo: «anda como lenta»): aprender corre en el mismo hilo que la app. Mientras escribís o
+         mientras espera una respuesta, se hace a un lado y sigue después (hasta 20 s; después aprende igual, despacio). */
+      for (let w = 0; w < 40 && ((typeof busy !== 'undefined' && busy) || (Date.now() - (_sem.ultTecla || 0) < 2500)); w++){ await new Promise(function(r){ setTimeout(r, 500); }); }
       const lote = pend.slice(i, i + SEM_LOTE);
       const vs = await semEmbed(lote.map(function(c){ return c.text; }), 'passage: ');
       const pares = lote.map(function(c, j){ return [_semHash(c.text), vs[j]]; });
@@ -8342,8 +8441,8 @@ async function fotoResolver(text){
      · la solapa «🔄 actualizar» del pie muestra la versión, lo nuevo y «buscar ahora».
    Actualizar = recargar con lo nuevo. La configuración, la memoria, los contactos y las tareas
    NO se tocan: no viven en el código. Nunca recarga sola ni a mitad de una respuesta. */
-const APP_BUILD = '2026-10-02.2';
-const APP_NOVEDADES = ["✦ Generación v40: tu MIRROR actúa en varios pasos, entiende por significado, te acompaña por voz y se actualiza solo.", "🔧 Pulido de octubre: el motor principal espera unos segundos antes de pasarle la posta al respaldo; cuando contesta el respaldo lo ves con el chip «↺ respaldo» y se cuida más de no inventar; tu MIRROR ya contesta bien «¿qué sabés hacer?», «¿tenés límites?» y «¿dónde guardás lo mío?»; y al agendar, la fecha va al calendario y no se repite en el título (se entiende aunque escribas «15 de dic» o te comas una letra). Tu MIRROR también sabe cuál es su motor de respaldo y, si le nombrás una versión que no es la suya, no la inventa.", "🔧 Arreglos de la auditoría: tu MIRROR ya sabe qué trae su versión y que se actualiza (antes lo inventaba, y hasta se lo acordaba mal: ahora la verdad le gana a la memoria); ninguna ventana queda sin salida (✕, Esc o tocando afuera); si una voz no suena, sigue con otra de tu compu y te avisa; «¿cómo estás? ¿cuál es tu modelo?» contesta las dos cosas; y si agendás una fecha que ya pasó, te lo advierte.", "🧭 Tu MIRROR ahora actúa en varios pasos: «avisale a Juan que no llego y anotame reprogramar» — busca, prepara y te deja las tarjetas; el último toque es tuyo.", "🧠 Memoria que entiende (opcional): encuentra por significado, no solo por palabras. Corre en tu dispositivo.", "🎧 Charla por voz manos libres y Aa modo fácil, para usarla sin teclado.", "📷 Foto y resuelvo: foto de una factura o un turno + «agendame el vencimiento».", "🔄 Esta solapa: te avisa cuando hay una versión nueva."];
+const APP_BUILD = '2026-10-02.3';
+const APP_NOVEDADES = ["✦ Generación v40: tu MIRROR actúa en varios pasos, entiende por significado, te acompaña por voz y se actualiza solo.", "🔧 Pulido de octubre: el motor principal espera unos segundos antes de pasarle la posta al respaldo; cuando contesta el respaldo lo ves con el chip «↺ respaldo» y se cuida más de no inventar; tu MIRROR ya contesta bien «¿qué sabés hacer?», «¿tenés límites?» y «¿dónde guardás lo mío?»; y al agendar, la fecha va al calendario y no se repite en el título (se entiende aunque escribas «15 de dic» o te comas una letra). Lo que es un dato de la app (dónde está lo tuyo, cuál es el motor de respaldo, otras versiones) lo contesta la app misma, sin inventos, aunque lo preguntes todo junto. La letra ya no salta de chica a grande mientras contesta, y la memoria que entiende aprende cuando no la estás usando.", "🔧 Arreglos de la auditoría: tu MIRROR ya sabe qué trae su versión y que se actualiza (antes lo inventaba, y hasta se lo acordaba mal: ahora la verdad le gana a la memoria); ninguna ventana queda sin salida (✕, Esc o tocando afuera); si una voz no suena, sigue con otra de tu compu y te avisa; «¿cómo estás? ¿cuál es tu modelo?» contesta las dos cosas; y si agendás una fecha que ya pasó, te lo advierte.", "🧭 Tu MIRROR ahora actúa en varios pasos: «avisale a Juan que no llego y anotame reprogramar» — busca, prepara y te deja las tarjetas; el último toque es tuyo.", "🧠 Memoria que entiende (opcional): encuentra por significado, no solo por palabras. Corre en tu dispositivo.", "🎧 Charla por voz manos libres y Aa modo fácil, para usarla sin teclado.", "📷 Foto y resuelvo: foto de una factura o un turno + «agendame el vencimiento».", "🔄 Esta solapa: te avisa cuando hay una versión nueva."];
 const ACT_CADA_MS = 6 * 60 * 60 * 1000;
 let _actUltimo = null;
 function _actCompara(a, b){ a = String(a || ''); b = String(b || ''); return a === b ? 0 : (a > b ? 1 : -1); }   // «AAAA-MM-DD.n» ordena como texto
@@ -8615,19 +8714,28 @@ async function send() {
   // v36-actua (Etapa 3 Ciclo 2): ¿pedido sobre la propia app? Se resuelve al instante, sin tokens.
   if (actuaInterceptar(text)) return;
   // v39-modelfijo: pregunta por el MODELO/MOTOR de IA → respuesta LOCAL y FIJA (no pasa por el modelo, que confabulaba).
-  if (esPreguntaModeloSola(text)) { responderModeloFijo(text); return; }
-  const _antepIdentidad = esPreguntaModelo(text); // v40-audit: venía con otro pedido → se antepone al final
+  // v40-hechos: datos de la app (dónde está lo tuyo, el respaldo, versiones ajenas) → los contesta la app, no el modelo.
+  // Va ANTES del modelfijo: «¿cuál es tu motor de respaldo?» nombra «tu motor» pero NO pregunta por el modelo principal.
+  const _hechos = (mode === 'mirror') ? hechosDeLaApp(text) : [];
+  const _textoModelo = _hechos.length ? textoSinHechos(text) : text;
+  if (_hechos.length && _restoTrivial(_textoModelo) && !esPreguntaModelo(_textoModelo)) { responderHechosFijo(text, _hechos); return; }
+  let _hechosYa = false;
+  if (esPreguntaModeloSola(_textoModelo) && !_hechos.length) { responderModeloFijo(text); return; }
+  const _antepIdentidad = esPreguntaModelo(_textoModelo); // v40-audit: venía con otro pedido → se antepone al final · v40-hechos: sin las preguntas que ya contestó la app
   setButtonsBusy(true);
   /* v40-agente: pedido de ACCIÓN (avisale / mandale / agendame…) → lo resuelve el agente en varios
      pasos con herramientas locales. Si no pudo ni empezar, sigue el camino de siempre sin
      repetir el mensaje del usuario. */
   try { if (_sem.on) await semPrepararConsulta(text); } catch(e){} // v40-comprende: el vector de ESTA pregunta (tope 1,5 s)
   let _agenteMostro = false;
-  if (agenteDebeActuar(text)) {
+  if (agenteDebeActuar(_textoModelo)) {
     let _ra = false;
-    try { _ra = await agenteResolver(text); } catch(e){ try{ regError('agente', e); }catch(_){} }
+    /* v40-hechos: «¿dónde guardo lo mío? … y agendame X» — el agente se quedaba con el pedido y contestaba MAL lo
+       demás («decime dónde querés guardar tus archivos»). Ahora la app contesta los datos y el agente recibe solo el pedido. */
+    if (_hechos.length){ try { addMsg('user', text); addMsg('mirror', textoHechos(_hechos, text)); history.push({ role:'user', content:text }, { role:'assistant', content:textoHechos(_hechos, text) }); } catch(e){} _hechosYa = true; }
+    try { _ra = await agenteResolver(_textoModelo, _hechos.length ? { yaMostrado:true } : undefined); } catch(e){ try{ regError('agente', e); }catch(_){} }
     if (_ra === true) { semCerrarConsulta(); return; }
-    _agenteMostro = (_ra === 'mostrado');
+    _agenteMostro = (_ra === 'mostrado') || _hechosYa;
   }
 
   // Construir contexto SOLO para la llamada actual (no se guarda en history,
@@ -8745,6 +8853,7 @@ async function send() {
     try { if (PREGUNTA_POR_VERSION.test(text)) _versionTurnos = 3; if (_versionTurnos > 0){ partes += bloqueVersion(); _versionTurnos--; } } catch(e){} // v40-audit6: la versión real, no inventada
     // v35-mem: memoria personal relevante (solo trae algo en modo espejo; en otros modos memoriaRelevante='').
     if (avisoMemoria) partes += avisoMemoria; // v39-memfix: nota de honestidad sobre la memoria
+    if (_hechos.length) partes += 'YA LO CONTESTÓ LA APP CON DATOS FIJOS (se muestra arriba de tu respuesta): ' + _hechos.map(function(x){ return x === 'guardo' ? 'dónde se guarda lo del usuario' : (x === 'respaldo' ? 'cuál es el motor de respaldo' : 'versiones que no son esta'); }).join(', ') + '. NO hables de esos temas ni los repitas: contestá SOLO lo demás del mensaje.\n\n'; // v40-hechos
     if (memoriaRelevante) partes += memoriaRelevante + '\n\n';
     if (suenoRelevante) partes += suenoRelevante + '\n\n'; // v39-sonar: el cruce local va como contexto honesto
     if (tareasRelevante) partes += tareasRelevante + '\n\n'; // v39-tareas
@@ -8833,6 +8942,7 @@ async function send() {
   try{ const _rc = (!errorMsg) ? respaldoChip() : ''; if (_rc) ultimaProcedencia.push(_rc); }catch(e){} // v40-respaldo: se ve quién contestó
   try{ if (!errorMsg && _preguntaVersion) reply = corregirNovedadAjena(reply, text); }catch(e){ console.error(e); } // v40-novedad: lo de antes no se vende como nuevo
   try{ if (!errorMsg && _antepIdentidad){ const _li = lineaIdentidadModelo(); if (_li) reply = _li + '\n\n' + reply; } }catch(e){ console.error(e); } // v40-audit
+  try{ if (!errorMsg && _hechos.length){ const _sinT = sacarTemasDeHechos(reply, _hechos); reply = _hechosYa ? (_sinT || reply) : (textoHechos(_hechos, text) + (_sinT ? '\n\n' + _sinT : '')); } }catch(e){ console.error(e); } // v40-hechos: el dato lo pone la app
   try{ addMsg('mirror', reply, msgStyle); }catch(e){ console.error(e); }
   try{ actuaPintarTarjeta(); }catch(e){ console.error(e); } // v36-actua
   try{ hablar(reply); }catch(e){ console.error(e); } // v3.0 — P5: si la voz falla, la app NO se traba
