@@ -4132,6 +4132,7 @@ function temporalToggle(){
   } else {
     const n = Math.max(0, history.length - _temporalDesde);
     history.splice(_temporalDesde);
+    try { invUltimoInforme = null; } catch(e){} // v40-1029 (verificador, GRAVE): el informe de la charla temporal no vuelve a viajar al modelo
     charlaTemporal = false;
     const b = document.getElementById('temporal-banda'); if (b) b.hidden = true;
     document.body.classList.remove('charla-temporal');
@@ -4599,7 +4600,7 @@ function updateTesisUI(data) {
   const st = calcularEstadisticas();
   document.getElementById('stat-dims').textContent = st ? st.dimensiones.length : 0;
   document.getElementById('conn-stats-tesis').style.display = 'flex';
-  const lastSync = new Date().toLocaleTimeString('es-AR', {hour:'2-digit', minute:'2-digit'});
+  const lastSync = new Date().toLocaleTimeString('es-AR', {hour:'2-digit', minute:'2-digit', hourCycle:'h23'}); // v40-1029: 24 h siempre
   document.getElementById('conn-footer-tesis').innerHTML =
     '<button class="conn-btn conn-btn-query" onclick="queryTesis()">⬡ Analizar con '+NM('tars')+'</button>' +
     '<button class="conn-btn" onclick="exportarJSONSuite()" title="Descarga todos los registros como archivo JSON">⬇ Exportar JSON</button>' +
@@ -5589,14 +5590,20 @@ async function investigarAFondo(pregunta, textoUsuario){
   showTyping('web');
   const fuentes = [], fallas = [];
   let reply = '', error = null;
+  let propio = ''; // v40-1029: afuera del try, porque el aviso de «0 citas» necesita saber si hubo material propio
   try {
     // 1) plan
     invNota('🔎 Paso 1/3 · armo el plan de búsqueda…');
     let plan = [pregunta];
     try {
-      const raw = await callGroqResiliente([{ role:'user', content: 'Pregunta a investigar: «' + pregunta + '»\nFecha de hoy: ' + new Date().toISOString().slice(0, 10) + '.\nDevolvé SOLO un JSON {"busquedas":["…","…"]} con 3 a 4 búsquedas web CORTAS y concretas (en el idioma en que más fuentes buenas haya; podés mezclar español e inglés) que, juntas, cubran la pregunta: datos, definiciones, evidencia y posturas distintas. Nada más que el JSON.' }],
+      /* v40-1029 (en vivo 23/10): «investigá a fondo sobre el proyecto de tesis de Darío Tello» trajo OTROS «Tello» (0 de 12
+         citadas). El plan no sabía quién preguntaba. Ahora lleva pistas (nombre, lugar, proyectos y documentos del usuario) y la
+         orden de desambiguar personas, proyectos y lugares. Las pistas solo orientan las búsquedas: no se inventa nada con ellas. */
+      const _pistas = invPistas();
+      const raw = await callGroqResiliente([{ role:'user', content: 'Pregunta a investigar: «' + pregunta + '»\nFecha de hoy: ' + new Date().toISOString().slice(0, 10) + '.\n' + (_pistas ? 'PISTAS DE QUIÉN PREGUNTA (usalas SOLO si la pregunta es sobre él, sus proyectos o su lugar): ' + _pistas + '.\n' : '') + 'Devolvé SOLO un JSON {"busquedas":["…","…"]} con 3 a 4 búsquedas web CORTAS y concretas (en el idioma en que más fuentes buenas haya; podés mezclar español e inglés) que, juntas, cubran la pregunta: datos, definiciones, evidencia y posturas distintas. Si la pregunta es sobre una PERSONA, un PROYECTO o un LUGAR concretos, cada búsqueda lleva el nombre completo entre comillas y algo que lo distinga (lugar, institución o tema), para no traer homónimos. Nada más que el JSON.' }],
         'Sos un planificador de búsquedas. Respondés solo con JSON válido.', 300, 0.2);
       plan = invParsearPlan(raw, pregunta);
+      if (invEsPersonaOProyecto(pregunta) && plan.length > 2) plan = plan.slice(1); // v40-10292: sobre una persona o tu proyecto, la pregunta cruda trae homónimos («otros Tello»): van solo las búsquedas con contexto
     } catch(e){ try { regError('investigar:plan', e); } catch(_){} } // sin plan se busca la pregunta tal cual
     if (miTurno !== turnoVivo) return;
     // 2) búsquedas (una por una: el plan gratis de Tavily se cuida)
@@ -5610,8 +5617,8 @@ async function investigarAFondo(pregunta, textoUsuario){
       if (miTurno !== turnoVivo) return;
     }
     // contexto propio (marcado aparte: no es web)
-    let propio = '';
-    try { if (typeof ragChunks !== 'undefined' && ragChunks.length){ const rc = getRagContext(pregunta, pregunta, true); if (rc) propio += 'DE TUS DOCUMENTOS:\n' + String(rc).slice(0, 1800) + '\n'; } } catch(_){}
+    // v40-1029: también los documentos de SESIÓN (antes solo la biblioteca guardada: con los dos de la tesis subidos en la sesión, el informe no los veía)
+    try { if ((typeof ragChunks !== 'undefined' && ragChunks.length) || (typeof ragDocs !== 'undefined' && ragDocs.some(function(d){ return d && d.type === 'session' && d.content; }))){ const rc = getRagContext(pregunta, pregunta, true); if (rc) propio += 'DE TUS DOCUMENTOS:\n' + String(rc).slice(0, 1800) + '\n'; } } catch(_){}
     try { const mr = (mode === 'mirror') ? getRecuerdosContext(pregunta) : ''; if (mr) propio += 'DE TU MEMORIA:\n' + String(mr).slice(0, 900) + '\n'; } catch(_){}
     if (!fuentes.length){
       removeTyping();
@@ -5641,14 +5648,21 @@ async function investigarAFondo(pregunta, textoUsuario){
   const pie = '\n\n**Fuentes** (las armó la app con lo que de verdad encontró; ' + nUsadas + ' de ' + fuentes.length + ' citadas' + (lc.quitadas ? '; saqué ' + lc.quitadas + ' cita(s) a fuentes que no existían' : '') + '):\n' + lista
     + (fallas.length ? '\n\n⚠️ ' + fallas.length + ' búsqueda(s) no respondieron; el informe sale de las demás.' : '')
     + '\n\nOjo: las fuentes son lo que devolvió el buscador, y yo puedo leerlas mal. Para algo importante, abrí las citadas.';
-  const final = lc.texto + pie;
-  invUltimoInforme = { pregunta: pregunta, md: '# Investigación: ' + pregunta + '\n_' + new Date().toLocaleString('es-AR') + ' · ' + nombreInv() + '_\n\n' + final + '\n' };
+  /* v40-1029 (en vivo 23/10): con «0 de 12 citadas» el informe salía igual, con cara de verificado, y el aviso quedaba
+     escondido al pie. Ahora se dice ARRIBA de todo, y se dice de dónde sale entonces lo que sigue. */
+  const cabeza = nUsadas ? '' : '⚠️ **De frente:** la web no aportó nada citable sobre esto (0 de ' + fuentes.length + ' fuentes citadas' + (lc.quitadas ? ': las citas que escribió el modelo no apuntaban a fuentes reales y las saqué' : ': el informe no se apoyó en ninguna de las que trajo el buscador') + '). '
+    + (propio ? 'Lo que sigue solo puede apoyarse en **tus documentos y tu memoria**, no en internet: verificalo ahí.' : 'Tomá lo que sigue como orientación, no como un informe verificado.') + '\n\n';
+  const final = cabeza + lc.texto + pie;
+  invUltimoInforme = { pregunta: pregunta, tipo: 'inv', texto: final, md: '# Investigación: ' + pregunta + '\n_' + fechaHora24() + ' · ' + nombreInv() + '_\n\n' + final + '\n' };
   ultimaProcedencia = ['🔎 investigación · ' + fuentes.length + ' fuentes'];
   try { const _rc = respaldoChip(); if (_rc) ultimaProcedencia.push(_rc); } catch(_){}
   addMsg('mirror', final, 'web');
   try { const ult = document.querySelector('#chat .msg:last-child .bubble'); if (ult){ const b = document.createElement('button'); b.type = 'button'; b.className = 'proc-chip proc-chip-btn'; b.textContent = '⬇ bajar el informe (.md)'; b.onclick = invBajarInforme; const c = ult.querySelector('.proc-chips') || ult; c.appendChild(b); } } catch(_){}
   try { const corto = /\*\*En corto\*\*\s*:?\s*([\s\S]*?)(?:\n\s*\*\*|$)/i.exec(lc.texto); hablar(corto ? corto[1].replace(/\[\d+\]/g, '') : lc.texto.slice(0, 500).replace(/\[\d+\]/g, '')); } catch(_){}
+  // v40-1029: con 0 citas y documentos cargados, el camino honesto es leerlos enteros: se ofrece con un toque
+  try { if (!nUsadas && typeof ragDocs !== 'undefined' && ragDocs.length){ const ult2 = document.querySelector('#chat .msg:last-child .bubble'); if (ult2){ const b2 = document.createElement('button'); b2.type = 'button'; b2.className = 'proc-chip proc-chip-btn'; b2.textContent = '📄 leer «' + String(docElegir(pregunta).doc.name).slice(0, 40) + '» entero sobre esto'; b2.onclick = function(){ if (busy) return; b2.disabled = true; analizarDocCompleto({ resto: pregunta, texto: pregunta }, '📄 analizá el documento completo: ' + pregunta); }; (ult2.querySelector('.proc-chips') || ult2).appendChild(b2); } } } catch(_){}
   history.push({ role:'user', content:'🔎 ' + pregunta }, { role:'assistant', content: final.slice(0, 6000) });
+  invUltimoInforme.hLen = history.length; // v40-1029: desde acá se cuenta si la repregunta todavía es sobre este informe
   try { await memorySet(history); } catch(_){}
   setButtonsBusy(false);
 }
@@ -5732,15 +5746,88 @@ async function analizarDocCompleto(ped, textoUsuario){
   const cobertura = Math.round(100 * usar.length / Math.max(1, total));
   const pie = '\n\n— Leí «' + el.doc.name + '» ' + (usar.length === total ? 'ENTERO' : 'en sus primeras ' + usar.length + ' de ' + total + ' partes (≈' + cobertura + '%: el resto no entró en esta pasada)') + (fallidas.length ? '; no pude leer la(s) parte(s) ' + fallidas.join(', ') : '') + '. [Pn] = parte del documento.' + ((!el.porNombre && el.docs.length > 1) ? ' Elegí el último que cargaste; si querías otro, nombralo («analizá el documento completo de <nombre>…»).' : '');
   const final = txt + pie;
-  invUltimoInforme = { pregunta: tarea, md: '# Análisis completo: ' + el.doc.name + '\n_' + new Date().toLocaleString('es-AR') + ' · ' + nombreInv() + '_\n\n**Pedido:** ' + tarea + '\n\n' + final + '\n\n---\n## Notas por parte\n' + notas.map(function(n){ return '### P' + n.i + '\n' + n.txt; }).join('\n\n') + '\n' };
+  invUltimoInforme = { pregunta: tarea, tipo: 'doc', texto: final, md: '# Análisis completo: ' + el.doc.name + '\n_' + fechaHora24() + ' · ' + nombreInv() + '_\n\n**Pedido:** ' + tarea + '\n\n' + final + '\n\n---\n## Notas por parte\n' + notas.map(function(n){ return '### P' + n.i + '\n' + n.txt; }).join('\n\n') + '\n' };
   ultimaProcedencia = ['📄 documento completo · ' + usar.length + '/' + total + ' partes'];
   try { const _rc = respaldoChip(); if (_rc) ultimaProcedencia.push(_rc); } catch(_){}
   addMsg('mirror', final, mode === 'tars' ? 'tars' : 'mirror');
   try { const ult = document.querySelector('#chat .msg:last-child .bubble'); if (ult){ const b = document.createElement('button'); b.type = 'button'; b.className = 'proc-chip proc-chip-btn'; b.textContent = '⬇ bajar el análisis (.md)'; b.onclick = invBajarInforme; (ult.querySelector('.proc-chips') || ult).appendChild(b); } } catch(_){}
   try { hablar(txt.slice(0, 600).replace(/\[P\d+\]/g, '')); } catch(_){}
   history.push({ role:'user', content: textoUsuario }, { role:'assistant', content: final.slice(0, 6000) });
+  invUltimoInforme.hLen = history.length; // v40-1029
   try { await memorySet(history); } catch(_){}
   setButtonsBusy(false);
+}
+/* v40-1029 (en vivo 23/10, Darío): la .md del informe decía «04:48:43» a las 16:48. toLocaleString('es-AR') depende del
+   navegador y de la configuración de Windows: en su Edge salió a 12 horas y sin am/pm. Se arma a mano, 24 h siempre. */
+function fechaHora24(d){ d = d || new Date(); const z = function(n){ return String(n).padStart(2, '0'); }; return z(d.getDate()) + '/' + z(d.getMonth() + 1) + '/' + d.getFullYear() + ' ' + z(d.getHours()) + ':' + z(d.getMinutes()) + ':' + z(d.getSeconds()); }
+/* v40-10292 (29/10/2026, auditoría de la 29.1) — EL HALLAZGO EN VIVO ERA «0 de 12 citadas» POR HOMÓNIMOS. La 29.1 le pasa pistas
+   al planificador, pero la pregunta CRUDA («el proyecto de tesis de Darío Tello») seguía yendo primera al buscador y llenaba el
+   cupo de fuentes con otros «Tello». Si la pregunta es sobre una persona o un proyecto concreto y el plan trajo búsquedas con
+   contexto, la cruda no va. Un lugar («paneles solares en Villa Regina») NO cuenta como persona: ahí la cruda sigue yendo. */
+function invEsPersonaOProyecto(p){
+  const s = String(p || '');
+  if (/\b(?:mi|mis|nuestro|nuestra)\s+(?:tesis|proyecto|investigaci[oó]n|trabajo|tp|paper|libro|tesina|emprendimiento)\b/i.test(s)) return true;
+  { const m = /\b(?:tesis|proyecto|trabajo|obra|libro|investigaci[oó]n)\s+(?:de\s+tesis\s+)?de\s+/i.exec(s); if (m){ const c = s.charAt(m.index + m[0].length); if (c && c !== c.toLowerCase()) return true; } }
+  return /(?:\bqui[eé]n\s+(?:es|fue)|\bsobre|\bacerca\s+de)\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]{2,}\s+(?:[A-ZÁÉÍÓÚÑ]\.?\s+)?[A-ZÁÉÍÓÚÑ][a-záéíóúñ]{2,}\b/.test(s);
+}
+function invPistas(){
+  try {
+    const P = (typeof perfilData !== 'undefined' && perfilData) || (typeof CONFIG !== 'undefined' && CONFIG && CONFIG.perfil) || {};
+    const out = [];
+    if (P.nombre) out.push('se llama ' + String(P.nombre).slice(0, 60));
+    if (P.ubicacion) out.push('vive en ' + String(P.ubicacion).slice(0, 60));
+    if (P.rol) out.push('es ' + String(P.rol).slice(0, 80));
+    if (P.proyectos) out.push('sus proyectos: ' + String(P.proyectos).slice(0, 200));
+    const docs = (typeof ragDocs !== 'undefined' ? ragDocs : []).map(function(d){ return d && d.name; }).filter(Boolean).slice(0, 6);
+    if (docs.length) out.push('documentos que cargó: ' + docs.join(', ').slice(0, 300));
+    return out.join('; ');
+  } catch(e){ return ''; }
+}
+/* ══ v40-1029 — LA REPREGUNTA SOBRE EL INFORME (hallazgo en vivo de Darío, 23/10) ══════════════════════════════
+   En MODO ANALÍTICO: «investigá a fondo…» → informe. Después «DECIME LAS CONCLUSIONES» / «TE ESTOY PIDIENDO LAS
+   CONCLUSIONES DE LA INVESTIGACIÓN A FONDO QUE HICISTE» → «No tengo acceso al texto completo…». CAUSA (verificada en el
+   código): el informe viajaba solo como historial, y en el analista ajustarAlCupo suelta el historial ANTES que el
+   material (guardarUltimos = 0): con dos documentos cargados, el RAG llenaba el cupo y el informe se iba primero.
+   AHORA: si la pregunta es sobre el último informe (lo nombra, pide conclusiones/resumen, o es una repregunta corta con
+   «eso/esas/y/pero» justo después), el informe va ADENTRO del material y ADELANTE: el recorte corta del final, así que
+   lo que se pierde primero es la bibliografía, no el informe. Vale 4 idas y vueltas; después se suelta solo. */
+/* verificador 29/10: la primera versión agarraba cualquier «resumen» o «análisis» («hacé un resumen de mis tareas» perdía las
+   tareas). Ahora: conclusiones (con errores de tipeo), «el/tu/ese informe | investigación | análisis», «lo que investigaste»,
+   «esas fuentes», o un «resumilo / ampliá eso / profundizá» pelado. */
+const PIDE_INFORME_RE = /\bconclu(?:[sc]i[oó]n(?:es)?|[sc]iones|iste|[ií]s|[ií]ste)\b|\b(?:el|tu|ese|este|la|tu|esa|esta|del|de\s+la)\s+(?:informe|investigaci[oó]n|an[aá]lisis|investigacion)\b(?!\s+(?:sobre|acerca\s+de)\b)|\blo\s+que\s+(?:hiciste|encontraste|investigaste|le[ií]ste|analizaste)\b|\binvestigaste\b|\b(?:las|esas|tus)\s+fuentes\b|^\s*(?:hac[eé]me\s+un\s+|dame\s+un\s+)?(?:resumen|resum[ií](?:me)?(?:lo|la)?|s[ií]ntesis)\s*[.!?¿]*\s*$|^\s*(?:ampli[aá]|profundiz[aá]|desarroll[aá])(?:me)?(?:lo|la)?(?:\s+(?:eso|esto|m[aá]s|un\s+poco)\b[^\n]{0,40})?\s*[.!?]*\s*$/i; // v40-10292: «contame de la investigación SOBRE el cáncer» habla de otra cosa: no arrastra el informe
+function informeVigente(text){
+  try {
+    if (!invUltimoInforme || !invUltimoInforme.texto || !invUltimoInforme.hLen) return '';
+    // se cuenta desde la última vez que se usó («usado» se anota antes de que entre ese ida y vuelta: +2)
+    let dist = history.length - Math.max(invUltimoInforme.hLen, invUltimoInforme.usado ? invUltimoInforme.usado + 2 : 0);
+    if (dist < 0 && dist >= -2) dist = 0; // ese turno falló y no guardó la respuesta
+    if (dist < 0 || dist > 8) return '';
+    const t = String(text || '');
+    const corta = t.split(/\s+/).filter(Boolean).length <= 14 && (/^\s*(?:y|pero|entonces|o\s+sea|che)\b/i.test(t) || /\b(?:eso|esto|esa|ese|esas|esos|aquello)\b/i.test(t));
+    if (!PIDE_INFORME_RE.test(t) && !(corta && dist === 0)) return ''; // verificador: «¿y eso?» solo JUSTO después del informe (o de usarlo)
+    return '=== TU ÚLTIMO ' + (invUltimoInforme.tipo === 'doc' ? 'ANÁLISIS DE DOCUMENTO' : 'INFORME DE INVESTIGACIÓN') + ' (lo escribiste VOS en esta charla; el usuario te pregunta por esto: contestá desde acá y NO digas que no lo tenés) ===\n'
+      + 'Pedido: ' + String(invUltimoInforme.pregunta || '').slice(0, 300) + '\n' + cortarLimpio(String(invUltimoInforme.texto), (typeof mode !== 'undefined' && mode === 'mirror') ? 3200 : 7000) + '\n=== FIN DEL INFORME ===\n\n'; // verificador: en el espejo el cupo libre es chico (~1.800 tokens)
+  } catch(e){ return ''; }
+}
+/* v40-1029: si piden conclusiones o un resumen y hay documentos cargados, la respuesta de siempre lee solo los pedazos que
+   se parecen a la pregunta. Se ofrece, con un toque, leer el documento ENTERO (📄). No se corre solo: son varios pedidos. */
+function ofrecerDocCompleto(text){
+  try {
+    if (typeof ragDocs === 'undefined' || !ragDocs.length) return false;
+    const t = String(text || '');
+    if (/\b(?:tareas?|pendientes?|agenda|recordatorios?|charla|conversaci[oó]n|memoria|recuerdos?|contactos?)\b/i.test(t)) return false; // verificador: «hacé un resumen de mis tareas» no es un documento
+    const _conclu = /\bconclu(?:[sc]i[oó]n(?:es)?|[sc]iones)\b/i.test(t);
+    const _pideDoc = /\b(?:resum[ií]\w*|resumen|s[ií]ntesis|de\s+qu[eé]\s+(?:trata|va)|qu[eé]\s+dice|ideas?\s+principales|tesis\s+central)/i.test(t) && /\b(?:documento|pdf|archivo|texto|tesis|paper|libro|apunte|proyecto|trabajo|cap[ií]tulo|informe)\b/i.test(t);
+    if (!_conclu && !_pideDoc) return false;
+    if (pedidoDocCompleto(t)) return false;
+    const ult = document.querySelector('#chat .msg:last-child .bubble'); if (!ult) return false;
+    const el = docElegir(t); if (!el.doc) return false;
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'proc-chip proc-chip-btn';
+    b.textContent = '📄 leer «' + String(el.doc.name).slice(0, 40) + '» entero y contestarte esto';
+    b.onclick = function(){ if (busy) return; b.disabled = true; analizarDocCompleto({ resto: t, texto: t }, '📄 ' + t); };
+    (ult.querySelector('.proc-chips') || ult).appendChild(b);
+    return true;
+  } catch(e){ return false; }
 }
 function nombreInv(){ return ((typeof CONFIG !== 'undefined' && CONFIG && CONFIG.appName) || 'MIRROR') + ' · ' + ((typeof PLATFORM_VERSION !== 'undefined' && PLATFORM_VERSION) || 'v40') + ((typeof APP_BUILD !== 'undefined') ? ' · build ' + APP_BUILD : ''); }
 
@@ -6463,6 +6550,7 @@ async function clearMem() {
   }
   const _r = await memoryClear();
   history = [];
+  try { invUltimoInforme = null; } catch(e){} // v40-1029 (verificador): charla borrada = informe olvidado
   document.getElementById('chat').innerHTML = '';
   /* v40-borrar (16/10, auditor 4 — GRAVE): decía «Memoria borrada. Empezamos de cero.» pero solo se borraba la charla
      (memory.json): los recuerdos seguían viajando al modelo. Ahora dice exactamente qué borró y qué no. */
@@ -7704,10 +7792,50 @@ function tituloSinFecha(titulo, fechaISO){
   } catch(e){ return orig; }
 }
 function _tareaNorm(s){ return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,' ').trim(); }
+/* v40-1029 (en vivo 23/10): en 📋 estaban «Pagar la luz · 15/12» y «pagar la luz el 15 de diciembr». La segunda era de
+   ANTES del arreglo del 2/10 (v40-audit9: «diciembr» no se entendía y la fecha quedaba pegada al título, sin fecha). Las
+   tareas viven en el dispositivo, así que la vieja seguía ahí. Ahora, al mirar o guardar tareas: (1) una tarea vieja SIN
+   fecha cuyo título trae una fecha escrita con todas las letras («el 15 de diciembr») pasa a tener su fecha y el título
+   limpio — solo «N de mes»: un «mañana» de hace un mes no es mañana; (2) dos pendientes con el mismo título y la misma
+   fecha quedan en uno (el más viejo). Nada sale del dispositivo. */
+function tareasSanear(){
+  /* verificador 29/10 (GRAVE en la primera versión): reescribía tareas legítimas («la reunión del 3 de octubre» → «la reunión
+     d»; una vencida saltaba al año que viene). Ahora es quirúrgico: SOLO una tarea sin fecha cuyo título TERMINA en «el N de
+     <mes>» (con el mes entero o cortado: «diciembr»), con el año de CUANDO SE ANOTÓ; y solo se une con una que ya exista
+     igual. Todo lo demás no se toca. */
+  try {
+    const a=tareasCargar(); if(!a.length) return false;
+    const MES={ene:0,feb:1,mar:2,abr:3,may:4,jun:5,jul:6,ago:7,sep:8,set:8,oct:9,nov:10,dic:11};
+    const RE=/^(.{3,}?)[\s,]+(?:para\s+)?el\s+(\d{1,2})\s+de\s+((ene|feb|mar|abr|may|jun|jul|ago|sep|set|oct|nov|dic)[a-z]*)\s*[.!]*\s*$/i;
+    const FULL={ene:'enero',feb:'febrero',mar:'marzo',abr:'abril',may:'mayo',jun:'junio',jul:'julio',ago:'agosto',sep:'septiembre',set:'setiembre',oct:'octubre',nov:'noviembre',dic:'diciembre'};
+    let cambio=false; const saneadas=[];
+    a.forEach(function(x){
+      if(!x || x.hecha || x.fecha) return;
+      const m=RE.exec(String(x.titulo||'')); if(!m) return;
+      const k=m[4].toLowerCase(), w=m[3].toLowerCase(); if(FULL[k].indexOf(w)!==0) return;   // «marcos» no es marzo
+      const base=x.ts?new Date(x.ts):new Date(); const dd=+m[2], mo=MES[k];
+      let d=new Date(base.getFullYear(),mo,dd); if(d.getMonth()!==mo) return;
+      const ref=new Date(base.getFullYear(),base.getMonth(),base.getDate());
+      if(d<ref){ d=new Date(base.getFullYear()+1,mo,dd); if(d.getMonth()!==mo) return; }   // anotada en noviembre «para el 15 de enero» → el enero siguiente
+      x.fecha=_tareaISO(d); x.titulo=m[1].trim(); cambio=true; saneadas.push(x);
+    });
+    let b=a;
+    if(saneadas.length){
+      b=a.filter(function(x){ if(saneadas.indexOf(x)<0) return true;
+        const igual=a.find(function(y){ return y!==x && !y.hecha && saneadas.indexOf(y)<0 && _tareaNorm(y.titulo)===_tareaNorm(x.titulo) && (y.fecha||'')===x.fecha; });
+        return !igual; });
+    }
+    if(cambio) tareasGuardarTodas(b);
+    return cambio;
+  } catch(e){ return false; }
+}
 function tareaGuardar(titulo, fechaISO){
   titulo=String(titulo||'').replace(/\s+/g,' ').trim().slice(0,120); if(!titulo) return false;
+  try{ tareasSanear(); }catch(e){}
   const a=tareasCargar();
   if(a.some(x=>!x.hecha && _tareaNorm(x.titulo)===_tareaNorm(titulo) && (x.fecha||'')===(fechaISO||''))) return false;
+  // v40-1029: la misma tarea que estaba SIN fecha, ahora con fecha → se completa la que estaba, no se duplica
+  if(fechaISO){ const sinF=a.find(x=>!x.hecha && !x.fecha && _tareaNorm(x.titulo)===_tareaNorm(titulo)); if(sinF){ sinF.fecha=fechaISO; return tareasGuardarTodas(a); } }
   a.push({id:'t_'+Date.now()+'_'+Math.random().toString(36).slice(2,6), titulo:titulo, fecha:fechaISO||'', ts:Date.now(), hecha:false});
   return tareasGuardarTodas(a);
 }
@@ -7728,6 +7856,7 @@ function getTareasContext(text){
 }
 function renderTareas(){
   const cont=document.getElementById('tareas-lista'); if(!cont) return;
+  try{ tareasSanear(); }catch(e){} // v40-1029
   const a=tareasActivas();
   if(!a.length){ cont.innerHTML='<div style="opacity:0.6;font-size:12px;padding:8px 2px;">No hay tareas guardadas. Cuando me pidas «agendá …» o «recordame …», la anoto acá.</div>'; return; }
   cont.innerHTML=a.map(function(x){
@@ -8252,6 +8381,7 @@ function actuaProcesarReply(reply){
   if (typeof CONFIG!=='undefined' && CONFIG.cap && CONFIG.cap.actua===false) return reply; // toggle OFF → sin tarjetas del modelo
   const m=reply.match(/\[ACCION:(\{[\s\S]{2,6000}?\})\]/); // tope ampliado en Etapa 12 (encuestas) y otra vez en Etapa 13 (v36-redactor): un borrador de mail formal no entra en 1500 — JSON.parse + truncados siguen custodiando
   if (!m) return reply;
+  let _shareDescartado = false; // v40-1029
   const limpio=reply.replace(m[0],'').trim();
   try {
     const a=JSON.parse(m[1]);
@@ -8295,10 +8425,12 @@ function actuaProcesarReply(reply){
     // v38-share (C1): «mandá esto a quien sea / por donde sea» — sin destinatario fijo.
     // No hay URL ni lista blanca acá: el texto no sale a ningún lado hasta que el usuario
     // elige la app en el selector del sistema. Mismo tope de 6000 que el resto de las marcas.
-    else if (a.tipo==='share' && a.texto && String(a.texto).trim()){ sharePend=['📤',String(a.titulo||'Mandarlo a donde quieras').slice(0,80),'',String(a.texto).slice(0,6000)]; }
+    /* v40-1029 (en vivo 23/10): a «QUE SABES HACER?» el modelo le colgó una tarjeta «Funciones de MANIFIESTOS · elegir a
+       dónde va». Nadie pidió compartir nada. Igual que la de agendar (v39-agenda2): solo si el pedido lo dice. */
+    else if (a.tipo==='share' && a.texto && String(a.texto).trim()){ if (/\b(?:compart|m[aá]nd[aá]|p[aá]s[aá]|env[ií][aá]|reenv[ií]|difund|poste[aá]|sub[ií](?:lo|la)|public[aá]|whats|wasap|mail|correo|telegram|linkedin|instagram|facebook|tuit)/i.test(typeof ultimoPedidoUsuario === 'string' ? ultimoPedidoUsuario : '')) sharePend=['📤',String(a.titulo||'Mandarlo a donde quieras').slice(0,80),'',String(a.texto).slice(0,6000)]; else { _shareDescartado = String(a.texto).slice(0,6000); try{ regError('actua2:share_no_pedido', new Error(String(a.titulo||'').slice(0,60))) }catch(e){} } }
     else { try{ regError('actua2:accion_invalida', new Error(m[1].slice(0,80))) }catch(e){} }
   } catch(e){ try{ regError('actua2:json',e) }catch(_){} }
-  return limpio||'Te dejé la tarjeta abajo — el toque final es tuyo.';
+  return limpio||(_shareDescartado?_shareDescartado:'Te dejé la tarjeta abajo — el toque final es tuyo.'); // v40-1029 (verificador): sin tarjeta, el texto igual se ve
 }
 function actuaPintarTarjeta(){ if(actuaPend){ try{ actuaTarjeta.apply(null,actuaPend) }catch(e){ try{ regError('actua2:pintar',e) }catch(_){} } actuaPend=null; } if(redactorPend){ try{ redactorTarjeta.apply(null,redactorPend) }catch(e){ try{ regError('redactor:pintar',e) }catch(_){} } redactorPend=null; } if(sharePend){ try{ compartirTarjeta.apply(null,sharePend) }catch(e){ try{ regError('share:pintar',e) }catch(_){} } sharePend=null; } } // v36-redactor · v38-share (C1)
 
@@ -8718,10 +8850,10 @@ function agenteEjecutar(call, tarjetas, pasos, textoUsuario){
     }
     if (nombre === 'agendar'){
       if (!AGENTE_PIDE_AGENDA.test(String(textoUsuario || ''))) return { ok:false, motivo:'El usuario no pidió agendar, anotar ni recordar nada.' };
-      const _tituloCrudo = _agenteTxt(a.titulo, 80);
+      const _tituloCrudo = _agenteTxt(a.titulo, 200); // v40-10292: se corta DESPUÉS de sacar la fecha y en borde de palabra (antes «…quinto año an»)
       if (!_tituloCrudo) return { ok:false, motivo:'Falta qué anotar.' };
       const fecha = _tareaFecha(a.cuando) || _tareaFecha(textoUsuario) || _tareaFecha(_tituloCrudo);
-      const titulo = tituloSinFecha(_tituloCrudo, fecha);   // v40-agendar: la fecha va al calendario, no al título
+      const titulo = cortarLimpio(tituloSinFecha(_tituloCrudo, fecha), 80).replace(/(?:\s+(?:de|del|el|la|los|las|y|o|a|al|en|con|para|por|que))+\s*$/i, ''); // verificador: sin conector colgando al final   // v40-agendar: la fecha va al calendario, no al título · v40-10292: sin cortar palabras
       /* v40-audit4 (25/09/2026) — FOTO DE UNA FACTURA VIEJA (auditoría de Darío): leyó bien el vencimiento
          08/07/2021 y lo agendó «para el 08/07», sin año y sin avisar que ya pasó. Una fecha pasada se anota
          igual (el usuario la pidió), pero se dice DE FRENTE en la tarjeta, en el rastro y al modelo. */
@@ -9251,8 +9383,8 @@ async function fotoResolver(text){
      · la solapa «🔄 actualizar» del pie muestra la versión, lo nuevo y «buscar ahora».
    Actualizar = recargar con lo nuevo. La configuración, la memoria, los contactos y las tareas
    NO se tocan: no viven en el código. Nunca recarga sola ni a mitad de una respuesta. */
-const APP_BUILD = '2026-10-23.2';
-const APP_NOVEDADES = ["✦ Generación v40: tu MIRROR actúa en varios pasos, entiende por significado, te acompaña por voz y se actualiza solo.", "🔎 Investigación a fondo: escribí «investigá a fondo …» (o tocá «+» → 🔎). Arma un plan, busca en varias fuentes, cruza con tus documentos y te escribe una síntesis con citas que podés verificar, y la lista de fuentes la pone la app (no se puede inventar). Gratis, con tu proxy.", "📄 Documentos largos, leídos enteros: «analizá el documento completo y decime…» lo recorre por partes (no solo los pedazos que se parecen a tu pregunta), te contesta citando la parte [P3] de cada cosa y te deja bajar el análisis.", "🕶 Tu memoria, más en tus manos: el chip «◈ memoria» te muestra qué recuerdos usé en cada respuesta y podés olvidarlos ahí mismo; con ✎ corregís un recuerdo; y la «🕶 charla temporal» no guarda nada ni usa tus recuerdos. Y si el motor de IA se cuelga, paso solo al de respaldo y te digo por qué.", "🛡 Revisión a fondo de octubre: tu MIRROR cambia de modo cuando le decís su nombre («pasá al modo analítico»); la hora y la versión salen exactas aunque lo escribas rápido o con errores; si no hay internet o el motor de IA se cae, te lo dice tal cual en vez de mandarte a revisar tu configuración; «borrar memoria» te dice exactamente qué borró; en el celular todo el pie se puede tocar y la bandeja «+» se cierra al mandar, con Esc o tocando afuera; y cuando dice «guardado», es porque de verdad se guardó.", "🎧 La charla por voz ya no te corta a la mitad: te deja hacer pausas y contesta cuando terminás de hablar. Y tu MIRROR contesta con datos fijos, sin inventar, quién es, qué versión es, qué hora es, dónde está lo tuyo, qué es el chip «↺ respaldo» y cómo se usan el modo fácil, la charla por voz y la memoria que entiende; ya no niega lo que sí tiene. Y lo hace directo: «buscá en internet…», «dibujame…», «activá el modo fácil» o «buscá a Juan en mis contactos». Y si la búsqueda 🌐 falla, te dice por qué.", "🔧 Pulido de octubre: el motor principal espera unos segundos antes de pasarle la posta al respaldo; cuando contesta el respaldo lo ves con el chip «↺ respaldo» y se cuida más de no inventar; tu MIRROR ya contesta bien «¿qué sabés hacer?», «¿tenés límites?» y «¿dónde guardás lo mío?»; y al agendar, la fecha va al calendario y no se repite en el título (se entiende aunque escribas «15 de dic» o te comas una letra). Lo que es un dato de la app (dónde está lo tuyo, cuál es el motor de respaldo, otras versiones) lo contesta la app misma, sin inventos, aunque lo preguntes todo junto. La letra ya no salta de chica a grande mientras contesta, y la memoria que entiende aprende cuando no la estás usando.", "🔧 Arreglos de la auditoría: tu MIRROR ya sabe qué trae su versión y que se actualiza (antes lo inventaba, y hasta se lo acordaba mal: ahora la verdad le gana a la memoria); ninguna ventana queda sin salida (✕, Esc o tocando afuera); si una voz no suena, sigue con otra de tu compu y te avisa; «¿cómo estás? ¿cuál es tu modelo?» contesta las dos cosas; y si agendás una fecha que ya pasó, te lo advierte.", "🧭 Tu MIRROR ahora actúa en varios pasos: «avisale a Juan que no llego y anotame reprogramar» — busca, prepara y te deja las tarjetas; el último toque es tuyo.", "🧠 Memoria que entiende (opcional): encuentra por significado, no solo por palabras. Corre en tu dispositivo.", "🎧 Charla por voz manos libres y Aa modo fácil, para usarla sin teclado.", "📷 Foto y resuelvo: foto de una factura o un turno + «agendame el vencimiento».", "🔄 Esta solapa: te avisa cuando hay una versión nueva."];
+const APP_BUILD = '2026-10-29.2';
+const APP_NOVEDADES = ["✦ Generación v40: tu MIRROR actúa en varios pasos, entiende por significado, te acompaña por voz y se actualiza solo.", "🧭 Seguís la charla sobre tu investigación: después de un 🔎 o un 📄, «decime las conclusiones» contesta desde ESA investigación o ese análisis (antes los perdía; vale mientras no recargues la página). Si la web no aportó nada, te lo digo arriba de todo, y si tenés documentos cargados te ofrezco leer el documento entero. Y te hablo con los nombres de TUS modos, no con los de fábrica. En una investigación sobre una persona o tu proyecto, ya no se busca la pregunta suelta (traía homónimos): van las búsquedas con contexto.", "🔎 Investigación a fondo: escribí «investigá a fondo …» (o tocá «+» → 🔎). Arma un plan, busca en varias fuentes, cruza con tus documentos y te escribe una síntesis con citas que podés verificar, y la lista de fuentes la pone la app (no se puede inventar). Gratis, con tu proxy.", "📄 Documentos largos, leídos enteros: «analizá el documento completo y decime…» lo recorre por partes (no solo los pedazos que se parecen a tu pregunta), te contesta citando la parte [P3] de cada cosa y te deja bajar el análisis.", "🕶 Tu memoria, más en tus manos: el chip «◈ memoria» te muestra qué recuerdos usé en cada respuesta y podés olvidarlos ahí mismo; con ✎ corregís un recuerdo; y la «🕶 charla temporal» no guarda nada ni usa tus recuerdos. Y si el motor de IA se cuelga, paso solo al de respaldo y te digo por qué.", "🛡 Revisión a fondo de octubre: tu MIRROR cambia de modo cuando le decís su nombre («pasá al modo analítico»); la hora y la versión salen exactas aunque lo escribas rápido o con errores; si no hay internet o el motor de IA se cae, te lo dice tal cual en vez de mandarte a revisar tu configuración; «borrar memoria» te dice exactamente qué borró; en el celular todo el pie se puede tocar y la bandeja «+» se cierra al mandar, con Esc o tocando afuera; y cuando dice «guardado», es porque de verdad se guardó.", "🎧 La charla por voz ya no te corta a la mitad: te deja hacer pausas y contesta cuando terminás de hablar. Y tu MIRROR contesta con datos fijos, sin inventar, quién es, qué versión es, qué hora es, dónde está lo tuyo, qué es el chip «↺ respaldo» y cómo se usan el modo fácil, la charla por voz y la memoria que entiende; ya no niega lo que sí tiene. Y lo hace directo: «buscá en internet…», «dibujame…», «activá el modo fácil» o «buscá a Juan en mis contactos». Y si la búsqueda 🌐 falla, te dice por qué.", "🔧 Pulido de octubre: el motor principal espera unos segundos antes de pasarle la posta al respaldo; cuando contesta el respaldo lo ves con el chip «↺ respaldo» y se cuida más de no inventar; tu MIRROR ya contesta bien «¿qué sabés hacer?», «¿tenés límites?» y «¿dónde guardás lo mío?»; y al agendar, la fecha va al calendario y no se repite en el título (se entiende aunque escribas «15 de dic» o te comas una letra). Lo que es un dato de la app (dónde está lo tuyo, cuál es el motor de respaldo, otras versiones) lo contesta la app misma, sin inventos, aunque lo preguntes todo junto. La letra ya no salta de chica a grande mientras contesta, y la memoria que entiende aprende cuando no la estás usando.", "🔧 Arreglos de la auditoría: tu MIRROR ya sabe qué trae su versión y que se actualiza (antes lo inventaba, y hasta se lo acordaba mal: ahora la verdad le gana a la memoria); ninguna ventana queda sin salida (✕, Esc o tocando afuera); si una voz no suena, sigue con otra de tu compu y te avisa; «¿cómo estás? ¿cuál es tu modelo?» contesta las dos cosas; y si agendás una fecha que ya pasó, te lo advierte.", "🧭 Tu MIRROR ahora actúa en varios pasos: «avisale a Juan que no llego y anotame reprogramar» — busca, prepara y te deja las tarjetas; el último toque es tuyo.", "🧠 Memoria que entiende (opcional): encuentra por significado, no solo por palabras. Corre en tu dispositivo.", "🎧 Charla por voz manos libres y Aa modo fácil, para usarla sin teclado.", "📷 Foto y resuelvo: foto de una factura o un turno + «agendame el vencimiento».", "🔄 Esta solapa: te avisa cuando hay una versión nueva."];
 const ACT_CADA_MS = 6 * 60 * 60 * 1000;
 let _actUltimo = null;
 function _actCompara(a, b){ a = String(a || ''); b = String(b || ''); return a === b ? 0 : (a > b ? 1 : -1); }   // «AAAA-MM-DD.n» ordena como texto
@@ -9399,6 +9531,43 @@ function _arqNombresModos(){
     return 'NOMBRES EN ESTA INSTALACIÓN (usá SIEMPRE estos, no los internos): el espejo se llama «' + (M.mirror||'MIRROR') + '», el analista «' + (M.tars||'TARS') + '», el examinador «' + (M.jurado||'EXAMINADOR') + '» y las conexiones «' + (M.conn||'CONEX') + '»' + ((CONFIG.appName) ? '; la entidad se llama «' + CONFIG.appName + '»' : '') + '.';
   } catch(e){ return ''; }
 }
+/* ══ v40-1029 — LOS NOMBRES DE FÁBRICA NO SE FILTRAN (hallazgo en vivo de Darío, 23/10) ══════════════════════════
+   «QUE SABES HACER?» → «módulos internos: TARS, EXAMINADOR, CONEX». CAUSA (verificada): el system prompt sí se
+   personaliza (personalizarPrompt), pero la ARQUITECTURA que viaja como material iba con los nombres de fábrica
+   («MIRROR · TARS · ⚖ EXAMINADOR · CONEX», «TARS: analista…», «CONEX: panel…»). Dos capas, porque por prompt no alcanza
+   (lección v39-modelsano): (1) la arquitectura sale con los nombres de la instalación; (2) la respuesta, antes de
+   mostrarse, cambia los nombres de fábrica por los tuyos. NO se toca si el usuario los nombró él (es su pregunta), ni
+   si su nombre ya es el de fábrica, ni sin modos configurados. Los nombres propios se protegen antes de reemplazar
+   (con «EXPERTO/EXAMINADOR», el EXAMINADOR suelto pasa a «EXPERTO/EXAMINADOR» sin duplicarse). */
+function personalizarNombres(txt, pregunta, conMirror){
+  try {
+    if (typeof txt !== 'string' || !txt) return txt;
+    const C = (typeof CONFIG !== 'undefined' && CONFIG && CONFIG.modos) || null; if (!C) return txt;
+    const M = NMODOS(); const q = String(pregunta || '');
+    // verificador 29/10: «JURADO» queda afuera (es palabra común: «el jurado de la tesis»), y MIRROR también (el constructor
+    // sigue diciendo «Tu MIRROR actúa»: renombrarlo en la arquitectura apuntaba a un interruptor que no existe con ese nombre)
+    const pares = [['TARS', M.tars], ['CONEX', M.conn], ['EXAMINADOR', M.jurado]];
+    if (conMirror) pares.push(['MIRROR', M.mirror]);
+    // las direcciones web y el código no se tocan («https://github.com/nasa/TARS», «const TARS = 1»)
+    const prot = []; let out = txt.replace(/```[\s\S]*?```|`[^`\n]*`|https?:\/\/[^\s)»"']+/g, function(m){ prot.push(m); return '\u0003' + (prot.length - 1) + '\u0003'; });
+    pares.forEach(function(p, i){
+      const fab = p[0], suyo = String(p[1] || '').trim();
+      if (!suyo || suyo === fab) return;
+      if (new RegExp('\\b' + fab + '\\b', 'i').test(q)) return;   // lo nombró el usuario: no es fuga
+      const tok = '\u0002' + i + '\u0002';
+      out = out.split(suyo).join(tok).replace(new RegExp('\\b' + fab + '\\b', 'g'), function(){ return suyo; }).split(tok).join(suyo); // función: un «$&» en el nombre no se interpreta
+    });
+    return out.replace(/\u0003(\d+)\u0003/g, function(_, k){ return prot[+k]; });
+  } catch(e){ return txt; }
+}
+function nombresDeFabricaEnSalida(reply, pregunta){
+  try {
+    let r = personalizarNombres(reply, pregunta, false);
+    // «módulos internos» no existe para el usuario: son sus modos
+    if (typeof r === 'string') r = r.replace(/\bm[oó]dulos\s+internos\b/gi, function(m){ return /^M/.test(m) ? 'Modos' : 'modos'; });
+    return r;
+  } catch(e){ return reply; }
+}
 function arquitecturaRelevante(pregunta){
   try {
     const P = _arqPartir();
@@ -9425,10 +9594,11 @@ function arquitecturaRelevante(pregunta){
     elegidos.sort(function(a,b){ return a-b; });
     const indice = P.items.map(function(it){ return _arqTitulo(it); }).join(' · ');
     const nombres = _arqNombresModos();
-    return P.cab.join('\n') + '\n' + (nombres ? nombres + '\n' : '')
+    const _arqOut = P.cab.join('\n') + '\n' + (nombres ? nombres + '\n' : '')
       + 'TODO LO QUE LA APP TIENE (índice — si preguntan por algo de acá que no está en el detalle, decí que existe y ofrecé contar más): ' + indice + '\n'
       + 'DETALLE DE LO RELEVANTE PARA ESTA PREGUNTA:\n' + elegidos.map(function(i){ return P.items[i]; }).join('\n') + '\n'
       + (P.pie.join('\n') || 'Si te preguntan algo de la app que NO figura acá, decí honestamente que no lo sabés con certeza.');
+    return (typeof personalizarNombres === 'function') ? personalizarNombres(_arqOut, pregunta, false) : _arqOut; // v40-1029: con los nombres de la instalación
   } catch(e){ try{ regError('arq:relevante', e); }catch(_){} return ARQUITECTURA_MIRROR; }
 }
 
@@ -9447,6 +9617,18 @@ function arquitecturaRelevante(pregunta){
    no entró la fuente de verdad y el modelo inventó una «v5.0». Ahora «v5.0», «v4.5», «v 39» también disparan. */
 const PREGUNTA_POR_VERSION = /(versi[oó]n|\bv\s?\d{2}\b|\bv\s?\d[.,]\d\b|novedad|\bqu[eé]\s+(hay|trae|tiene)\s+de\s+(nuev|buen)|\bqu[eé]\s+cambi[oó]\s*(?:[?¿!.]*\s*$|(?:en|con)\s+(?:la\s+app|vos|esta\s+versi[oó]n|la\s+actualizaci[oó]n))|\b(?:te|se)\s+actualiz|\bactualizarte\b|\bactualizaci[oó]n(?:es)?\s+(?:de\s+(?:la\s+app|vos)|nueva|tuya)|\bhay\s+(?:alguna\s+|una\s+)?actualizaci|\bbuild\b|lo\s+nuevo)/i;  // v40-audit11: acotada («¿qué cambió en la ley?», «actualizá la tarea» ya no traen el bloque de versión)
 let _versionTurnos = 0;
+/* v40-1029 (en vivo 23/10 + auditores): después de preguntar la versión, el bloque de VERSIÓN viajaba 2–3 turnos más
+   aunque la charla cambiara de tema, y el corrector de novedades se metía donde no correspondía: a «QUE SABES HACER?»
+   le sacó «crear encuestas» (¡que sí sabe hacer!) y puso «✎ Nota de la app: saqué las encuestas de lo nuevo…». Ahora
+   sigue vigente SOLO en una repregunta corta («¿y esas ventajas?», «¿pero qué cambió?»); una pregunta por lo que la
+   app sabe hacer NO es una pregunta por lo nuevo. */
+const PREGUNTA_CAPACIDADES = /\b(?:qu[eé]\s+(?:sab[eé]s|pod[eé]s|sabes|podes)(?:\s+hacer)?|para\s+qu[eé]\s+serv[ií]s|qu[eé]\s+funciones|qu[eé]\s+hac[eé]s|en\s+qu[eé]\s+me\s+(?:pod[eé]s\s+)?ayud)/i;
+function versionSigueVigente(t){
+  t = String(t || '');
+  if (PREGUNTA_CAPACIDADES.test(t)) return false;
+  if (t.split(/\s+/).filter(Boolean).length > 14) return false;
+  return /^\s*(?:y|pero|entonces|o\s+sea|che)\b/i.test(t) || /\b(?:eso|esto|esa|ese|esas|esos|aquello|ventajas?|mejor|cambi\w*|nuev\w*|diferencias?)\b/i.test(t);
+}
 let _appTurnos = 0;   // v40-audit11: repreguntas sobre la app que ya no la nombran
 function bloqueVersion(){
   try {
@@ -9649,7 +9831,8 @@ async function send() {
   if (ragContext && nivelDatos === 'normal') nivelDatos = 'resumen';
   const tesisContext = ((mode === 'tars' || mode === 'jurado') && tesisConnected) ? getTesisContext(nivelDatos) : '';
   // v35-mem: memoria personal por relevancia (BM25 sobre recuerdos). SOLO modo espejo; en TARS/jurado queda vacía.
-  let _preguntaVersion = false; try { _preguntaVersion = PREGUNTA_POR_VERSION.test(text) || _versionTurnos > 0; } catch(e){} // v40-audit7
+  let _preguntaVersion = false; try { _preguntaVersion = PREGUNTA_POR_VERSION.test(text) || _versionTurnos > 0; } catch(e){} // v40-audit7 (los filtros de memoria/historial envenenados siguen los turnos pegajosos)
+  let _versionDirecta = false; try { _versionDirecta = PREGUNTA_POR_VERSION.test(text) || (_versionTurnos > 0 && versionSigueVigente(text)); } catch(e){} // v40-1029: el bloque largo y el corrector, solo si de verdad se habla de la versión
   const memoriaRelevante = (mode === 'mirror') ? getRecuerdosContext(text, { sinVersion: _preguntaVersion }) : '';
   const suenoRelevante = (mode === 'mirror' && !charlaTemporal) ? getSuenoContext(text) : ''; // v39-sonar · v40-temporal: sólo si el dueño pregunta por el sueño
   const tareasRelevante = (mode === 'mirror') ? getTareasContext(text) : ''; // v39-tareas
@@ -9680,7 +9863,8 @@ async function send() {
      caía en el aviso «conectá CONEX» porque la regex sólo tenía el singular — el modelo no veía sus
      propios documentos. No se toca la protección de la base: un pedido de registros/encuestas SIN
      mencionar documentos sigue desviando bien (eso lo amarra TEST_router_docs.js). */
-  if (mode === 'tars' && !tesisConnected && preguntaPorDatos && !evalInstrumento && !haySesion) {
+  const _informeCtx = informeVigente(text); // v40-1029: la repregunta sobre el último informe
+  if (mode === 'tars' && !tesisConnected && preguntaPorDatos && !evalInstrumento && !haySesion) { // verificador: el aviso de la base no se saltea por un informe
     avisoSinBase = 'IMPORTANTE: la base de datos externa NO está conectada en este momento. El usuario pregunta por datos/registros pero NO tenés acceso a ellos. NO uses la bibliografía como si fuera la base de datos. Respondé EXACTAMENTE: "La base de datos no está conectada todavía. Conectala con el botón CONEX (arriba a la derecha) y vuelvo a tener acceso a los registros para analizarlos." No inventes datos ni cites PDFs como si fueran los datos.\n\n';
   }
 
@@ -9742,7 +9926,7 @@ async function send() {
     let _bloqueVer = '';
     try {
       if (PREGUNTA_POR_VERSION.test(text) && !_esDeseo) _versionTurnos = 3;
-      if (_versionTurnos > 0){ if (!_hechosVersion && !_esDeseo) _bloqueVer = bloqueVersion(); _versionTurnos--; }
+      if (_versionTurnos > 0){ if (!_hechosVersion && !_esDeseo && _versionDirecta) _bloqueVer = bloqueVersion(); _versionTurnos--; } // v40-1029: «¿cómo se llama mi perra?» ya no carga la lista de novedades
     } catch(e){} // v40-audit6: la versión real, no inventada · v40-cupo2: si ya la contestó la app, no viaja en largo
     /* v40-audit11 (3/10, en vivo): «¿qué mejoras te gustaría?» → pidió lo que ya tiene; la repregunta «¿pero eso no lo tenés
        incorporado?» ya no nombraba nada de la app y contestó «no» (falso). La arquitectura acompaña 2 turnos más. */
@@ -9761,6 +9945,7 @@ async function send() {
     if (memoriaRelevante) partes += memoriaRelevante + '\n\n';
     if (suenoRelevante) partes += suenoRelevante + '\n\n'; // v39-sonar: el cruce local va como contexto honesto
     if (tareasRelevante) partes += tareasRelevante + '\n\n'; // v39-tareas
+    if (_informeCtx){ partes += _informeCtx; ultimaProcedencia.push('🔎 tu informe'); try { invUltimoInforme.usado = history.length; } catch(e){} } // v40-1029: después de lo personal y ADELANTE del material (el recorte corta del final)
     // v37-web (C1a): la web va DESPUÉS de la memoria a propósito — ante un dato
     // concreto, la fuente reciente pesa más que el recuerdo.
     if (webRetenido) partes += webRetenido + '\n\n';
@@ -9806,6 +9991,7 @@ async function send() {
   // v39-cupo: perillas y presupuesto de salida se calculan ACÁ (ajustarAlCupo los necesita para
   // medir). En reposo/no-cebolla dan los mismos números de siempre (jurado 1100, TARS-DB 1500,
   // resto 700; temps de siempre). Antes vivían adentro del try.
+  try { if (_informeCtx && invUltimoInforme && invUltimoInforme.texto){ const _cab = String(invUltimoInforme.texto).slice(0, 200); for (let _i = previos.length - 1; _i >= 0; _i--){ if (previos[_i] && previos[_i].role === 'assistant' && String(previos[_i].content || '').slice(0, 200) === _cab) previos.splice(_i, 1); } } } catch(e){} // v40-1029
   const _cebP = (typeof cebActiva==='function' && cebActiva() && mode==='mirror') ? cebPerillas() : null; // v52-cebolla
   const _maxSalida = _cebP ? _cebP.tok : (mode==='jurado'?1100:(isTarsDB?1500:700));
   const _temp = _cebP ? _cebP.temp : ((mode==='tars')?0.3:(mode==='jurado'?0.4:0.7));
@@ -9847,10 +10033,12 @@ async function send() {
   try{ reply = actuaProcesarReply(reply); }catch(e){ console.error(e); } // v36-actua: ¿el modelo pidió una tarjeta?
   try{ if (!errorMsg && esPreguntaPorApp(text) && !preguntaNombraModeloAjeno(text)) reply = corregirModeloAjeno(reply); }catch(e){ console.error(e); } // v39-modelsano · v40-autoconoc2: mismo disparador que la arquitectura
   try{ const _rc = (!errorMsg) ? respaldoChip() : ''; if (_rc) ultimaProcedencia.push(_rc); }catch(e){} // v40-respaldo: se ve quién contestó
-  try{ if (!errorMsg && _preguntaVersion) reply = corregirNovedadAjena(reply, text); }catch(e){ console.error(e); } // v40-novedad: lo de antes no se vende como nuevo
+  try{ if (!errorMsg && _versionDirecta) reply = corregirNovedadAjena(reply, text); }catch(e){ console.error(e); } // v40-novedad: lo de antes no se vende como nuevo
   try{ if (!errorMsg && _antepIdentidad){ const _li = lineaIdentidadModelo(); if (_li) reply = _li + '\n\n' + reply; } }catch(e){ console.error(e); } // v40-audit
   try{ if (!errorMsg && _hechos.length){ const _sinT = sacarTemasDeHechos(reply, _hechos); reply = _hechosYa ? (_sinT || reply) : (textoHechos(_hechos, text) + (_sinT ? '\n\n' + _sinT : '')); } }catch(e){ console.error(e); } // v40-hechos: el dato lo pone la app
+  try{ if (!errorMsg) reply = nombresDeFabricaEnSalida(reply, text); }catch(e){ console.error(e); } // v40-1029: los nombres de TUS modos
   try{ addMsg('mirror', reply, msgStyle); }catch(e){ console.error(e); }
+  try{ if (!errorMsg) ofrecerDocCompleto(text); }catch(e){ console.error(e); } // v40-1029: 📄 leer entero, con un toque
   try{ actuaPintarTarjeta(); }catch(e){ console.error(e); } // v36-actua
   try{ hablar(reply); }catch(e){ console.error(e); } // v3.0 — P5: si la voz falla, la app NO se traba
   // v1.0: línea de fuentes solo con los PDFs que TARS realmente nombró (no los del buscador de fondo)
@@ -9905,7 +10093,7 @@ async function editarPerfil() {
   };
   perfilData = nuevo;
   const _okP = await perfilSave(nuevo);
-  document.getElementById('perfil-sync').textContent = 'Actualizado ' + new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
+  document.getElementById('perfil-sync').textContent = 'Actualizado ' + new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit',hourCycle:'h23'}); // v40-1029
   addMsg('mirror', _okP ? '✅ Perfil actualizado y guardado en tu Firebase.'
     : (FB_URL ? '⚠️ Actualicé tu perfil para esta sesión, pero NO pude guardarlo en tu Firebase (revisá la conexión o las reglas de la base). Si cerrás la app, se pierde.'
               : '◈ Actualicé tu perfil para esta sesión. Todavía no hay una base Firebase conectada, así que al cerrar la app se pierde.'), 'mirror'); // v40-guardado
@@ -10293,7 +10481,7 @@ function cerrarModalInforme(){ document.getElementById('modal-informe').classLis
 const BIBLIOGRAFIA_APA = [];
 
 function metadatosInforme(){
-  const fecha = new Date().toLocaleString('es-AR',{dateStyle:'long',timeStyle:'short'});
+  const fecha = new Date().toLocaleString('es-AR',{dateStyle:'long',timeStyle:'short',hourCycle:'h23'}); // v40-1029: 24 h siempre
   const docNames = ragDocs.map(d=>d.name);
   return { fecha, docNames, nReg: tesisData ? tesisData.length : 0 };
 }
