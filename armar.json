@@ -1,0 +1,22 @@
+{
+  "_que_es": "Receta del armado (Etapa 1 · Arquitectura de la Entidad Componible). El index.html que se deploya se ARMA pegando estas piezas en este orden. Cada «ancla» es el texto con el que empieza esa pieza dentro del index.html (sirve para volver a desarmarlo). Ver ESTRUCTURA.md.",
+  "salida": "index.html",
+  "piezas": [
+    { "archivo": "nucleo/pagina_cabeza.html", "ancla": null },
+    { "archivo": "nucleo/estilos.css", "ancla": "<style>\n", "despues": true },
+    { "archivo": "nucleo/pagina_cuerpo.html", "ancla": "</style>\n" },
+    { "archivo": "nucleo/motor_arranque.js", "ancla": "<script>\n/* ════════════════════════════════════════════════════════════════════════\n   CONFIGURACIÓN DE TU MIRROR", "corrimiento": 9 },
+    { "archivo": "adn/adn_fabrica.js", "ancla": "// ── CONFIG POR DEFECTO (lo que ve un MIRROR recién nacido)" },
+    { "archivo": "nucleo/motor_1.js", "ancla": "/* ── v38-motor · MODELOS QUE EL PROVEEDOR YA APAG" },
+    { "archivo": "organos/investigador/codigo.js", "ancla": "/* ══ v40-investigar (23/10/2026)" },
+    { "archivo": "nucleo/motor_2.js", "ancla": "// --- Groq ---\n" },
+    { "archivo": "organos/manos/codigo.js", "ancla": "// ══════════ v36-actua (Etapa 3 Ciclo 2" },
+    { "archivo": "organos/dato_agenda/codigo.js", "ancla": "/* ══════════ v40-datoagenda (06/11/2026) — ÁTOMO" },
+    { "archivo": "nucleo/catalogo_piezas.js", "generada": "catalogo", "ancla": "/* ══ v40-piezas · CATÁLOGO DE PIEZAS" },
+    { "archivo": "nucleo/piezas.js", "ancla": "/* ══════════ v40-piezas (10/11/2026) — DORMIR Y DESPERTAR" },
+    { "archivo": "nucleo/motor_3.js", "ancla": "/* v39-modelfijo (20/09/2026) — RESPUESTA DETERMINÍSTICA" },
+    { "archivo": "organos/agente/codigo.js", "ancla": "/* ══════════ v40-agente (24/09/2026)" },
+    { "archivo": "nucleo/motor_4.js", "ancla": "/* ══════════ FIN v40-agente ══════════ */\n", "despues": true },
+    { "archivo": "nucleo/pagina_cierre.html", "ancla": "</script>\n\n<script>\n// ══════════ v36-pwa (Etapa 7 Ciclo 2)" }
+  ]
+}

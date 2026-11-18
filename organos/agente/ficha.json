@@ -1,0 +1,45 @@
+{
+  "nombre": "Agente de varios pasos",
+  "version": "1.0",
+  "proposito": "Resolver un pedido encadenado («avisale a Juan que no llego y anotame reprogramar») con herramientas locales, mostrando lo que hizo.",
+  "disparadores": [
+    "pedido de acción con verbo y objeto (agenteDebeActuar), solo en el espejo y con «actúa» encendido"
+  ],
+  "entradas": [
+    "el pedido",
+    "herramientas locales: buscar contacto, preparar mensaje, anotar tarea, ver tareas, memoria"
+  ],
+  "salidas": [
+    "tarjetas preparadas",
+    "la línea «🧭 lo que hice»"
+  ],
+  "herramientas": [
+    "function calling del motor (Groq gpt-oss-120b / qwen)",
+    "las mismas manos (tarjetas y tareas)"
+  ],
+  "permisos": {
+    "lee": [
+      "agenda (sin ver números: solo si la persona está)",
+      "tareas",
+      "memoria"
+    ],
+    "escribe": [
+      "tareas en el dispositivo"
+    ],
+    "propone": [
+      "tarjetas"
+    ],
+    "nunca": [
+      "enviar, llamar o publicar: esa herramienta no existe"
+    ]
+  },
+  "limites": [
+    "Hasta 4 rondas y ~6.500 tokens por pedido (cupo gratis de Groq).",
+    "Si el motor no soporta herramientas o falla antes de empezar, el pedido sigue por el camino de siempre."
+  ],
+  "banco": [
+    "pruebas/bancos/TEST_agente.js"
+  ],
+  "estado": "despierto",
+  "codigo": "organos/agente/codigo.js"
+}

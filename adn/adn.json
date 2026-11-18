@@ -1,0 +1,8 @@
+{
+  "_que_es": "Sello del ADN de fábrica: versión + huella (md5) de adn/adn_fabrica.js. Si el ADN cambia sin sellarse, el armado da rojo.",
+  "version": "adn-1.0",
+  "huella": "5ed74352bdcf28d7acb36af8dd2d2e97",
+  "fecha": "2026-10-29",
+  "motivo": "primer sello: el ADN de fábrica sale del index.html de la 29.1 sin cambiar una coma (Etapa 1)",
+  "historial": []
+}

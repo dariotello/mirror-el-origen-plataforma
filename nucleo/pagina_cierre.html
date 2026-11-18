@@ -1,0 +1,320 @@
+</script>
+
+<script>
+// ══════════ v36-pwa (Etapa 7 Ciclo 2) — MIRROR INSTALABLE (PWA) ══════════
+// Manifest dinámico + registro del service worker acompañante + aviso HONESTO sin red.
+// · El manifest se arma en runtime (data: URI) — en la plataforma toma el nombre que el
+//   usuario le puso a su app en el constructor; ícono: monolito 1:4:9, obvio.
+// · El SW vive en archivo aparte (mirror-sw.js, va JUNTO al index en el deploy): cachea SOLO
+//   el shell para abrir al instante; proxy/Firebase/CDNs viajan SIEMPRE por red viva.
+// · Sin mirror-sw.js al lado (o en file://) NADA se rompe: instalable igual, sin cache offline.
+// 100% aditivo: cualquier fallo acá adentro no toca el resto de la app (try/catch total).
+(function(){
+try{
+  var APP = (typeof CONFIG!=='undefined' && CONFIG.appName) ? CONFIG.appName : 'MIRROR';
+  var I192 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAIAAADdvvtQAAABjUlEQVR42u3V4QmAIBCA0YwOmrIB+iU0h+AvB2jSdohIkfcmuDs/MEXsC7y1OgECQkAICAGBgBAQAkJAICAEhIAQEAgIASEgBAQCQkAICAEhIBAQAkJACAgEhIAQEAICASEgBISAQEB8Y5tvpevKI49XShXQ6PJ5jDlYbbcvDASEgBAQAkJAICAEhIAQEAgIASEgBAQCQkAICAGBgBAQAkJAICAEhIAQEAICASEgBISAQEAICAEhIBAQAkJACAgEhIAQEAJCQCAgBISAEBAICAEhIAQEAkJACAgBgYAQEAJCQAgIBISAEBACAgEhIASEgEBACAgBISAQEAJCQAgIBISAEBACQkAgIASEgBAQCAgBISAEBAJCQAgIAYGAEBACQkAICASEgBAQAgIBISAEhIBAQAgIASEgEBACQkAICAGBgOhlm3Kr2m5P+48UsbsCvjAEhIAQEAgIASEgBAQCQkAICAGBgBAQAkJAICAEhIAQEAICASEgBISAQEAICAEhIBAQAkJACAgEhIDo7QGiywlxUAU/+QAAAABJRU5ErkJggg==';
+  var I512 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAIAAAB7GkOtAAAFy0lEQVR42u3YwQmAIACF4QyFpmyAToJzCJ4coElbwaCD5PeN8C4/vJDSsQGwnt0EAAIAgAAAIAAACAAAAgCAAAAgAAAIAAACAIAAACAAAAgAAAIAgAAAIAAACAAAAgCAAAAgAAAIAAACAIAAACAAAAIAgAAAIAAACAAAAgCAAAAgAAAIAAACAIAAACAAAAgAAAIAgAAAIAAACAAAAgCAAAAgAAAIAAACAIAAACAAAAIAgAAAIAAACAAAAgCAAAAgAAAIAAACAIAAACAAAAgAAAIAgAAAIAAACAAAAgCAAAAgAAAIAAACAIAAACAAAAgAgAAAIAAACAAAAgCAAAAgAAAIAAACAIAAACAAAAgAAAIAgAAAIAAACAAAAgCAAAAgAAAIAAACAIAAACAAAAgAgAAAIAAALCOagHGlZCPMr9ZmBASA7+XrNMLMWr+NwCAXEIAAACAAAAgAAAIAgAAAIAAACAAAAgCAAAAgAAAIAAACAIAAACAAAAgAAAIAgAAAIAAACAAAAgCAAAAgAAAIAIAAACAAAAgAAAIAgAAAIAAACAAAAgCAAAAgAAAIAAACAIAAACAAAAgAAAIAgAAAIAAACAAAAgCAAAAgAAAIAIAAmABAAAAQAAAEAAABAEAAABAAAAQAAAEAQAAAEAAABAAAAQBAAAAQAAAEAAABAEAAABAAAAQAAAEAQAAAEAAABABAAAAQAAAEAAABAEAAABAAAAQAAAEAQAAAEAAABAAAAQBAAAAQAAAEAAABAEAAABAAAAQAAAEAQAAAEAAABABAAAAQAAAEAAABAEAAABAAAAQAAAEAQAAAEAAABAAAAQBAAAAQAAAEAAABAEAAABAAAAQAAAEAQAAAEAAABAAAAQAQAAAEAAABAEAAABAAAAQAAAEAQAAAEAAABAAAAQBAAAAQAAAEAAABAEAAABAAAAQAAAEAQAAAEAAABAAAAQAQAAAEAAABAEAAABAAAAQAAAEAQAAAEAAABAAAAQBAAAAQAAAEAAABAEAAABAAAAQAAAEAQAAAEAAABAAAAQBAAAAEAAABAEAAABAAAAQAAAEAQAAAEAAABAAAAQBAAAAQAAAEAAABAEAAABAAAAQAAAEAQAAAEAAABAAAAQBAAAAEAAABAEAAABAAAAQAAAEAQAAAEAAABAAAAQBAAAAQAAAEAAABAEAAABAAAAQAAAEAQAAAEAAABAAAAQBAAAAQAAABAEAAABAAAAQAAAEAQAAAEAAABAAAAQBAAAAQAAAEAAABAEAAABAAAAQAAAEAQAAAEAAABAAAAQBAAAAQAAABAEAAABAAAAQAAAEAQAAAEAAABAAAAQBAAAAQAAAEAAABAEAAABAAAAQAAAEAQAAAEAAABAAAAQBAAAAQAAAEAEAAABAAAAQAAAEAQAAAEAAABAAAAQBAAAAQAAAEAAABAEAAABAAAAQAAAEAQAAAEAAABAAAAQBAAAAQAAAEAEAAABAAAAQAAAEAQAAAEAAABAAAAQBAAAAQAAAEAAABAEAAABAAAAQAAAEAQAAAEAAABAAAAQBAAAAQAAAEAEAATAAgAAAIAAACAIAAACAAAAgAAAIAgAAAIAAATCiagFdav40A/xBSOqwAsCAXEIAAACAAAAgAAAIAgAAAIAAACAAAAgCAAAAgAAAIAAACAIAAACAAAAgAAAIAgAAAIAAACAAAAgCAAAAgAAAIAIAAACAAAAgAAAIAgAAAIAAACAAAAgCAAAAgAAAIAAACAIAAACAAAAgAAAIAgAAAIAAACAAAAgCAAAAgAAAIAIAAmABAAAAQAAAEAAABAEAAABAAAAQAAAEAQAAAEAAABAAAAQBAAAAQAAAEAAABAEAAABAAAAQAAAEAQAAAEAAABABAAAAQAAAEAAABAEAAABAAAAQAAAEAQAAAEAAABAAAAQBAAAAQAAAEAAABAEAAABAAAAQAAAEAQAAAEAAABABAAAAQAADW8QB6BQvxicfYngAAAABJRU5ErkJggg==';
+  var man = {
+    name: APP, short_name: APP.length>12 ? APP.slice(0,12) : APP,
+    description: 'Tu entidad digital personal — memoria propia, honestidad radical.',
+    start_url: location.href.split('#')[0].split('?')[0] + '?app', // v39-consvisit: la app instalada entra directo, sin la puerta del constructor
+    display: 'standalone', background_color: '#050508', theme_color: '#050508',
+    icons: [ { src: I192, sizes: '192x192', type: 'image/png', purpose: 'any' },
+             { src: I512, sizes: '512x512', type: 'image/png', purpose: 'any maskable' } ]
+  };
+  var link = document.createElement('link'); link.rel = 'manifest';
+  link.href = 'data:application/manifest+json,' + encodeURIComponent(JSON.stringify(man));
+  document.head.appendChild(link);
+  var mt = document.createElement('meta'); mt.name = 'theme-color'; mt.content = '#050508'; document.head.appendChild(mt);
+  var ap = document.createElement('link'); ap.rel = 'apple-touch-icon'; ap.href = I192; document.head.appendChild(ap); // iOS: mejor esfuerzo (Compartir → Agregar a inicio)
+  if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')){
+    navigator.serviceWorker.register('mirror-sw.js').catch(function(){ console.info('[PWA] mirror-sw.js no está junto al index — instalable igual, sin cache offline.'); });
+  }
+  function bannerOffline(on){
+    var b = document.getElementById('pwa-offline');
+    if (!on){ if (b) b.remove(); return; }
+    if (b) return;
+    b = document.createElement('div'); b.id = 'pwa-offline';
+    b.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#151515;color:#e8e2d6;font:11px "Space Mono",monospace;text-align:center;padding:6px 12px;border-bottom:1px solid #3a3a3a;letter-spacing:0.05em;';
+    b.textContent = (typeof i18nT==='function') ? i18nT('◈ Sin conexión: ahora mismo no puedo pensar. Lo que ya estaba guardado no se pierde. Vuelvo solo cuando vuelva la red.') : '◈ Sin conexión: ahora mismo no puedo pensar. Lo que ya estaba guardado no se pierde. Vuelvo solo cuando vuelva la red.'; // v36-i18n
+    document.body.appendChild(b);
+  }
+  window.addEventListener('offline', function(){ bannerOffline(true); });
+  window.addEventListener('online', function(){ bannerOffline(false); });
+  if (navigator.onLine === false) bannerOffline(true);
+}catch(e){ try{ regError('pwa', e); }catch(_){ } }
+})();
+</script>
+
+<script>
+// ══════════ v36-a11y (Etapa 9 Ciclo 2) — ACCESIBILIDAD PROFUNDA ══════════
+// Los modales se vuelven ciudadanos de primera para teclado y lector de pantalla:
+// role="dialog" + aria-modal + título anunciado, foco que ENTRA al abrir y VUELVE
+// exactamente adonde estaba al cerrar, Tab atrapado adentro (circular, con Shift),
+// y Esc que cierra llamando la función de cierre REAL de cada modal (jamás un click
+// a ciegas: en el panel de memoria el botón "cancel" es «borrar todo» — lección aprendida).
+// El PIN ya maneja su propio Esc (no se duplica). El constructor (cons-ov) queda afuera
+// a propósito: es un asistente de pantalla completa y cerrarlo con Esc perdería el paso.
+// 100% aditivo: si esta capa falla, los modales siguen funcionando como siempre.
+(function(){
+try{
+  var CERRAR = { 'modal': 'cancelDoc', 'modal-informe': 'cerrarModalInforme', 'voz-modal': 'cerrarSelectorVoz', 'mem-modal': 'cerrarMemoria', 'ana-modal': 'anaCerrar', 'enc-modal': 'encCerrar' }; // pin-modal: Esc propio
+  var MODALES = ['modal','modal-informe','voz-modal','mem-modal','pin-modal','ana-modal','enc-modal']; // +analista (E11) +encuestas (E12)
+  var focoPrevio = null, modalAbierto = null;
+  var FOCUSABLE = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+  function focusables(m){
+    return Array.prototype.filter.call(m.querySelectorAll(FOCUSABLE), function(el){ return !el.disabled && el.getAttribute('aria-hidden')!=='true'; });
+  }
+  MODALES.forEach(function(id){
+    var m = document.getElementById(id); if (!m) return;
+    m.setAttribute('role','dialog'); m.setAttribute('aria-modal','true');
+    var h = m.querySelector('h3');
+    if (h){ if (!h.id) h.id = id + '-titulo'; m.setAttribute('aria-labelledby', h.id); }
+    new MutationObserver(function(){
+      var abierto = m.classList.contains('visible');
+      if (abierto && modalAbierto !== m){
+        focoPrevio = document.activeElement; modalAbierto = m;
+        setTimeout(function(){ var f = focusables(m); if (f.length) try{ f[0].focus(); }catch(e){} }, 60);
+      } else if (!abierto && modalAbierto === m){
+        modalAbierto = null;
+        var fp = focoPrevio; focoPrevio = null;
+        if (fp && fp.focus) setTimeout(function(){ try{ fp.focus(); }catch(e){} }, 60);
+      }
+    }).observe(m, { attributes: true, attributeFilter: ['class'] });
+  });
+  document.addEventListener('keydown', function(e){
+    if (!modalAbierto) return;
+    if (e.key === 'Tab'){
+      var f = focusables(modalAbierto); if (!f.length) return;
+      var i = f.indexOf(document.activeElement);
+      if (e.shiftKey && i <= 0){ e.preventDefault(); f[f.length-1].focus(); }
+      else if (!e.shiftKey && (i === f.length-1 || i === -1)){ e.preventDefault(); f[0].focus(); }
+    } else if (e.key === 'Escape' && !e.defaultPrevented){
+      var fx = CERRAR[modalAbierto.id];
+      if (fx && typeof window[fx] === 'function'){ e.preventDefault(); window[fx](); }
+    }
+  });
+}catch(e){ try{ regError('a11y', e); }catch(_){ } }
+})();
+/* v40-a11y2 (23/10/2026, auditor 3 — pendiente nº 5 del 16/10): 13 capas más (contactos, compartir, estado, qué hago con
+   lo tuyo, privacidad, guía, premium, Gmail, imágenes, memoria que entiende, actualizar, ordenar el pie, presentación) no
+   anunciaban que eran una ventana, el foco se quedaba atrás, Tab se escapaba al fondo y al cerrar el foco se perdía. Y con
+   el constructor abierto, Tab recorría la app escondida detrás (con Enter se cambiaba de modo sin ver nada).
+   Una capa genérica: la ventana abierta de más arriba recibe el foco, Tab queda adentro, y al cerrarse el foco vuelve. */
+(function(){
+try{
+  var SEL = '.modal-overlay.visible, .v40-modal, #share-ov, #legal-ov, #guia-ov, #premium-ov, #gmail-ov, #polli-ov, #pres, #share-view';
+  var CONOCIDAS = { 'modal':1, 'modal-informe':1, 'voz-modal':1, 'mem-modal':1, 'pin-modal':1, 'ana-modal':1, 'enc-modal':1 }; // ya las maneja la capa v36-a11y
+  var FOC = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+  var abierta = null, previo = null;
+  function vis(el){ try { var cs = getComputedStyle(el); return cs.display !== 'none' && cs.visibility !== 'hidden' && el.getClientRects().length > 0; } catch(e){ return false; } }
+  function focs(m){ return Array.prototype.filter.call(m.querySelectorAll(FOC), function(el){ return !el.disabled && vis(el); }); }
+  function arriba(){
+    var l = Array.prototype.filter.call(document.querySelectorAll(SEL), function(el){ return !CONOCIDAS[el.id] && vis(el); });
+    if (!l.length) return null;
+    l.sort(function(a,b){ return (parseInt(getComputedStyle(b).zIndex)||0) - (parseInt(getComputedStyle(a).zIndex)||0); });
+    return l[0];
+  }
+  var pend = false;
+  function revisar(){
+    pend = false;
+    try {
+      var cons = document.getElementById('cons-ov'), app = document.getElementById('app');
+      if (app) { var tapada = !!(cons && vis(cons)); if (app.inert !== tapada) app.inert = tapada; }
+      var m = arriba();
+      if (m && m !== abierta){
+        if (!abierta || !vis(abierta) || !document.contains(abierta)) previo = document.activeElement; // si la anterior ya se cerró, el foco a recordar es el de ahora
+        abierta = m;
+        if (!m.getAttribute('role')) m.setAttribute('role','dialog');
+        m.setAttribute('aria-modal','true');
+        if (!m.contains(document.activeElement)) setTimeout(function(){ var f = focs(m); if (f.length) try { f[0].focus(); } catch(e){} }, 60);
+      } else if (!m && abierta){
+        abierta = null; var p = previo; previo = null;
+        if (p && p.focus && document.contains(p)) setTimeout(function(){ try { p.focus(); } catch(e){} }, 60);
+      }
+    } catch(e){}
+  }
+  new MutationObserver(function(){ if (!pend){ pend = true; requestAnimationFrame(revisar); } })
+    .observe(document.body, { subtree:true, childList:true, attributes:true, attributeFilter:['class','style'] });
+  document.addEventListener('keydown', function(e){
+    if (e.key !== 'Tab' || !abierta || !vis(abierta)) return;
+    var f = focs(abierta); if (!f.length) return;
+    var i = f.indexOf(document.activeElement);
+    if (e.shiftKey && i <= 0){ e.preventDefault(); f[f.length-1].focus(); }
+    else if (!e.shiftKey && (i === f.length-1 || i === -1)){ e.preventDefault(); f[0].focus(); }
+  });
+  revisar();
+}catch(e){ try{ regError('a11y2', e); }catch(_){ } }
+})();
+</script>
+<script>
+/* ══ v40-audit5 (25/09/2026) — NINGUNA CAPA SIN SALIDA ══════════════════════════════════════════════
+   La capa de accesibilidad (arriba) cierra con Esc los 6 modales que conoce. La auditoría encontró 10
+   capas más que Esc no cerraba (contactos, compartir, estado, qué hago con lo tuyo, privacidad, memoria
+   que entiende, actualizar, ordenar el pie…). Esto las cubre a TODAS sin conocerlas una por una: busca
+   la capa abierta de más arriba y aprieta SU botón de cierre real (el que dice «cerrar»/«✕»). Nunca un
+   click a ciegas: en el panel de memoria el botón «cancel» es «borrar todo» — por eso se busca por el
+   TEXTO de cierre, y si la capa ya la cerró la capa de accesibilidad (defaultPrevented), no se toca.
+   El PIN y el constructor quedan afuera a propósito (tienen su propio manejo). Tocar el FONDO cierra
+   solo las capas que son de lectura (voces, qué hago con lo tuyo, memoria que entiende, actualizar):
+   en las que tienen formularios, un toque de más no te puede hacer perder lo escrito. */
+(function(){
+'use strict';
+try{
+  var CIERRE_RE = /^\s*(?:(?:✕|×)(?:\s*(?:cerrar|salir))?|cerrar|salir)\s*$/i;
+  var FONDO_OK = { 'voz-modal':1, 'cumpli-modal':1, 'sem-modal':1, 'act-modal':1 };
+  function visible(el){ try { var cs = getComputedStyle(el); return cs.display !== 'none' && cs.visibility !== 'hidden'; } catch(e){ return false; } }
+  function capasAbiertas(){
+    var sel = '.modal-overlay.visible, .v40-modal, #share-ov, #legal-ov, #guia-ov, #premium-ov, #gmail-ov, #polli-ov';
+    return Array.prototype.filter.call(document.querySelectorAll(sel), function(el){ return el.id !== 'pin-modal' && visible(el); });
+  }
+  /* v40-1023 (hallado por la prueba nueva t_1023, 23/10 — GRAVE, venía de antes): con contactos guardados, Esc en
+     «📇 contactos» apretaba el PRIMER «✕» de la capa… que era el de BORRAR el primer contacto (sin confirmación).
+     Ahora gana un botón que diga «cerrar/salir»; un «✕» pelado solo cuenta si no es de borrar/eliminar/quitar algo. */
+  var BORRA_RE = /borr|elimin|quit[aá]/i; // ojo: no «remove»: el «Cerrar» de varias capas hace .remove() de sí misma
+  function botonCierre(capa){
+    var bots = Array.prototype.slice.call(capa.querySelectorAll('button, [onclick]'));
+    var esBorrar = function(b){ return BORRA_RE.test((b.getAttribute('title') || '') + ' ' + (b.getAttribute('aria-label') || '') + ' ' + (b.getAttribute('onclick') || '')); };
+    for (var i = 0; i < bots.length; i++){ var b = bots[i]; if (!esBorrar(b) && (b.classList.contains('modal-x') || /cerrar|salir/i.test(b.textContent || '')) && CIERRE_RE.test(b.textContent || '')) return b; }
+    for (var j = 0; j < bots.length; j++){ var c = bots[j]; if (!esBorrar(c) && (c.classList.contains('modal-x') || CIERRE_RE.test(c.textContent || ''))) return c; }
+    return null;
+  }
+  function deArriba(){
+    var capas = capasAbiertas(); if (!capas.length) return null;
+    var z = function(el){ return parseInt(getComputedStyle(el).zIndex, 10) || 0; };
+    var mejor = capas[0];
+    capas.forEach(function(c){ if (z(c) >= z(mejor)) mejor = c; });
+    return mejor;
+  }
+  window.cerrarCapaDeArriba = function(){ var c = deArriba(); if (!c) return false; var b = botonCierre(c); if (!b) return false; b.click(); return true; };
+  document.addEventListener('keydown', function(e){
+    if (e.key !== 'Escape' || e.defaultPrevented) return;
+    try { var cons = document.getElementById('cons-ov'); var c = deArriba(); if (!c) return;
+      if (cons && cons.classList.contains('show') && !/-ov$/.test(c.id || '')) return;  // en el constructor, solo sus guías
+      var b = botonCierre(c); if (b){ e.preventDefault(); b.click(); } } catch(err){ try{ regError('audit5:esc', err); }catch(_){ } }
+  });
+  document.addEventListener('click', function(e){
+    try { var t = e.target; if (!t || !t.id) return;
+      if (FONDO_OK[t.id]){ var b = botonCierre(t); if (b) b.click(); } } catch(err){}
+  });
+}catch(e){ try{ regError('audit5', e); }catch(_){ } }
+})();
+</script>
+<script>
+/* ══════════ v36-i18n (Etapa 13B Ciclo 2) — IDIOMAS BÁSICOS: es · en · pt ══════════
+   El idioma elegido en el constructor gobierna: (1) los textos del constructor y avisos
+   (diccionario de fragmentos, traducción por NODOS DE TEXTO — reversible, el original
+   queda guardado); (2) el idioma en que responde el modo espejo (bloque en su prompt);
+   (3) el dictado (recognition.lang) y las voces sugeridas. HONESTIDAD DEL ALCANCE:
+   TARS/jurado del ámbito tesis y la guía técnica siguen en español (regla sagrada);
+   el catálogo de motores se traduce parcialmente (los textos fijos, no el catálogo).
+   Usuario viejo sin CONFIG.idioma = español, CERO cambios. Todo con try/catch total. */
+(function(){
+'use strict';
+try{
+var I18N_DICT = {"🚗 modo auto": {"en": "🚗 car mode", "pt": "🚗 modo carro"}, "Modo auto (al volante)": {"en": "Car mode (at the wheel)", "pt": "Modo carro (ao volante)"}, "Pantalla de conducción: todo enorme, la pantalla no se apaga y la acción ocupa media pantalla para tocarla sin apuntar. La escucha continua arranca SIEMPRE apagada y te avisa que el audio sale del dispositivo. No reemplaza a Android Auto ni CarPlay: no admiten apps web.": {"en": "Driving screen: everything huge, the screen stays awake and the action fills half the screen so you can tap it without aiming. Continuous listening ALWAYS starts off and warns you that audio leaves the device. It does not replace Android Auto or CarPlay: those do not accept web apps.", "pt": "Tela de condução: tudo enorme, a tela não apaga e a ação ocupa meia tela para tocar sem mirar. A escuta contínua começa SEMPRE desligada e avisa que o áudio sai do dispositivo. Não substitui Android Auto nem CarPlay: eles não aceitam apps web."},"Código de país para WhatsApp (opcional)": {"en": "Country code for WhatsApp (optional)", "pt": "Código do país para WhatsApp (opcional)"}, "Solo los números, sin el +. WhatsApp exige el número completo con código de país: sin esto, un número local no abre el chat. Si guardás tus contactos con + y el código, no hace falta.": {"en": "Digits only, no +. WhatsApp requires the full number with country code: without it, a local number will not open the chat. If you save your contacts with + and the code, this is not needed.", "pt": "Somente os números, sem o +. O WhatsApp exige o número completo com código do país: sem isso, um número local não abre a conversa. Se você salva seus contatos com + e o código, não é necessário."},"Vas a crear tu":{"en":"You are about to create your","pt":"Você vai criar o seu"},"propio MIRROR":{"en":"own MIRROR","pt":"próprio MIRROR"},"Tu MIRROR es tu entidad digital: te conoce, habla como vos y trabaja para vos. En unos pocos pasos lo vas a tener andando —":{"en":"Your MIRROR is your digital entity: it knows you, speaks like you and works for you. In just a few steps it will be up and running —","pt":"Seu MIRROR é a sua entidade digital: ele conhece você, fala como você e trabalha para você. Em poucos passos ele estará funcionando —"},"sin escribir una sola línea de código":{"en":"without writing a single line of code","pt":"sem escrever uma única linha de código"},". Te acompaño en cada decisión, como si lo armáramos juntos. Lo único que tenés que haber conseguido antes (la guía te explica cómo): tu clave de IA, tu proxy y tu memoria.":{"en":". I will walk you through every decision, as if we were building it together. The only things you need beforehand (the guide explains how): your AI key, your proxy and your memory.","pt":". Eu acompanho você em cada decisão, como se estivéssemos montando juntos. A única coisa que você precisa ter antes (o guia explica como): sua chave de IA, seu proxy e sua memória."},"Comenzar el viaje ▸":{"en":"Begin the journey ▸","pt":"Começar a viagem ▸"},"📖 ¿No tenés tu clave, proxy y memoria todavía? Abrí la guía paso a paso":{"en":"📖 Don't have your key, proxy and memory yet? Open the step-by-step guide","pt":"📖 Ainda não tem sua chave, proxy e memória? Abra o guia passo a passo"},"Soy técnico, llevame directo a la app":{"en":"I'm technical — take me straight to the app","pt":"Sou técnico, me leve direto para o app"},"🌐 Idioma de tu MIRROR":{"en":"🌐 Your MIRROR's language","pt":"🌐 Idioma do seu MIRROR"},"Gobierna la interfaz, el dictado, las voces, las encuestas, los informes y el idioma en que responde tu espejo. Honestidad: los modos analítico y examinador siguen respondiendo en español — tu MIRROR te lo va a decir de frente si se lo pedís en otro idioma.":{"en":"Governs the interface, dictation, voices, surveys, reports and the language your mirror answers in. Honesty: the analytical and examiner modes still answer in Spanish — your MIRROR will tell you so upfront if you ask for them in another language.","pt":"Governa a interface, o ditado, as vozes, as pesquisas, os relatórios e o idioma em que seu espelho responde. Honestidade: os modos analítico e examinador continuam respondendo em espanhol — seu MIRROR vai dizer isso de frente se você pedir em outro idioma."},"Dale un":{"en":"Give a","pt":"Dê um"},"nombre":{"en":"name","pt":"nome"},"a tu MIRROR.":{"en":"to your MIRROR.","pt":"ao seu MIRROR."},"Tu MIRROR tiene cuatro modos. Llamalos como quieras — estos son los nombres que vas a ver en pantalla. Si te gustan los que vienen, dejalos.":{"en":"Your MIRROR has four modes. Name them however you like — these are the names you will see on screen. If you like the defaults, keep them.","pt":"Seu MIRROR tem quatro modos. Chame-os como quiser — estes são os nomes que você verá na tela. Se gostar dos que vieram, deixe assim."},"Nombre de tu entidad":{"en":"Name of your entity","pt":"Nome da sua entidade"},"Tu yo digital":{"en":"Your digital self","pt":"Seu eu digital"},"Analítico":{"en":"Analytical","pt":"Analítico"},"Experto / examinador":{"en":"Expert / examiner","pt":"Especialista / examinador"},"Conexiones / datos":{"en":"Connections / data","pt":"Conexões / dados"},"◂ Atrás":{"en":"◂ Back","pt":"◂ Voltar"},"Siguiente ▸":{"en":"Next ▸","pt":"Avançar ▸"},"Elegí tu":{"en":"Choose your","pt":"Escolha seu"},"motor":{"en":"engine","pt":"motor"},"Es lo que hace pensar a tu MIRROR. Pensalo como el motor de tu auto: los":{"en":"This is what makes your MIRROR think. Think of it as your car's engine: the","pt":"É o que faz seu MIRROR pensar. Pense nele como o motor do seu carro: os"},"gratuitos":{"en":"free ones","pt":"gratuitos"},"alcanzan de sobra para volar. Los":{"en":"are more than enough to fly. The","pt":"são mais que suficientes para voar. Os"},"premium":{"en":"premium ones","pt":"premium"},"son más potentes, pero necesitan créditos pagos. Vos elegís tu máquina.":{"en":"are more powerful, but need paid credits. You choose your machine.","pt":"são mais potentes, mas precisam de créditos pagos. Você escolhe sua máquina."},"Modelo":{"en":"Model","pt":"Modelo"},"💎 ¿Gratis o premium? Mirá qué cuesta cada cosa, sin humo":{"en":"💎 Free or premium? See what each thing costs — no smoke","pt":"💎 Grátis ou premium? Veja quanto custa cada coisa, sem enrolação"},"Gratis":{"en":"Free","pt":"Grátis"},"1) ¿Cómo saco la clave?":{"en":"1) How do I get the key?","pt":"1) Como pego a chave?"},"2) ¿Dónde la pongo?":{"en":"2) Where do I put it?","pt":"2) Onde coloco?"},"En TU proxy, como secreto":{"en":"In YOUR proxy, as a secret","pt":"No SEU proxy, como segredo"},"Es de pago por uso: cargá un crédito en el proveedor.":{"en":"It's pay-per-use: load credit with the provider.","pt":"É pago por uso: carregue um crédito no provedor."},"La clave NUNCA va en MIRROR: queda blindada dentro del proxy.":{"en":"The key NEVER goes in MIRROR: it stays shielded inside the proxy.","pt":"A chave NUNCA vai no MIRROR: fica blindada dentro do proxy."},"¿Qué":{"en":"What can","pt":"O que seu MIRROR"},"sabe hacer":{"en":"your MIRROR do","pt":"sabe fazer"},"tu MIRROR?":{"en":"?","pt":"?"},"Activá solo lo que quieras. Cada cosa es real y ya está construida — nada de humo. Algunos prefieren su MIRROR en silencio; otros, con voz y micrófono. Es tu decisión.":{"en":"Turn on only what you want. Everything here is real and already built — no smoke. Some people prefer their MIRROR silent; others, with voice and microphone. It's your call.","pt":"Ative só o que quiser. Cada coisa é real e já está construída — nada de enrolação. Alguns preferem seu MIRROR em silêncio; outros, com voz e microfone. A decisão é sua."},"Carácter de tu MIRROR":{"en":"Your MIRROR's character","pt":"Caráter do seu MIRROR"},"(perillas estilo TARS de Interstellar — vos las regulás)":{"en":"(TARS-from-Interstellar-style dials — you set them)","pt":"(botões estilo TARS de Interestelar — você regula)"},"💎 Insumos premium (honestos) y qué viene próximamente":{"en":"💎 Premium supplies (honest) and what's coming next","pt":"💎 Insumos premium (honestos) e o que vem por aí"},"Color de tu MIRROR":{"en":"Your MIRROR's color","pt":"Cor do seu MIRROR"},"Música ambiental":{"en":"Ambient music","pt":"Música ambiente"},"La banda sonora original «El Origen» mientras usás tu MIRROR.":{"en":"The original «El Origen» soundtrack while you use your MIRROR.","pt":"A trilha sonora original «El Origen» enquanto você usa seu MIRROR."},"Lectura en voz alta":{"en":"Read aloud","pt":"Leitura em voz alta"},"Tu MIRROR te lee las respuestas en voz alta. Elegís la voz.":{"en":"Your MIRROR reads the answers aloud. You choose the voice.","pt":"Seu MIRROR lê as respostas em voz alta. Você escolhe a voz."},"Dictado por voz":{"en":"Voice dictation","pt":"Ditado por voz"},"Hablale a tu MIRROR en vez de escribir. Usa el micrófono.":{"en":"Talk to your MIRROR instead of typing. Uses the microphone.","pt":"Fale com seu MIRROR em vez de digitar. Usa o microfone."},"Búsqueda en la web":{"en":"Web search","pt":"Busca na web"},"Tu MIRROR puede buscar información actual en internet (requiere clave Tavily).":{"en":"Your MIRROR can look up current information online (requires a Tavily key).","pt":"Seu MIRROR pode buscar informações atuais na internet (requer chave Tavily)."},"Memoria de audio":{"en":"Audio memory","pt":"Memória de áudio"},"Subí un audio (o un video) y tu MIRROR transcribe lo que se dice y lo recuerda. Gratis, con Whisper de Groq.":{"en":"Upload an audio (or a video) and your MIRROR transcribes what is said and remembers it. Free, with Groq's Whisper.","pt":"Envie um áudio (ou um vídeo) e seu MIRROR transcreve o que foi dito e lembra. Grátis, com o Whisper da Groq."},"Fachada cinematográfica":{"en":"Cinematic façade","pt":"Fachada cinematográfica"},"La cinemática de nacimiento, el monolito y el modo presentación.":{"en":"The birth cinematic, the monolith and presentation mode.","pt":"A cinemática de nascimento, o monólito e o modo apresentação."},"Te devuelve a tu vida":{"en":"Gives you your life back","pt":"Devolve você à sua vida"},"En charlas largas, tu MIRROR cierra con una acción concreta hacia afuera en vez de retenerte. Toda IA del mercado se diseña para engancharte; el tuyo se diseña para devolverte a tu vida.":{"en":"In long chats, your MIRROR closes with a concrete outward action instead of keeping you hooked. Every AI on the market is designed to retain you; yours is designed to give you back your life.","pt":"Em conversas longas, seu MIRROR encerra com uma ação concreta para fora em vez de prender você. Toda IA do mercado é projetada para reter; o seu é projetado para devolver você à sua vida."},"Tu MIRROR actúa":{"en":"Your MIRROR acts","pt":"Seu MIRROR age"},"Manos propias: por chat o por voz prende y apaga la música o la lectura, abre su memoria, y arma tarjetas de UN toque para llamar, mandar WhatsApp, poner música o agendar. Nunca ejecuta nada hacia afuera sin tu toque final; los números salen solo de tu agenda local (tu dispositivo) y jamás se inventan.":{"en":"Its own hands: by chat or voice it turns the music or the reading on and off, opens its memory, and builds ONE-tap cards to call, send a WhatsApp, play music or schedule. It never executes anything outward without your final tap; numbers come only from your local address book (your device) and are never invented.","pt":"Mãos próprias: por chat ou por voz liga e desliga a música ou a leitura, abre sua memória e monta cartões de UM toque para ligar, mandar WhatsApp, tocar música ou agendar. Nunca executa nada para fora sem o seu toque final; os números vêm só da sua agenda local (seu dispositivo) e jamais são inventados."},"Analista de datos":{"en":"Data analyst","pt":"Analista de dados"},"Subí o pegá un CSV y tu MIRROR lo analiza EN TU DISPOSITIVO: estadística, frecuencias, correlaciones y gráficos. La matemática la calcula la app — el modelo solo interpreta; tus filas crudas jamás viajan a la nube.":{"en":"Upload or paste a CSV and your MIRROR analyzes it ON YOUR DEVICE: statistics, frequencies, correlations and charts. The math is computed by the app — the model only interprets; your raw rows never travel to the cloud.","pt":"Envie ou cole um CSV e seu MIRROR analisa NO SEU DISPOSITIVO: estatística, frequências, correlações e gráficos. A matemática é calculada pelo app — o modelo só interpreta; suas linhas cruas jamais viajam para a nuvem."},"Encuestas propias":{"en":"Your own surveys","pt":"Pesquisas próprias"},"Creá formularios sin Google Forms: archivos autocontenidos cuyas respuestas caen en TU Firebase. Las ves, exportás CSV y las analizás con el analista — soberanía de datos de punta a punta.":{"en":"Create forms without Google Forms: self-contained files whose answers land in YOUR Firebase. You view them, export CSV and analyze them with the analyst — data sovereignty end to end.","pt":"Crie formulários sem o Google Forms: arquivos autocontidos cujas respostas caem no SEU Firebase. Você as vê, exporta CSV e analisa com o analista — soberania de dados de ponta a ponta."},"Redactor de respuestas":{"en":"Reply writer","pt":"Redator de respostas"},"Pegale un mail o WhatsApp recibido y tu MIRROR redacta la respuesta EN TU VOZ, usando tu perfil y tu memoria. Te la entrega en una tarjeta de UN toque: leés, tocás y sale. Nunca envía solo — y tu bandeja de entrada no la lee (te lo decimos de frente).":{"en":"Paste a received email or WhatsApp and your MIRROR drafts the reply IN YOUR VOICE, using your profile and your memory. It hands it over as a ONE-tap card: you read, you tap, it goes. It never sends on its own — and it does not read your inbox (we tell you that upfront).","pt":"Cole um e-mail ou WhatsApp recebido e seu MIRROR redige a resposta NA SUA VOZ, usando seu perfil e sua memória. Entrega em um cartão de UM toque: você lê, toca e envia. Nunca envia sozinho — e não lê sua caixa de entrada (dizemos isso de frente)."},"Franqueza":{"en":"Frankness","pt":"Franqueza"},"Humor":{"en":"Humor","pt":"Humor"},"Desafío":{"en":"Challenge","pt":"Desafio"},"diplomático":{"en":"diplomatic","pt":"diplomático"},"sin anestesia":{"en":"no anesthesia","pt":"sem anestesia"},"sobrio":{"en":"sober","pt":"sóbrio"},"socarrón":{"en":"wry","pt":"sarcástico"},"acompaña":{"en":"supports","pt":"acompanha"},"confronta":{"en":"confronts","pt":"confronta"},"Conectá tus":{"en":"Connect your","pt":"Conecte seus"},"direcciones":{"en":"addresses","pt":"endereços"},"Las tres direcciones tuyas que obtuviste con la guía. Tu clave de IA":{"en":"The three addresses of yours you got with the guide. Your AI key","pt":"Os três endereços seus que você obteve com o guia. Sua chave de IA"},"no va acá":{"en":"does NOT go here","pt":"NÃO vai aqui"},": vive segura en tu proxy, nunca en el navegador.":{"en":": it lives safely inside your proxy, never in the browser.","pt":": ela vive segura no seu proxy, nunca no navegador."},"📖 Ver la guía para conseguir estas tres direcciones":{"en":"📖 See the guide to get these three addresses","pt":"📖 Ver o guia para conseguir estes três endereços"},"Tu proxy (Cloudflare Worker)":{"en":"Your proxy (Cloudflare Worker)","pt":"Seu proxy (Cloudflare Worker)"},"La que termina en":{"en":"The one ending in","pt":"O que termina em"},"Tu memoria (Firebase)":{"en":"Your memory (Firebase)","pt":"Sua memória (Firebase)"},"⚠ Para que tu memoria no caduque.":{"en":"⚠ So your memory never expires.","pt":"⚠ Para a sua memória não expirar."},"Si creaste tu Firebase en «modo de prueba», a los":{"en":"If you created your Firebase in «test mode», after","pt":"Se você criou seu Firebase em «modo de teste», depois de"},"30 días deja de guardar":{"en":"30 days it stops saving","pt":"30 dias ele para de salvar"},"sola (es una regla de Firebase, no de tu MIRROR: el MIRROR sigue abriendo, pero pierde la memoria nueva).":{"en":"on its own (it's a Firebase rule, not your MIRROR's: the MIRROR still opens, but loses new memories).","pt":"sozinho (é uma regra do Firebase, não do seu MIRROR: o MIRROR continua abrindo, mas perde a memória nova)."},"Para que dure":{"en":"To make it last","pt":"Para durar"},"para siempre":{"en":"forever","pt":"para sempre"},": en la consola de Firebase →":{"en":": in the Firebase console →","pt":": no console do Firebase →"},"Realtime Database → pestaña Reglas":{"en":"Realtime Database → Rules tab","pt":"Realtime Database → aba Regras"},", dejá esto y publicá:":{"en":", set this and publish:","pt":", deixe isto e publique:"},"Honestidad: esto deja tu base abierta y permanente. Para tu memoria personal alcanza; si vas a guardar datos sensibles de otras personas, conviene reglas con autenticación (lo explica la guía).":{"en":"Honesty: this leaves your database open and permanent. For your personal memory it's enough; if you'll store sensitive data about other people, rules with authentication are better (the guide explains).","pt":"Honestidade: isso deixa sua base aberta e permanente. Para a sua memória pessoal é suficiente; se for guardar dados sensíveis de outras pessoas, é melhor usar regras com autenticação (o guia explica)."},"Tu PIN de memoria (inventá uno)":{"en":"Your memory PIN (make one up)","pt":"Seu PIN de memória (invente um)"},"un PIN tuyo":{"en":"a PIN of yours","pt":"um PIN seu"},"¿Quién":{"en":"Who","pt":"Quem"},"sos":{"en":"are you","pt":"é você"},"Esto es lo que hace que tu MIRROR hable como vos y no como un robot. Cuanto más cuentes, mejor te conoce. Completá lo que quieras ahora; lo podés ampliar siempre.":{"en":"This is what makes your MIRROR speak like you and not like a robot. The more you share, the better it knows you. Fill in what you want now; you can always expand it later.","pt":"É isso que faz seu MIRROR falar como você e não como um robô. Quanto mais você contar, melhor ele conhece você. Preencha o que quiser agora; pode ampliar sempre."},"¿A qué te dedicás? Tocá un punto de partida (opcional — después editás todo a tu gusto):":{"en":"What do you do? Tap a starting point (optional — you can edit everything afterwards):","pt":"O que você faz? Toque em um ponto de partida (opcional — depois você edita tudo):"},"📚 Docente":{"en":"📚 Teacher","pt":"📚 Docente"},"💼 Emprendedor/a":{"en":"💼 Entrepreneur","pt":"💼 Empreendedor(a)"},"🎵 Músico/a":{"en":"🎵 Musician","pt":"🎵 Músico(a)"},"✍️ Escritor/a":{"en":"✍️ Writer","pt":"✍️ Escritor(a)"},"🩺 Salud":{"en":"🩺 Healthcare","pt":"🩺 Saúde"},"🗂️ Oficina":{"en":"🗂️ Office","pt":"🗂️ Escritório"},"🎓 Estudiante":{"en":"🎓 Student","pt":"🎓 Estudante"},"Tu nombre":{"en":"Your name","pt":"Seu nome"},"Ubicación":{"en":"Location","pt":"Localização"},"Rol / ocupación":{"en":"Role / occupation","pt":"Função / ocupação"},"Cómo hablás y escribís":{"en":"How you speak and write","pt":"Como você fala e escreve"},"Algo más sobre vos (opcional)":{"en":"Something else about you (optional)","pt":"Algo mais sobre você (opcional)"},"Dar vida a mi MIRROR ✦":{"en":"Bring my MIRROR to life ✦","pt":"Dar vida ao meu MIRROR ✦"},"Nombre y apellido":{"en":"First and last name","pt":"Nome e sobrenome"},"Ciudad, país":{"en":"City, country","pt":"Cidade, país"},"A qué te dedicás":{"en":"What you do","pt":"O que você faz"},"Ej: informal, directo, rioplatense con voseo, humor seco. Tu MIRROR va a imitar esto.":{"en":"E.g.: informal, direct, dry humor. Your MIRROR will imitate this.","pt":"Ex.: informal, direto, humor seco. Seu MIRROR vai imitar isso."},"Tus proyectos, lo que te importa, en qué andás.":{"en":"Your projects, what matters to you, what you're up to.","pt":"Seus projetos, o que importa para você, no que você anda."},"Tu MIRROR":{"en":"Your MIRROR","pt":"Seu MIRROR"},"respira":{"en":"breathes","pt":"respira"},"Ya es tuyo, único, irrepetible. Lo podés ajustar cuando quieras desde el modo de conexiones. El origen está; el espejo, ahora, es tuyo.":{"en":"It is yours now — unique, unrepeatable. You can adjust it whenever you want from the connections mode. The origin is set; the mirror, now, is yours.","pt":"Agora é seu — único, irrepetível. Você pode ajustá-lo quando quiser no modo de conexões. A origem está; o espelho, agora, é seu."},"Entrar a mi MIRROR ▸":{"en":"Enter my MIRROR ▸","pt":"Entrar no meu MIRROR ▸"},"construido para que cada persona tenga el suyo":{"en":"built so every person can have their own","pt":"construído para que cada pessoa tenha o seu"},"🔒 Privacidad y licencia":{"en":"🔒 Privacy & license","pt":"🔒 Privacidade e licença"},"Escribí acá...":{"en":"Type here...","pt":"Escreva aqui..."},"buscar en la memoria...":{"en":"search the memory...","pt":"buscar na memória..."},"…o pegá el CSV acá (encabezados en la primera fila)":{"en":"…or paste the CSV here (headers in the first row)","pt":"…ou cole o CSV aqui (cabeçalhos na primeira linha)"},"Título de la encuesta":{"en":"Survey title","pt":"Título da pesquisa"},"Hablá conmigo o pegá un mensaje para que lo conteste por vos...":{"en":"Talk to me or paste a message for me to answer as you...","pt":"Fale comigo ou cole uma mensagem para eu responder por você..."},"◈ Sin conexión: ahora mismo no puedo pensar. Lo que ya estaba guardado no se pierde. Vuelvo solo cuando vuelva la red.":{"en":"◈ Offline: I cannot think right now. What was already saved is not lost. I will be back on my own when the network returns.","pt":"◈ Sem conexão: agora não consigo pensar. O que já estava salvo não se perde. Volto sozinho quando a rede voltar."},"Dictar por voz":{"en":"Dictate by voice","pt":"Ditar por voz"}};
+try{ I18N_DICT["Ya tenés tu MIRROR armado en este navegador:"]={"en":"You already have your MIRROR set up in this browser:","pt":"Você já tem seu MIRROR montado neste navegador:"}; I18N_DICT["O seguí abajo para ajustarlo o armar uno nuevo."]={"en":"Or keep going below to adjust it or build a new one.","pt":"Ou continue abaixo para ajustá-lo ou montar um novo."}; }catch(e){} // v39-consvisit
+var I18N_WM = (typeof WeakMap!=='undefined') ? new WeakMap() : {get:function(){},set:function(){},has:function(){return false;}};
+window.i18nSel = '';
+window.i18nActual = function(){ try{ if(window.i18nSel) return window.i18nSel; if(typeof CONFIG!=='undefined'&&CONFIG&&CONFIG.idioma) return CONFIG.idioma; }catch(e){} return 'es'; };
+window.i18nT = function(es){ try{ var l=window.i18nActual(); if(l==='es') return es; var e=I18N_DICT[String(es).replace(/\s+/g,' ').trim()]; return (e&&e[l])||es; }catch(e){ return es; } };
+window.i18nRecLang = function(){ return ({es:'es-AR',en:'en-US',pt:'pt-BR'})[window.i18nActual()]||'es-AR'; };
+/* ── v37-i18n (V36-7) — CAMBIAR DE IDIOMA SIN VOLVER AL CONSTRUCTOR ──
+   Lo que reportó Darío: con el MIRROR en inglés, hablar en castellano se transcribía
+   mal («See Puffer, Cura y Cartesiano») y NO había forma de cambiar el idioma sin
+   volver al constructor. Además el micrófono quedaba «pegado»: `recog.lang` se fija
+   al CREAR el reconocedor, así que cambiar el idioma no servía hasta recargar.
+   ARREGLO: switch accesible (botón del pie y por voz) que aplica en el acto Y
+   REINICIA el reconocedor, para que el dictado tome el idioma nuevo enseguida. */
+window.i18nCambiar = function(l){
+  try {
+    if (l!=='es' && l!=='en' && l!=='pt') return false;
+    window.i18nSel = l;
+    try { if (typeof CONFIG!=='undefined' && CONFIG){ CONFIG.idioma = l; if (typeof guardarConfig==='function') guardarConfig(CONFIG); } } catch(e){}
+    try { window.i18nAplicarUI(); } catch(e){}
+    // El reconocedor guarda el idioma de cuando nació: hay que rehacerlo.
+    try {
+      const estaba = (typeof micOn!=='undefined' && micOn);
+      if (estaba && typeof micStop==='function') micStop();
+      if (typeof recog!=='undefined' && recog){ try{ recog.abort(); }catch(e){} recog = null; }
+      if (estaba && typeof toggleMic==='function') setTimeout(function(){ try{ toggleMic(); }catch(e){} }, 250);
+    } catch(e){}
+    // Las voces disponibles también dependen del idioma elegido.
+    try { if (typeof cargarVoces==='function') cargarVoces(); } catch(e){}
+    return true;
+  } catch(e){ try{ regError('i18n:cambiar', e); }catch(_){ } return false; }
+};
+/* Botón del pie: rota es → en → pt → es. Un toque, sin menús. */
+window.i18nRotar = function(){
+  try {
+    const orden = ['es','en','pt'];
+    const i = orden.indexOf(window.i18nActual());
+    const nuevo = orden[(i<0?0:i+1) % orden.length];
+    window.i18nCambiar(nuevo);
+    try { const b=document.getElementById('idiBtn'); if(b) b.textContent = '🌐 '+nuevo.toUpperCase(); } catch(e){}
+    try { if (typeof addMsg==='function') addMsg('mirror', ({es:'Listo, sigo en español ✅ — el dictado también.',en:'Done, switching to English ✅ — dictation too.',pt:'Pronto, sigo em português ✅ — o ditado também.'})[nuevo], mode); } catch(e){}
+    return nuevo;
+  } catch(e){ return ''; }
+};
+window.i18nVozPrefijo = function(){ return ({es:'es',en:'en',pt:'pt'})[window.i18nActual()]||'es'; };
+function trNodo(n,l){
+  var orig = I18N_WM.has(n) ? I18N_WM.get(n) : n.nodeValue;
+  var key = String(orig).replace(/\s+/g,' ').trim();
+  if(!key) return;
+  var e = I18N_DICT[key];
+  if(!e) return;
+  if(!I18N_WM.has(n)) I18N_WM.set(n, orig);
+  var m = String(orig).match(/^(\s*)[\s\S]*?(\s*)$/);
+  n.nodeValue = m[1] + ((l==='es') ? String(orig).trim() : (e[l]!==undefined ? e[l] : String(orig).trim())) + m[2];
+}
+function trAttrs(root,l){
+  try{
+    var els = root.querySelectorAll('[placeholder],[title]');
+    for(var i=0;i<els.length;i++){
+      var el = els[i];
+      ['placeholder','title'].forEach(function(a){
+        try{
+          var v = el.getAttribute(a); if(v===null) return;
+          var dk = 'i18nEs'+a;
+          if(!el.dataset[dk]){ if(!I18N_DICT[String(v).replace(/\s+/g,' ').trim()]) return; el.dataset[dk]=v; }
+          var es = el.dataset[dk];
+          var e = I18N_DICT[String(es).replace(/\s+/g,' ').trim()];
+          el.setAttribute(a, (l==='es') ? es : ((e&&e[l])||es));
+        }catch(e2){}
+      });
+    }
+  }catch(e){}
+}
+window.i18nConsTraducir = function(){
+  try{
+    var ov = document.getElementById('cons-ov'); if(!ov) return;
+    var l = window.i18nActual();
+    var w = document.createTreeWalker(ov, NodeFilter.SHOW_TEXT, null, false);
+    var n; while((n = w.nextNode())) trNodo(n, l);
+    trAttrs(ov, l);
+  }catch(e){ try{ regError('i18n:cons', e) }catch(e2){} }
+};
+window.i18nAplicarUI = function(){
+  try{
+    var l = window.i18nActual();
+    trAttrs(document.body, l);
+    var mic = document.getElementById('micbtn'); if(mic) mic.title = window.i18nT('Dictar por voz')+' ('+window.i18nRecLang()+')';
+    if (typeof cargarVoces==='function') try{ cargarVoces(); }catch(e3){}
+  }catch(e){ try{ regError('i18n:ui', e) }catch(e2){} }
+};
+window.i18nConsCambiar = function(v){
+  try{ window.i18nSel = (v==='en'||v==='pt'||v==='es') ? v : 'es'; window.i18nConsTraducir(); window.i18nAplicarUI(); }
+  catch(e){ try{ regError('i18n:cambiar', e) }catch(e2){} }
+};
+// ganchos: cada paso repinta contenido dinámico (toggles/perillas/motores) → retraducir
+if (typeof window.consGo==='function'){ var _cg=window.consGo; window.consGo=function(n){ _cg(n); try{ window.i18nConsTraducir(); }catch(e){} }; }
+if (typeof window.abrirConstructor==='function'){ var _ac=window.abrirConstructor; window.abrirConstructor=function(){ _ac(); try{ var s=document.getElementById('c-idioma'); if(s) s.value=window.i18nActual(); window.i18nConsTraducir(); }catch(e){} }; }
+// arranque: usuario configurado con idioma ≠ es → interfaz coherente al abrir; con es o sin idioma → cero cambios
+try{ if (window.i18nActual()!=='es'){ window.i18nAplicarUI(); window.i18nConsTraducir(); } }catch(e){}
+// v37-i18n (V36-7): el botón del pie nace mostrando el idioma real
+try{ var _ib=document.getElementById('idiBtn'); if(_ib) _ib.textContent='🌐 '+window.i18nActual().toUpperCase(); }catch(e){}
+}catch(e){ try{ regError('i18n:init', e) }catch(e2){} }
+})();
+</script>
+</body>
+</html>

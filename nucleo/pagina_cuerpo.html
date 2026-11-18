@@ -1,0 +1,1143 @@
+</style>
+</head>
+<body>
+
+<!-- ═══ FACHADA v3.0: CINEMÁTICA DE ARRANQUE ═══ -->
+<div id="boot" onclick="finishBoot()">
+  <canvas id="bootCanvas"></canvas>
+  <div class="mono-title" id="bootTitle" style="top:auto;bottom:25%;font-size:24px;"><em>El Origen</em></div>
+  <div class="mono-sign" id="bootSign">UNA ENTIDAD DIGITAL · MIRROR "El Origen"</div>
+  <div id="bootHint">tocá para entrar</div>
+</div>
+<script>/* PARACAÍDAS independiente del script principal: pase lo que pase (incluso si un
+error matara todo el JS), a los 13 segundos el boot se va y la app aparece. */
+setTimeout(function(){try{var b=document.getElementById('boot');if(b)b.classList.add('gone');
+var a=document.getElementById('app');if(a)a.classList.add('ready');}catch(e){}},13000);</script>
+
+<!-- ═══ FACHADA v3.0: MODO PRESENTACIÓN / DEFENSA ═══ -->
+<div id="pres">
+  <canvas id="presCanvas"></canvas>
+  <div class="mono-title" id="presTitle" style="top:auto;bottom:25%;font-size:24px;"><em>El Origen</em></div>
+  <div class="mono-sign" id="presSign">UNA ENTIDAD DIGITAL · MIRROR "El Origen"</div>
+  <button id="presClose" onclick="closePres()">✕ salir</button>
+  <div id="presHint">deslizá el mouse para encenderlo · esc: salir</div>
+</div>
+
+<div class="bg"><div class="grid"></div></div>
+
+<!-- MODAL TIPO DE DOCUMENTO -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h3>¿Cómo guardamos este documento?</h3>
+    <p>Elegí cómo querés que MIRROR recuerde este archivo.</p>
+    <div class="modal-fname" id="modal-fname"></div>
+    <div class="modal-btns">
+      <button class="mbtn mbtn-session" onclick="confirmDoc('session')">Solo sesión</button>
+      <button class="mbtn mbtn-temp" onclick="confirmDoc('temp')">Temporal (días)</button>
+      <button class="mbtn mbtn-perm" onclick="confirmDoc('perm')">Permanente 🧠</button>
+      <button class="mbtn mbtn-cancel" onclick="cancelDoc()">✕</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL INFORME -->
+<div class="modal-overlay" id="modal-informe">
+  <div class="modal">
+    <h3>📄 Generar informe</h3>
+    <p>El modo analítico redacta un informe académico riguroso (introducción, marco teórico, resultados, discusión y conclusiones) a partir de los datos reales de tu base + la bibliografía cargada. Incluye gráficos. No es un chat.</p>
+    <p style="font-size:11px;opacity:0.6;margin-top:-4px;">Tarda unos segundos: TARS lo escribe en el momento.</p>
+    <div class="modal-fname" id="informe-resumen"></div>
+    <div class="modal-btns">
+      <button class="mbtn mbtn-perm" onclick="descargarWord()">Word (.docx)</button>
+      <button class="mbtn mbtn-temp" onclick="descargarPDF()">PDF</button>
+      <button class="mbtn mbtn-session" onclick="descargarJSON()">JSON</button>
+      <button class="mbtn mbtn-cancel" onclick="cerrarModalInforme()">✕</button>
+    </div>
+    <div class="pin-error" id="informe-status" style="display:block;color:var(--conn-on);text-align:center;margin-top:0.6rem;min-height:14px;"></div>
+  </div>
+</div>
+
+<!-- MODAL SELECTOR DE VOZ (v2.3) -->
+<div class="modal-overlay" id="voz-modal">
+  <div class="modal" style="max-width:440px;">
+    <button class="modal-x" onclick="cerrarSelectorVoz()" aria-label="Cerrar" title="Cerrar (Esc)">✕</button>
+    <h3>🗣 Elegir la voz de lectura</h3>
+    <div id="voz-diag" class="voz-diag" role="status" aria-live="polite"></div>
+    <p style="font-size:11px;opacity:0.65;">Asigná una voz al modo espejo y otra a los modos de análisis y examen (▶ la prueba). Quedan guardadas. Aun con la misma voz, el espejo suena cálido y el análisis más grave. <b>🌐</b> = voz de internet (necesita red; si no suena, elegí una sin 🌐, que vive en tu compu).</p>
+    <p style="font-size:10.5px;opacity:0.55;">📱 En el celular (Samsung): para sumar voces mejores andá a Ajustes → Administración general → Salida de texto a voz → motor de Google → ⚙ → Instalar datos de voz → Español (España). Después cerrá y reabrí MIRROR y elegila acá.</p>
+    <div id="voz-lista" class="voz-lista"></div>
+    <div id="audio-salida-sec" style="margin-top:0.7rem;border-top:1px solid rgba(120,120,255,0.15);padding-top:0.6rem;">
+      <div style="font-size:11px;opacity:0.75;margin-bottom:4px;">🎧 Salida de audio (música y sonidos de la app)</div>
+      <div id="audio-salida-lista" class="voz-lista" style="max-height:14vh;"></div>
+      <div style="font-size:10px;opacity:0.5;margin-top:4px;">Honestidad: la VOZ sintetizada la rutea tu sistema operativo (el navegador no deja elegirle salida); la música y los sonidos sí cambian acá. Emparejar el Bluetooth se hace en el sistema, no acá — una vez emparejado, todo fluye solo al auricular.</div>
+    </div>
+    <div class="modal-btns" style="margin-top:0.8rem;">
+      <button class="mbtn mbtn-cancel" onclick="cerrarSelectorVoz()">cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PIN CONEXIÓN -->
+<!-- ════ v35-mem (Etapa 3) · PANEL «VISTO SIN VIGILADO» — la memoria a la vista del dueño ════ -->
+<div class="modal-overlay" id="mem-modal">
+  <div class="modal" style="max-width:540px;">
+    <h3>◈ Tu memoria, a la vista</h3>
+    <p id="mem-intro">Todo lo que tu MIRROR recuerda de tus charlas (memoria por relevancia). Nada oculto: leelo, buscalo, corregilo (✎), borralo recuerdo por recuerdo o llevátelo en JSON. Es tuyo.</p>
+    <input class="pin-input" type="text" id="mem-buscar" placeholder="buscar en la memoria..." oninput="renderRecuerdos(this.value)" style="letter-spacing:normal;">
+    <div class="voz-lista" id="mem-lista"></div>
+    <div class="modal-btns" style="margin-top:0.8rem;">
+      <button class="mbtn mbtn-session" onclick="consolidarRecuerdos()" title="Agrupa recuerdos de más de 60 días por similitud y los funde en resúmenes. Los originales quedan archivados, no se pierden.">🌙 dormir</button>
+      <button class="mbtn mbtn-perm" onclick="soniarMostrar()" title="Lo que la entidad cruzó de tus recuerdos: patrones, conexiones y tironeos. Cómputo local, nada viaja. No es una experiencia: es un cruce de lo que guardaste.">💤 lo que crucé</button>
+      <button class="mbtn mbtn-perm" onclick="exportarRecuerdos()" title="Descarga toda tu memoria como JSON (backup y portabilidad)">⬇ exportar JSON</button>
+      <button class="mbtn mbtn-cancel" onclick="borrarTodosRecuerdos()">borrar todo</button>
+      <button class="mbtn mbtn-cancel" onclick="cerrarMemoria()">✕ cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ANALISTA (v36-analista · Etapa 11 C2) -->
+<div class="modal-overlay" id="ana-modal">
+  <div class="modal">
+    <h3>📊 Analizar datos (CSV)</h3>
+    <p style="font-size:11px;opacity:0.65;">La matemática se calcula EN TU DISPOSITIVO. Al modelo solo le llega el resumen ya calculado — jamás tus filas crudas. Acepta coma, punto y coma o tabulación; decimales con coma o punto.</p>
+    <input type="file" id="ana-file" accept=".csv,.tsv,.txt" onchange="anaArchivo(event)" style="font-size:11px;margin-bottom:8px;" aria-label="Elegir archivo CSV">
+    <textarea id="ana-texto" placeholder="…o pegá el CSV acá (encabezados en la primera fila)" style="width:100%;height:120px;font-size:11px;background:var(--glass);color:var(--text);border:1px solid var(--border);border-radius:3px;padding:8px;" aria-label="Pegar datos CSV"></textarea>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px;">
+      <button class="mbtn mbtn-perm" onclick="anaAnalizarClick()">analizar 📊</button>
+      <button class="mbtn mbtn-cancel" onclick="anaCerrar()">cerrar</button>
+    </div>
+  </div>
+</div>
+<!-- MODAL ENCUESTAS (v36-encuesta · Etapa 12 C2) -->
+<div class="modal-overlay" id="enc-modal">
+  <div class="modal">
+    <h3>📋 Mis encuestas</h3>
+    <p style="font-size:11px;opacity:0.65;">Formulario autocontenido: lo descargás, lo publicás donde quieras (Pages/Netlify, gratis) y las respuestas caen en TU Firebase (la base de Google que es tuya) — sin Google Forms, sin rastreo. ⚠ El formulario lleva adentro la dirección de tu base: con las reglas abiertas de la guía, quien lo reciba podría leer tu base. Si vas a publicarlo, ajustá las reglas para que «encuestas» acepte solo escrituras. Para opciones múltiples: pregunta y opciones entre paréntesis separadas por | .</p>
+    <input type="text" id="enc-titulo" placeholder="Título de la encuesta" style="width:100%;font-size:12px;background:var(--glass);color:var(--text);border:1px solid var(--border);border-radius:3px;padding:8px;box-sizing:border-box;margin-bottom:6px;" aria-label="Título de la encuesta">
+    <textarea id="enc-preguntas" placeholder="Una pregunta por línea. Ej:&#10;¿Usás IA para estudiar? (sí|no|a veces)&#10;¿Qué te gustaría mejorar?" style="width:100%;height:90px;font-size:11px;background:var(--glass);color:var(--text);border:1px solid var(--border);border-radius:3px;padding:8px;box-sizing:border-box;" aria-label="Preguntas, una por línea"></textarea>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px;">
+      <button class="mbtn mbtn-perm" onclick="encCrearClick()">crear formulario ⬇</button>
+      <button class="mbtn mbtn-cancel" onclick="encCerrar()">cerrar</button>
+    </div>
+    <div class="voz-lista" id="enc-lista" style="margin-top:10px;"></div>
+  </div>
+</div>
+<div class="modal-overlay" id="pin-modal">
+  <div class="pin-modal">
+    <h3>Autorización requerida</h3>
+    <p>Ingresá el PIN para conectar tu base de datos externa.</p>
+    <input class="pin-input" type="password" id="pin-input" placeholder="••••••" maxlength="20" onkeydown="pinKey(event)">
+    <div class="pin-error" id="pin-error">PIN incorrecto. Acceso denegado.</div>
+    <div class="pin-btns">
+      <button class="pin-btn-ok" onclick="confirmPin()">Autorizar acceso</button>
+      <button class="pin-btn-cancel" onclick="cancelPin()">Cancelar</button>
+    </div>
+  </div>
+</div>
+<!-- v38-cumpli (H1): el panel se llena desde JS con el estado REAL de ESTA instalación
+     (qué base configuró quien la armó, si hay dictado local, cuántos recuerdos hay).
+     Escribirlo a mano sería prometer una foto que puede no ser la de hoy. -->
+<div class="modal-overlay" id="ceb-modal">
+    <div class="modal" style="max-width:540px;">
+      <h3>🧅 estado</h3>
+      <div class="ceb-body" id="ceb-body"></div>
+      <div class="modal-btns">
+        <button class="mbtn mbtn-temp" id="ceb-cong-btn" onclick="cebCongelarToggle()">congelar</button>
+        <button class="mbtn mbtn-perm" onclick="cebNeutro()">volver a neutro</button>
+        <button class="mbtn mbtn-session" onclick="cebCerrar()">cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="cumpli-modal">
+  <div class="modal" style="max-width:540px;">
+    <h3>🤖 Qué hago con lo tuyo</h3>
+    <div class="cumpli-body" id="cumpli-body"></div>
+    <div class="modal-btns">
+      <button class="mbtn mbtn-perm" onclick="portaExportar&&addMsg('mirror',portaExportar());cumpliCerrar()">📦 llevarme todo</button>
+      <button class="mbtn mbtn-temp" onclick="cumpliPausaToggle()" id="cumpli-pausa-btn">recordatorio de pausa</button>
+      <button class="mbtn mbtn-session" onclick="cumpliCerrar()">cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ GUÍA PASO A PASO (embebida — vive dentro de la plataforma) ═══ -->
+<div id="guia-ov" style="position:fixed;inset:0;z-index:100000;display:none;overflow-y:auto;background:radial-gradient(ellipse 80% 60% at 50% 0%, #11112a 0%, #05050c 70%);color:#d8d8f0;font-family:'Space Mono', ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', 'DejaVu Sans Mono', monospace;padding:0;">
+  <div style="max-width:760px;margin:0 auto;padding:2.4rem 1.4rem 4rem;">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;border-bottom:1px solid rgba(120,120,255,0.18);padding-bottom:1rem;margin-bottom:1.6rem;">
+      <div>
+        <div style="font-size:10px;letter-spacing:0.3em;color:#646488;text-transform:uppercase;">Proyecto MIRROR · Guía</div>
+        <div style="font-family:'Cormorant Garamond', Georgia, 'Times New Roman', serif;font-size:30px;font-weight:300;color:#f4f4ff;line-height:1.15;">Armá tu MIRROR en <em style="color:#7070ff;font-style:italic;">3 pasos</em></div>
+      </div>
+      <button onclick="cerrarGuia()" style="flex-shrink:0;background:transparent;border:1px solid rgba(120,120,255,0.3);color:#9494c4;border-radius:6px;padding:8px 14px;cursor:pointer;font-family:'Space Mono', ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', 'DejaVu Sans Mono', monospace;font-size:12px;">✕ cerrar</button>
+    </div>
+
+    <p style="font-size:13.5px;line-height:1.7;color:#bcbcd8;margin-bottom:1.8rem;">Tu MIRROR necesita <b style="color:#e8e8ff;">tres cosas tuyas</b>, y las tres son <b style="color:#4ade80;">gratis</b>. No hace falta saber programar: copiás, pegás y listo. Seguilas en orden. Al terminar volvés al constructor y pegás las tres direcciones.</p>
+
+    <!-- PASO 1 -->
+    <div style="border:1px solid rgba(120,120,255,0.14);border-radius:12px;padding:1.2rem 1.3rem;margin-bottom:1.3rem;background:rgba(120,120,255,0.03);">
+      <div style="font-family:'Cormorant Garamond', Georgia, 'Times New Roman', serif;font-size:22px;color:#cfcfff;margin-bottom:0.5rem;"><b style="color:#7070ff;">1.</b> Tu clave de IA <span style="font-size:11px;color:#4ade80;font-family:'Space Mono', ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', 'DejaVu Sans Mono', monospace;">· gratis (Groq)</span></div>
+      <ol style="font-size:13px;line-height:1.75;color:#c4c4dc;padding-left:1.2rem;margin:0;">
+        <li>Entrá a <b>console.groq.com</b> y creá tu cuenta (podés entrar con tu Google).</li>
+        <li>En el menú, andá a <b>API Keys</b> → <b>Create API Key</b> → ponele un nombre → <b>Copiá</b> la clave (empieza con <code style="color:#ffd9a0;">gsk_...</code>). Guardala: la vas a usar en el Paso 2.</li>
+      </ol>
+      <div style="margin-top:0.7rem;font-size:11.5px;color:#ffd9a0;background:rgba(255,180,0,0.06);border:1px solid rgba(255,180,0,0.22);border-radius:8px;padding:8px 11px;line-height:1.5;">⚠ Esa clave es secreta. <b>NO la pegues en MIRROR.</b> Va dentro de tu proxy (Paso 2), donde queda blindada.</div>
+    </div>
+
+    <!-- PASO 2 -->
+    <div style="border:1px solid rgba(120,120,255,0.14);border-radius:12px;padding:1.2rem 1.3rem;margin-bottom:1.3rem;background:rgba(120,120,255,0.03);">
+      <div style="font-family:'Cormorant Garamond', Georgia, 'Times New Roman', serif;font-size:22px;color:#cfcfff;margin-bottom:0.5rem;"><b style="color:#7070ff;">2.</b> Tu proxy <span style="font-size:11px;color:#9494c4;font-family:'Space Mono', ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', 'DejaVu Sans Mono', monospace;">· la caja fuerte (Cloudflare)</span></div>
+      <p style="font-size:12.5px;color:#9a9ac0;line-height:1.6;margin-bottom:0.7rem;">El proxy guarda tu clave del lado del servidor, para que nunca viaje al navegador. Es un "Worker" de Cloudflare, gratis.</p>
+      <div style="margin-bottom:1.1rem;padding:0.95rem 1.05rem;border:1px solid rgba(112,112,255,0.32);border-radius:10px;background:rgba(112,112,255,0.06);">
+        <div style="font-size:12.5px;color:#aeaeff;letter-spacing:0.04em;margin-bottom:0.55rem;"><b>⚡ La forma rápida — 2 clics</b></div>
+        <p style="font-size:12px;color:#9a9ac0;line-height:1.55;margin:0 0 0.75rem;">Tocá el botón: Cloudflare clona el proxy en tu cuenta, te pide tu clave de Groq (la del Paso 1) y lo deja andando. La dirección <b style="color:#ffd9a0;">.workers.dev</b> que te queda es tu <b>PROXY</b>. No tenés que copiar ni pegar nada de código.</p>
+        <a href="https://deploy.workers.cloudflare.com/?url=https://github.com/dariotello/mirror-proxy" target="_blank" rel="noopener" style="display:inline-block;text-decoration:none;">
+          <img src="https://deploy.workers.cloudflare.com/button" alt="Deploy to Cloudflare" height="32" style="height:32px;vertical-align:middle;border:0;" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-block';">
+          <span style="display:none;padding:7px 16px;border:1px solid rgba(112,112,255,0.5);border-radius:6px;color:#aeaeff;font-size:12px;">▸ Deploy to Cloudflare</span>
+        </a>
+      </div>
+      <div style="font-size:10.5px;color:#646488;text-transform:uppercase;letter-spacing:0.12em;margin:0 0 0.7rem;text-align:center;">— o a mano, si preferís —</div>
+      <ol style="font-size:13px;line-height:1.75;color:#c4c4dc;padding-left:1.2rem;margin:0;">
+        <li>Entrá a <b>dash.cloudflare.com</b> y creá una cuenta gratis.</li>
+        <li><b>Workers &amp; Pages</b> → <b>Create</b> → <b>Create Worker</b> → ponele un nombre (ej: <code style="color:#ffd9a0;">mi-mirror-api</code>) → <b>Deploy</b>.</li>
+        <li>Tocá <b>Edit code</b>: borrá todo lo que haya y pegá el código de abajo. Después <b>Deploy</b>.</li>
+        <li><b>Settings</b> → <b>Variables and Secrets</b> → <b>Add</b> → nombre <code style="color:#ffd9a0;">GROQ_KEY</code>, valor = la clave del Paso 1 → guardá y <b>Deploy</b>.</li>
+        <li>(Para la búsqueda en internet 🌐) otro secret: nombre <code style="color:#ffd9a0;">TAVILY_KEY</code>, valor = tu clave de <b>tavily.com</b> (gratis, empieza con <code style="color:#ffd9a0;">tvly-</code>).</li>
+        <li>(Para el motor de respaldo gratis) <b>Settings</b> → <b>Bindings</b> → <b>Add</b> → <b>Workers AI</b>, con el nombre de variable <code style="color:#ffd9a0;">AI</code>. No lleva clave.</li>
+        <li>Copiá la dirección que termina en <b style="color:#ffd9a0;">.workers.dev</b>. Esa es tu <b>PROXY</b>.</li>
+      </ol>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin:0.9rem 0 0.4rem;">
+        <span style="font-size:11px;letter-spacing:0.1em;color:#646488;text-transform:uppercase;">Código del proxy</span>
+        <button onclick="guiaCopiar('guia-proxy-code', this)" style="background:rgba(112,112,255,0.12);border:1px solid rgba(112,112,255,0.35);color:#aeaeff;border-radius:6px;padding:5px 12px;cursor:pointer;font-family:'Space Mono', ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', 'DejaVu Sans Mono', monospace;font-size:11px;">⧉ copiar</button>
+      </div>
+      <textarea id="guia-proxy-code" readonly style="width:100%;height:200px;background:#04040a;border:1px solid rgba(120,120,255,0.18);border-radius:8px;color:#c8c8e8;font-family:'Space Mono', ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', 'DejaVu Sans Mono', monospace;font-size:10.5px;line-height:1.45;padding:10px;resize:vertical;white-space:pre;">/* ════════════════════════════════════════════════════════════════════════
+   MIRROR «El Origen» — PROXY UNIVERSAL (Cloudflare Worker)
+   Una idea original de Darío Alejandro Tello.
+
+   Qué hace este proxy (tu &quot;caja fuerte&quot;):
+   • Recibe los pedidos de tu MIRROR y los reenvía al proveedor de IA real.
+   • Le agrega TU clave del lado del servidor — tu clave NUNCA viaja al navegador.
+   • Rutea a 7 motores, a la búsqueda web (Tavily) y a la transcripción de
+     audio/video (Whisper de Groq, ruta /transcribe), todos por la misma puerta.
+   • Respaldo GRATIS: Cloudflare Workers AI (ruta /cloudflare), que corre acá
+     adentro y no necesita clave ninguna.
+   • Los motores pasan el STREAMING tal cual (SSE): la respuesta aparece
+     palabra por palabra en vez de caer de golpe al final.
+   • Ruta /hf (GET): baja el modelo de la «memoria que entiende» cuando la red
+     del usuario no deja bajarlo directo de Hugging Face. Lista cerrada de modelos.
+   • 3/10/2026: la búsqueda web manda la clave a Tavily como «Authorization: Bearer»
+     (la forma actual de Tavily). Solo en el body, Tavily la rechazaba.
+
+   Cómo se usa:
+   1. Pegá este código en tu Worker de Cloudflare (Workers &amp; Pages → Crear Worker).
+   2. En Settings → Variables and Secrets, agregá SOLO las claves de los motores
+      que vayas a usar (no hace falta cargar todas). Nombres de los secrets:
+        GROQ_KEY, CEREBRAS_KEY, OPENAI_KEY, OPENROUTER_KEY,
+        DEEPSEEK_KEY, TOGETHER_KEY, MISTRAL_KEY, TAVILY_KEY
+      (sin TAVILY_KEY, el botón 🌐 no puede buscar en internet).
+   3. Para el respaldo gratis: Settings → Bindings → Add → Workers AI, con el
+      nombre de variable AI. No lleva clave: el modelo corre en este Worker.
+   4. Deploy. La dirección .workers.dev que te queda es tu PROXY_URL.
+
+   Seguridad: las claves viven como secrets cifrados de Cloudflare. Este archivo
+   NO contiene ninguna clave. No lo subas a ningún lado con claves pegadas.
+   ════════════════════════════════════════════════════════════════════════ */
+
+// Mapa de cada motor → su endpoint real y el nombre del secret con su clave.
+const PROVEEDORES = {
+  groq:       { url: &#x27;https://api.groq.com/openai/v1/chat/completions&#x27;,        secret: &#x27;GROQ_KEY&#x27; },
+  cerebras:   { url: &#x27;https://api.cerebras.ai/v1/chat/completions&#x27;,            secret: &#x27;CEREBRAS_KEY&#x27; },
+  openai:     { url: &#x27;https://api.openai.com/v1/chat/completions&#x27;,             secret: &#x27;OPENAI_KEY&#x27; },
+  openrouter: { url: &#x27;https://openrouter.ai/api/v1/chat/completions&#x27;,          secret: &#x27;OPENROUTER_KEY&#x27; },
+  deepseek:   { url: &#x27;https://api.deepseek.com/v1/chat/completions&#x27;,           secret: &#x27;DEEPSEEK_KEY&#x27; },
+  together:   { url: &#x27;https://api.together.xyz/v1/chat/completions&#x27;,           secret: &#x27;TOGETHER_KEY&#x27; },
+  mistral:    { url: &#x27;https://api.mistral.ai/v1/chat/completions&#x27;,             secret: &#x27;MISTRAL_KEY&#x27; },
+};
+
+// Cabeceras CORS: permiten que tu MIRROR (en tu dominio) hable con este proxy.
+function corsHeaders() {
+  return {
+    &#x27;Access-Control-Allow-Origin&#x27;: &#x27;*&#x27;,
+    &#x27;Access-Control-Allow-Methods&#x27;: &#x27;POST, OPTIONS&#x27;,
+    &#x27;Access-Control-Allow-Headers&#x27;: &#x27;Content-Type, Authorization&#x27;,
+    &#x27;Access-Control-Max-Age&#x27;: &#x27;86400&#x27;,
+  };
+}
+
+function json(obj, status) {
+  return new Response(JSON.stringify(obj), {
+    status: status || 200,
+    headers: { &#x27;Content-Type&#x27;: &#x27;application/json&#x27;, ...corsHeaders() },
+  });
+}
+
+export default {
+  async fetch(request, env) {
+    // Preflight CORS
+    if (request.method === &#x27;OPTIONS&#x27;) {
+      return new Response(null, { status: 204, headers: corsHeaders() });
+    }
+
+    // ── /hf — el modelo de la «memoria que entiende» ──
+    // Algunas redes no dejan que el navegador baje de huggingface.co. Esta ruta lo baja Cloudflare
+    // y lo devuelve con permiso. LISTA CERRADA: solo el modelo de la app, no es un proxy abierto.
+    // Va ANTES del control de POST, porque el modelo se baja con GET.
+    const _hfUrl = new URL(request.url);
+    if ((request.method === &#x27;GET&#x27; || request.method === &#x27;HEAD&#x27;) &amp;&amp; _hfUrl.pathname.startsWith(&#x27;/hf/&#x27;)) {
+      const path = _hfUrl.pathname.slice(4);
+      const PERMITIDOS = [&#x27;Xenova/multilingual-e5-small/&#x27;];
+      if (path.includes(&#x27;..&#x27;) || !PERMITIDOS.some(p =&gt; path.startsWith(p))) {
+        return new Response(&#x27;No permitido&#x27;, { status: 403, headers: { &#x27;Access-Control-Allow-Origin&#x27;: &#x27;*&#x27; } });
+      }
+      const r = await fetch(&#x27;https://huggingface.co/&#x27; + path, { method: request.method, cf: { cacheEverything: true, cacheTtl: 2592000 } });
+      const h = new Headers();
+      [&#x27;content-type&#x27;, &#x27;content-length&#x27;, &#x27;etag&#x27;, &#x27;last-modified&#x27;].forEach(k =&gt; { const v = r.headers.get(k); if (v) h.set(k, v); });
+      h.set(&#x27;Access-Control-Allow-Origin&#x27;, &#x27;*&#x27;);
+      h.set(&#x27;Access-Control-Expose-Headers&#x27;, &#x27;content-length, etag&#x27;);
+      h.set(&#x27;Cache-Control&#x27;, &#x27;public, max-age=2592000&#x27;);
+      return new Response(r.body, { status: r.status, headers: h });
+    }
+    if (request.method !== &#x27;POST&#x27;) {
+      return json({ error: { message: &#x27;Usá POST.&#x27; } }, 405);
+    }
+
+    // La ruta define el destino: /groq, /openai, /tavily, etc.
+    const ruta = new URL(request.url).pathname.replace(/^\/+/, &#x27;&#x27;).toLowerCase();
+
+    // ── Búsqueda web (Tavily) ──
+    if (ruta === &#x27;tavily&#x27;) {
+      const key = String(env.TAVILY_KEY || &#x27;&#x27;).trim();
+      if (!key) return json({ error: { message: &#x27;Falta el secret TAVILY_KEY en el proxy.&#x27; } }, 400);
+      let cuerpo;
+      try { cuerpo = await request.json(); } catch (e) { return json({ error: { message: &#x27;Body inválido.&#x27; } }, 400); }
+      cuerpo.api_key = key;   // forma vieja de Tavily (por las dudas)
+      try {
+        const r = await fetch(&#x27;https://api.tavily.com/search&#x27;, {
+          method: &#x27;POST&#x27;,
+          headers: { &#x27;Content-Type&#x27;: &#x27;application/json&#x27;, &#x27;Authorization&#x27;: &#x27;Bearer &#x27; + key },  // forma actual
+          body: JSON.stringify(cuerpo),
+        });
+        const txt = await r.text();
+        return new Response(txt, { status: r.status, headers: { &#x27;Content-Type&#x27;: &#x27;application/json&#x27;, ...corsHeaders() } });
+      } catch (e) {
+        return json({ error: { message: &#x27;El proxy no pudo contactar a Tavily: &#x27; + e.message } }, 502);
+      }
+    }
+
+    // ── Transcripción de audio/video (Whisper de Groq) ──
+    // Recibe un archivo (multipart/form-data, campo &quot;file&quot;) y devuelve { text }.
+    if (ruta === &#x27;transcribe&#x27; || ruta === &#x27;groq-audio&#x27;) {
+      const key = env.GROQ_KEY;
+      if (!key) return json({ error: { message: &#x27;Falta el secret GROQ_KEY en el proxy (la transcripción de audio usa Whisper de Groq).&#x27; } }, 400);
+      let form;
+      try { form = await request.formData(); } catch (e) { return json({ error: { message: &#x27;Esperaba un archivo de audio (multipart/form-data).&#x27; } }, 400); }
+      const file = form.get(&#x27;file&#x27;);
+      if (!file) return json({ error: { message: &#x27;Falta el archivo (campo &quot;file&quot;).&#x27; } }, 400);
+      const fwd = new FormData();
+      fwd.append(&#x27;file&#x27;, file, (file.name || &#x27;audio.webm&#x27;));
+      fwd.append(&#x27;model&#x27;, form.get(&#x27;model&#x27;) || &#x27;whisper-large-v3-turbo&#x27;);
+      if (form.get(&#x27;language&#x27;)) fwd.append(&#x27;language&#x27;, form.get(&#x27;language&#x27;));
+      fwd.append(&#x27;response_format&#x27;, form.get(&#x27;response_format&#x27;) || &#x27;json&#x27;);
+      try {
+        const r = await fetch(&#x27;https://api.groq.com/openai/v1/audio/transcriptions&#x27;, {
+          method: &#x27;POST&#x27;,
+          headers: { &#x27;Authorization&#x27;: &#x27;Bearer &#x27; + key },
+          body: fwd,
+        });
+        const txt = await r.text();
+        return new Response(txt, { status: r.status, headers: { &#x27;Content-Type&#x27;: &#x27;application/json&#x27;, ...corsHeaders() } });
+      } catch (e) {
+        return json({ error: { message: &#x27;El proxy no pudo transcribir: &#x27; + e.message } }, 502);
+      }
+    }
+
+    // ── Respaldo gratis: Cloudflare Workers AI ──
+    // No tiene endpoint ni clave: el modelo corre acá adentro, vía el binding AI.
+    // La respuesta se envuelve en formato OpenAI para que la app la lea igual que a Groq.
+    if (ruta === &#x27;cloudflare&#x27;) {
+      if (!env.AI) {
+        return json({ error: { message: &#x27;Falta el binding AI en el proxy. Agregalo en Settings → Bindings → Add → Workers AI, con el nombre de variable AI.&#x27; } }, 400);
+      }
+      let cuerpo;
+      try { cuerpo = await request.json(); } catch (e) { return json({ error: { message: &#x27;Body inválido.&#x27; } }, 400); }
+      const modelo = cuerpo.model || &#x27;@cf/meta/llama-3.3-70b-instruct-fp8-fast&#x27;;
+      try {
+        const salida = await env.AI.run(modelo, {
+          messages: cuerpo.messages || [],
+          max_tokens: cuerpo.max_tokens || cuerpo.max_completion_tokens || 2000,
+          temperature: (typeof cuerpo.temperature === &#x27;number&#x27;) ? cuerpo.temperature : 0.6,
+        });
+        const texto = (salida &amp;&amp; (salida.response ?? salida.result ?? &#x27;&#x27;)) || &#x27;&#x27;;
+        return json({
+          choices: [{ message: { role: &#x27;assistant&#x27;, content: texto } }],
+          model: modelo,
+          _via: &#x27;cloudflare-workers-ai&#x27;,
+        });
+      } catch (e) {
+        return json({ error: { message: &#x27;El proxy no pudo usar Workers AI: &#x27; + e.message } }, 502);
+      }
+    }
+
+    // ── Motores de IA (formato OpenAI chat completions) ──
+    const prov = PROVEEDORES[ruta];
+    if (!prov) {
+      return json({ error: { message: &#x27;Ruta desconocida: /&#x27; + ruta + &#x27;. Usá una de: &#x27; + Object.keys(PROVEEDORES).join(&#x27;, &#x27;) + &#x27;, cloudflare, tavily, transcribe.&#x27; } }, 404);
+    }
+    const key = env[prov.secret];
+    if (!key) {
+      return json({ error: { message: &#x27;Falta el secret &#x27; + prov.secret + &#x27; en el proxy. Cargalo en Settings → Variables and Secrets.&#x27; } }, 400);
+    }
+
+    let body;
+    try { body = await request.text(); } catch (e) { return json({ error: { message: &#x27;Body inválido.&#x27; } }, 400); }
+
+    const headers = {
+      &#x27;Content-Type&#x27;: &#x27;application/json&#x27;,
+      &#x27;Authorization&#x27;: &#x27;Bearer &#x27; + key,
+    };
+    // OpenRouter pide (opcionalmente) cabeceras de identificación; las mandamos genéricas.
+    if (ruta === &#x27;openrouter&#x27;) {
+      headers[&#x27;HTTP-Referer&#x27;] = &#x27;https://mirror-el-origen.app&#x27;;
+      headers[&#x27;X-Title&#x27;] = &#x27;MIRROR El Origen&#x27;;
+    }
+
+    try {
+      const r = await fetch(prov.url, { method: &#x27;POST&#x27;, headers, body });
+      // STREAMING: si el proveedor contestó en SSE, el stream pasa de largo, sin leerlo.
+      const ctype = r.headers.get(&#x27;content-type&#x27;) || &#x27;&#x27;;
+      if (r.ok &amp;&amp; r.body &amp;&amp; ctype.includes(&#x27;text/event-stream&#x27;)) {
+        return new Response(r.body, {
+          status: r.status,
+          headers: {
+            &#x27;Content-Type&#x27;: &#x27;text/event-stream; charset=utf-8&#x27;,
+            &#x27;Cache-Control&#x27;: &#x27;no-cache&#x27;,
+            ...corsHeaders(),
+          },
+        });
+      }
+      const txt = await r.text();
+      // Reenviamos la respuesta del proveedor tal cual (la app espera formato OpenAI).
+      return new Response(txt, { status: r.status, headers: { &#x27;Content-Type&#x27;: &#x27;application/json&#x27;, ...corsHeaders() } });
+    } catch (e) {
+      return json({ error: { message: &#x27;El proxy no pudo contactar al proveedor (&#x27; + ruta + &#x27;): &#x27; + e.message } }, 502);
+    }
+  },
+};
+</textarea>
+    </div>
+
+    <!-- PASO 3 -->
+    <div style="border:1px solid rgba(120,120,255,0.14);border-radius:12px;padding:1.2rem 1.3rem;margin-bottom:1.3rem;background:rgba(120,120,255,0.03);">
+      <div style="font-family:'Cormorant Garamond', Georgia, 'Times New Roman', serif;font-size:22px;color:#cfcfff;margin-bottom:0.5rem;"><b style="color:#7070ff;">3.</b> Tu memoria <span style="font-size:11px;color:#4ade80;font-family:'Space Mono', ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', 'DejaVu Sans Mono', monospace;">· gratis (Firebase)</span></div>
+      <ol style="font-size:13px;line-height:1.75;color:#c4c4dc;padding-left:1.2rem;margin:0;">
+        <li>Entrá a <b>console.firebase.google.com</b> → <b>Crear un proyecto</b> (ponele cualquier nombre).</li>
+        <li>En el menú, <b>Realtime Database</b> → <b>Crear base de datos</b> → elegí ubicación → <b>modo de prueba</b> → Habilitar.</li>
+        <li><b style="color:#ffd9a0;">Importante — para que NO caduque a los 30 días:</b> andá a la pestaña <b>Reglas</b>, borrá lo que haya, pegá esto y <b>Publicá</b>:</li>
+      </ol>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin:0.8rem 0 0.4rem;">
+        <span style="font-size:11px;letter-spacing:0.1em;color:#646488;text-transform:uppercase;">Reglas permanentes</span>
+        <button onclick="guiaCopiar('guia-fb-rules', this)" style="background:rgba(112,112,255,0.12);border:1px solid rgba(112,112,255,0.35);color:#aeaeff;border-radius:6px;padding:5px 12px;cursor:pointer;font-family:'Space Mono', ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', 'DejaVu Sans Mono', monospace;font-size:11px;">⧉ copiar</button>
+      </div>
+      <textarea id="guia-fb-rules" readonly style="width:100%;height:96px;background:#04040a;border:1px solid rgba(120,120,255,0.18);border-radius:8px;color:#ffe9c2;font-family:'Space Mono', ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', 'DejaVu Sans Mono', monospace;font-size:12px;line-height:1.5;padding:10px;resize:vertical;white-space:pre;">{
+  "rules": {
+    ".read": true,
+    ".write": true
+  }
+}</textarea>
+      <ol start="4" style="font-size:13px;line-height:1.75;color:#c4c4dc;padding-left:1.2rem;margin:0.6rem 0 0;">
+        <li>Copiá la dirección que termina en <b style="color:#ffd9a0;">.firebaseio.com</b>. Esa es tu <b>MEMORIA</b>.</li>
+      </ol>
+      <div style="margin-top:0.7rem;font-size:11.5px;color:#ffd9a0;background:rgba(255,180,0,0.06);border:1px solid rgba(255,180,0,0.22);border-radius:8px;padding:8px 11px;line-height:1.5;">Honestidad: estas reglas dejan tu base abierta y permanente. Para tu memoria personal alcanza. Si vas a guardar datos sensibles de otras personas, conviene reglas con autenticación.</div>
+    </div>
+
+    <!-- CIERRE -->
+    <div style="border:1px solid rgba(74,222,128,0.25);border-radius:12px;padding:1.2rem 1.3rem;background:rgba(74,222,128,0.05);">
+      <div style="font-family:'Cormorant Garamond', Georgia, 'Times New Roman', serif;font-size:22px;color:#bdf0cf;margin-bottom:0.5rem;">✦ Ya está. Volvé al constructor.</div>
+      <p style="font-size:13px;color:#c4dcc8;line-height:1.7;margin:0;">Ahora tenés las tres: tu <b>proxy</b> (.workers.dev), tu <b>memoria</b> (.firebaseio.com) y un <b>PIN</b> que inventás vos. Pegalas en el paso "Conectá tus direcciones" y dale a <b>Dar vida a mi MIRROR</b>.</p>
+    </div>
+
+    <div style="text-align:center;margin-top:1.8rem;font-size:10px;letter-spacing:0.15em;color:#5a5a7a;">MIRROR «El Origen» · una idea original de Darío Alejandro Tello</div>
+    <div style="text-align:center;margin-top:1.2rem;">
+      <button onclick="cerrarGuia()" style="background:rgba(112,112,255,0.12);border:1px solid rgba(112,112,255,0.4);color:#cfcfff;border-radius:8px;padding:10px 22px;cursor:pointer;font-family:'Space Mono', ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', 'DejaVu Sans Mono', monospace;font-size:13px;">Volver al constructor ▸</button>
+    </div>
+  </div>
+</div>
+
+<div id="premium-ov" style="position:fixed;inset:0;z-index:100000;display:none;overflow-y:auto;background:radial-gradient(ellipse 80% 60% at 50% 0%, #11112a 0%, #05050c 70%);color:#d8d8f0;font-family:'Space Mono', ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', 'DejaVu Sans Mono', monospace;padding:0;">
+  <div style="max-width:760px;margin:0 auto;padding:2.4rem 1.4rem 4rem;">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;border-bottom:1px solid rgba(120,120,255,0.18);padding-bottom:1rem;margin-bottom:1.6rem;">
+      <div>
+        <div style="font-size:10px;letter-spacing:0.3em;color:#646488;text-transform:uppercase;">Proyecto MIRROR · Insumos</div>
+        <div style="font-family:'Cormorant Garamond', Georgia, 'Times New Roman', serif;font-size:30px;font-weight:300;color:#f4f4ff;line-height:1.15;">Lo gratis y lo <em style="color:#ffb86b;font-style:italic;">premium</em></div>
+      </div>
+      <button onclick="cerrarPremium()" style="flex-shrink:0;background:transparent;border:1px solid rgba(120,120,255,0.3);color:#9494c4;border-radius:6px;padding:8px 14px;cursor:pointer;font-family:'Space Mono', ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', 'DejaVu Sans Mono', monospace;font-size:12px;">✕ cerrar</button>
+    </div>
+
+    <p style="font-size:13.5px;line-height:1.7;color:#bcbcd8;margin-bottom:1.8rem;">Tu MIRROR funciona <b style="color:#4ade80;">completo siendo gratis</b>. De verdad. Acá el pago nunca compra «que ande» — compra <b style="color:#ffb86b;">MÁS</b>. Te decimos qué cuesta y por qué, <b style="color:#e8e8ff;">sin humo</b>.</p>
+
+    <!-- GRATIS -->
+    <div style="border:1px solid rgba(74,222,128,0.22);border-radius:12px;padding:1.2rem 1.3rem;margin-bottom:1.3rem;background:rgba(74,222,128,0.04);">
+      <div style="font-family:'Cormorant Garamond', Georgia, 'Times New Roman', serif;font-size:24px;color:#bdf0cf;margin-bottom:0.8rem;">✓ Gratis — y alcanza <em style="color:#4ade80;font-style:italic;">de sobra</em></div>
+      <ul style="font-size:13px;line-height:1.8;color:#c4dcc8;padding-left:1.15rem;margin:0;">
+        <li><b style="color:#e8e8ff;">Motor Groq:</b> rápido y potente, gratis y sin tarjeta. <b style="color:#e8e8ff;">Respaldo Cloudflare:</b> 10.000 neuronas por día, también sin tarjeta, y va por tu mismo proxy (no hace falta ninguna clave nueva). <b style="color:#e8e8ff;">Cerebras</b> ya NO entra acá: desde el 17/08/2026 pide tarjeta para darte US$5 de crédito y después es pago por uso.</li>
+        <li><b style="color:#e8e8ff;">Toda la app:</b> chat, memoria, documentos, transcripción de audio y video (Whisper), lectura en voz alta, dictado por voz, búsqueda web (Tavily tiene cuota gratis) y la fachada cinematográfica.</li>
+        <li><b style="color:#e8e8ff;">Tu memoria</b> (Firebase, plan gratis) y <b style="color:#e8e8ff;">tu proxy</b> (Cloudflare Worker, plan gratis).</li>
+      </ul>
+      <div style="margin-top:0.9rem;font-size:12px;color:#bdf0cf;background:rgba(74,222,128,0.06);border:1px solid rgba(74,222,128,0.22);border-radius:8px;padding:9px 12px;line-height:1.55;">Si no querés pagar un peso, <b>no hace falta</b>. Tu MIRROR ya está entero.</div>
+    </div>
+
+    <!-- PREMIUM -->
+    <div style="border:1px solid rgba(255,184,107,0.25);border-radius:12px;padding:1.2rem 1.3rem;margin-bottom:1.3rem;background:rgba(255,184,107,0.04);">
+      <div style="font-family:'Cormorant Garamond', Georgia, 'Times New Roman', serif;font-size:24px;color:#ffd9a0;margin-bottom:0.5rem;">💎 Premium — el pago compra <em style="color:#ffb86b;font-style:italic;">MÁS</em></div>
+      <p style="font-size:12px;color:#c8b89a;line-height:1.6;margin:0 0 1rem;">No para «que funcione» (ya funciona gratis), sino para tener más músculo cuando lo necesites. En todos pagás <b style="color:#ffd9a0;">por uso</b>: sin suscripción obligatoria, empezás gratis y subís solo si querés.</p>
+
+      <div style="border-top:1px solid rgba(255,184,107,0.15);padding-top:0.9rem;margin-bottom:0.9rem;">
+        <div style="font-size:13.5px;color:#f0e0c8;margin-bottom:0.3rem;">🧠 Modelos más potentes</div>
+        <div style="font-size:12px;color:#b8a888;line-height:1.6;">Claude o GPT-4o vía <b style="color:#ffd9a0;">OpenRouter</b> (una sola clave, cientos de modelos). Mejor razonamiento y matices. Pagás por uso. <a href="https://openrouter.ai/models" target="_blank" rel="noopener" style="color:#ffd9a0;text-decoration:underline;">ver precios actuales ↗</a></div>
+      </div>
+      <div style="border-top:1px solid rgba(255,184,107,0.15);padding-top:0.9rem;margin-bottom:0.9rem;">
+        <div style="font-size:13.5px;color:#f0e0c8;margin-bottom:0.3rem;">💾 Más memoria</div>
+        <div style="font-size:12px;color:#b8a888;line-height:1.6;">El plan gratis de Firebase es generoso. Si guardás muchísimo, el plan Blaze cobra <b>por uso</b> solo lo que excedas. <a href="https://firebase.google.com/pricing" target="_blank" rel="noopener" style="color:#ffd9a0;text-decoration:underline;">ver precios actuales ↗</a></div>
+      </div>
+      <div style="border-top:1px solid rgba(255,184,107,0.15);padding-top:0.9rem;">
+        <div style="font-size:13.5px;color:#f0e0c8;margin-bottom:0.3rem;">🌐 Más búsqueda web</div>
+        <div style="font-size:12px;color:#b8a888;line-height:1.6;"><b style="color:#ffd9a0;">Tavily</b> da búsquedas gratis por mes. Si necesitás más volumen, hay plan pago por uso. <a href="https://tavily.com/#pricing" target="_blank" rel="noopener" style="color:#ffd9a0;text-decoration:underline;">ver precios actuales ↗</a></div>
+      </div>
+    </div>
+
+    <!-- PRÓXIMAMENTE -->
+    <div style="border:1px dashed rgba(120,120,255,0.28);border-radius:12px;padding:1.2rem 1.3rem;margin-bottom:1.3rem;background:rgba(120,120,255,0.02);">
+      <div style="font-family:'Cormorant Garamond', Georgia, 'Times New Roman', serif;font-size:24px;color:#9a9ac4;margin-bottom:0.5rem;">⏳ Próximamente — todavía <em style="color:#7070ff;font-style:italic;">no</em>, y no te mentimos</div>
+      <p style="font-size:12px;color:#8484a8;line-height:1.6;margin:0 0 0.9rem;">No vas a encontrar un botón que prometa estas cosas. Hoy <b>no están</b>. Cuando estén, las vas a ver acá de verdad.</p>
+      <ul style="font-size:12.5px;line-height:1.75;color:#a0a0c0;padding-left:1.15rem;margin:0;">
+        <li><b style="color:#c4c4dc;">👁 Ver imágenes y video.</b> Hoy MIRROR transcribe lo que se <i>dice</i> en un audio o video; entender lo que se <i>ve</i> llega después.</li>
+        <li><b style="color:#c4c4dc;">💬 WhatsApp.</b> Que MIRROR lea tus mensajes y te prepare borradores de respuesta para revisar. En construcción. <span style="color:#8fdfb0;">(📧 Gmail ya está disponible: mirá el panel de conexiones.)</span></li>
+      </ul>
+    </div>
+
+    <div style="text-align:center;margin-top:1.8rem;font-size:10px;letter-spacing:0.15em;color:#5a5a7a;">MIRROR «El Origen» · una idea original de Darío Alejandro Tello</div>
+    <div style="text-align:center;margin-top:1.2rem;">
+      <button onclick="cerrarPremium()" style="background:rgba(112,112,255,0.12);border:1px solid rgba(112,112,255,0.4);color:#cfcfff;border-radius:8px;padding:10px 22px;cursor:pointer;font-family:'Space Mono', ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', 'DejaVu Sans Mono', monospace;font-size:13px;">Entendido ▸</button>
+    </div>
+  </div>
+</div>
+
+<div id="gmail-ov" style="position:fixed;inset:0;z-index:100000;display:none;overflow-y:auto;background:radial-gradient(ellipse 80% 60% at 50% 0%, #11112a 0%, #05050c 70%);color:#d8d8f0;font-family:'Space Mono', ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', 'DejaVu Sans Mono', monospace;padding:0;">
+  <div style="max-width:780px;margin:0 auto;padding:2rem 1.4rem 3rem;">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-bottom:1.3rem;">
+      <div style="font-family:'Cormorant Garamond', Georgia, 'Times New Roman', serif;font-size:30px;color:#cfcfff;line-height:1.1;">📧 Tu MIRROR responde tus mails</div>
+      <button onclick="cerrarGmail()" style="flex-shrink:0;background:transparent;border:1px solid rgba(120,120,255,0.3);color:#9494c4;border-radius:6px;padding:8px 14px;cursor:pointer;font-family:'Space Mono', ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', 'DejaVu Sans Mono', monospace;font-size:12px;">✕ cerrar</button>
+    </div>
+    <p style="font-size:13px;color:#b8b8d8;line-height:1.7;margin:0 0 1rem;">Tu MIRROR lee los mails que vos elijas y te deja <b style="color:#e8e8ff;">borradores de respuesta</b> escritos con tu estilo, en la carpeta <b>Borradores</b> de Gmail. <b style="color:#4ade80;">Nunca envía solo</b>: vos leés, corregís y mandás. Honesto por diseño.</p>
+    <div style="border:1px solid rgba(74,222,128,0.25);border-radius:10px;background:rgba(74,222,128,0.05);padding:0.9rem 1.1rem;margin-bottom:1.3rem;font-size:12px;color:#bdf0cf;line-height:1.65;">✓ <b>Gratis y sin clave nueva.</b> Reusa el mismo proxy y la misma clave de IA que ya configuraste para tu MIRROR. Corre en los servidores de Google, dentro de TU cuenta. Sin servidor central, sin costo extra.</div>
+    <div style="border:1px solid rgba(112,112,255,0.3);border-radius:10px;background:rgba(112,112,255,0.05);padding:0.9rem 1.1rem;margin-bottom:1.2rem;font-size:12.5px;color:#cfcfff;line-height:1.65;">🖐 <b>Vos tenés el control.</b> MIRROR no escanea tu bandeja. Solo redacta los mails que VOS marcás a mano con la etiqueta <b style="color:#00ffcc;">MIRROR-contestar</b>. El resto ni los mira.</div>
+    <div style="font-family:'Cormorant Garamond', Georgia, 'Times New Roman', serif;font-size:22px;color:#cfcfff;margin-bottom:0.6rem;">Paso a paso</div>
+    <ol style="font-size:12.5px;color:#c4c4dc;line-height:1.85;padding-left:1.2rem;margin:0 0 1.3rem;">
+      <li>Tocá <b style="color:#9aa0ff;">Copiar mi script ya configurado</b> (abajo): viene con tu proxy y tu estilo puestos.</li>
+      <li>Entrá a <b style="color:#ffd9a0;">script.google.com</b> → <b>Nuevo proyecto</b>. Borrá todo y pegá el script. Guardá (💾).</li>
+      <li>Ejecutá una vez <b style="color:#00ffcc;">mirrorCrearEtiquetas</b> → crea en Gmail las etiquetas del flujo. (Google pide permiso para tus mails: aceptá, es tu cuenta.)</li>
+      <li>En <b>Gmail</b>, ponele la etiqueta <b style="color:#00ffcc;">MIRROR-contestar</b> a los mails que quieras contestar (🏷 → tildás la etiqueta). Un clic por mail.</li>
+      <li>Probá seguro: ejecutá <b style="color:#00ffcc;">mirrorProbar</b> → te muestra el borrador <b>sin crearlo</b>. Cuando te guste, ejecutá <b style="color:#00ffcc;">mirrorRevisarMails</b> y revisá el borrador en Gmail.</li>
+      <li><b>Opcional automático:</b> <b style="color:#00ffcc;">mirrorInstalarDisparador</b> revisa cada 15 min, pero <b>siempre solo</b> los mails que etiquetaste. Para frenar: <b>mirrorQuitarDisparador</b>.</li>
+    </ol>
+    <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:0.6rem;">
+      <button onclick="generarScriptGmail()" style="background:rgba(112,112,255,0.16);border:1px solid rgba(112,112,255,0.5);color:#dcdcff;border-radius:8px;padding:10px 18px;cursor:pointer;font-family:'Space Mono', ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', 'DejaVu Sans Mono', monospace;font-size:12.5px;">📋 Copiar mi script ya configurado</button>
+      <span id="gmail-copy-msg" style="font-size:11.5px;color:#8fdfb0;"></span>
+    </div>
+    <pre id="gmail-code" style="background:#05050c;border:1px solid rgba(120,120,255,0.18);border-radius:8px;padding:1rem;font-size:10.5px;line-height:1.5;color:#b8c0e8;overflow-x:auto;max-height:300px;white-space:pre;font-family:'Space Mono', ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', 'DejaVu Sans Mono', monospace;">/**
+ * ════════════════════════════════════════════════════════════════════════
+ *  MIRROR «El Origen» — AGENTE DE GMAIL  ·  v1.1  (control manual)
+ *  Tu MIRROR te deja BORRADORES de respuesta, pero SOLO en los mails que
+ *  VOS elegís. NUNCA envía solo: vos leés, corregís y mandás.
+ *
+ *  Idea original de Darío Alejandro Tello · Apache 2.0
+ *
+ *  CÓMO FUNCIONA (vos tenés el control, gratis, sin servidor central):
+ *   • Corre en los servidores de Google, dentro de TU cuenta (Apps Script).
+ *   • Reusa el MISMO proxy y la MISMA clave de IA gratis que ya tiene tu MIRROR.
+ *   • NO escanea tu bandeja. Solo mira los mails que VOS marcaste a mano con
+ *     la etiqueta «MIRROR-contestar». A esos les deja un borrador con tu estilo
+ *     y les saca la etiqueta. El resto ni los toca.
+ *
+ *  INSTALACIÓN (5 minutos):
+ *   1. https://script.google.com → Nuevo proyecto. Borrá todo y pegá ESTO.
+ *   2. Completá el bloque CONFIG (proxy, modelo, tu estilo).
+ *   3. Guardá (💾). Ejecutá una vez  mirrorCrearEtiquetas  → crea en Gmail las
+ *      etiquetas «MIRROR-contestar» y «MIRROR-borrador-listo».
+ *      (Google te va a pedir permiso para tus mails: aceptá, es tu cuenta.)
+ *
+ *  USO DIARIO (así controlás qué contesta y qué no):
+ *   • En Gmail, abrí (o seleccioná) el mail que querés contestar y ponele la
+ *     etiqueta «MIRROR-contestar» (ícono 🏷 → tildás la etiqueta). Un clic.
+ *   • Ejecutá  mirrorRevisarMails  (o dejá el disparador, ver abajo): MIRROR
+ *     deja el borrador en Borradores, y le cambia la etiqueta a «borrador-listo».
+ *   • Revisás el borrador, lo corregís y lo mandás VOS.
+ *
+ *  PRUEBA SEGURA:  mirrorProbar  → muestra el borrador del primer mail
+ *  etiquetado, SIN crearlo (mirá  Ver → Registro).
+ *
+ *  AUTOMÁTICO (opcional):  mirrorInstalarDisparador  → cada 15 min revisa SOLO
+ *  los mails que etiquetaste. Para frenar:  mirrorQuitarDisparador.
+ * ════════════════════════════════════════════════════════════════════════
+ */
+
+// ─────────────────────────── CONFIG (completá esto) ───────────────────────────
+const CONFIG = {
+
+  // Tu proxy (el mismo .workers.dev de tu MIRROR) + la ruta del motor gratis.
+  PROXY_URL: &#x27;https://TU-PROXY.TU-SUBDOMINIO.workers.dev&#x27;,
+  RUTA:      &#x27;groq&#x27;,
+
+  // El modelo (para Groq gratis suele andar bien):
+  MODELO:    &#x27;openai/gpt-oss-120b&#x27;,
+
+  // IDIOMA de las respuestas (igual respeta el idioma del mail entrante).
+  IDIOMA:    &#x27;español rioplatense&#x27;,
+
+  // TU ESTILO / QUIÉN SOS → para que el borrador suene como vos.
+  // Pegá acá el mismo &quot;núcleo&quot; que pusiste en tu MIRROR.
+  PERFIL: &#x27;Describí acá quién sos y tu estilo de escritura (lo mismo que pusiste en tu MIRROR).&#x27;,
+
+  // ── CONTROL MANUAL: las dos etiquetas del flujo ──
+  // La que VOS aplicás a mano a los mails que querés contestar:
+  ETIQUETA_PEDIR: &#x27;MIRROR-contestar&#x27;,
+  // La que el script pone cuando ya dejó el borrador (para no repetir):
+  ETIQUETA_LISTO: &#x27;MIRROR-borrador-listo&#x27;,
+
+  // Firma del borrador (dejala &#x27;&#x27; si no querés firma).
+  FIRMA: &#x27;— [Tu nombre]&#x27;,
+
+  // Cuántos mails procesar por corrida.
+  MAX_HILOS: 10,
+
+  // Parámetros del modelo.
+  TEMPERATURA: 0.5,
+  MAX_TOKENS:  700,
+
+  // Tope de caracteres del mail entrante que se manda al modelo (ahorra tokens).
+  MAX_CHARS_ENTRANTE: 3500
+};
+// ───────────────────────────────────────────────────────────────────────────────
+
+
+/** Crea en Gmail las dos etiquetas del flujo. Ejecutar UNA vez al principio. */
+function mirrorCrearEtiquetas() {
+  obtenerEtiqueta_(CONFIG.ETIQUETA_PEDIR);
+  obtenerEtiqueta_(CONFIG.ETIQUETA_LISTO);
+  Logger.log(&#x27;✅ Etiquetas listas. En Gmail, ponele «&#x27; + CONFIG.ETIQUETA_PEDIR +
+             &#x27;» a los mails que quieras que MIRROR conteste.&#x27;);
+}
+
+/** PRUEBA SEGURA: arma el borrador del primer mail etiquetado, pero NO lo crea. */
+function mirrorProbar() {
+  const hilos = GmailApp.search(&#x27;label:&#x27; + queryLabel_(CONFIG.ETIQUETA_PEDIR), 0, 1);
+  if (!hilos.length) {
+    Logger.log(&#x27;No hay mails con la etiqueta «&#x27; + CONFIG.ETIQUETA_PEDIR +
+               &#x27;». Ponésela a un mail en Gmail y volvé a probar.&#x27;);
+    return;
+  }
+  const msg = ultimoEntrante_(hilos[0]);
+  if (!msg) { Logger.log(&#x27;Ese hilo no tiene un mensaje entrante para responder.&#x27;); return; }
+  Logger.log(&#x27;── MAIL ENTRANTE ──\nDe: &#x27; + msg.getFrom() + &#x27;\nAsunto: &#x27; + msg.getSubject() +
+             &#x27;\n\n&#x27; + recortar_(msg.getPlainBody(), 800));
+  Logger.log(&#x27;\n── BORRADOR QUE MIRROR DEJARÍA (prueba, NO creado) ──\n\n&#x27; + redactarBorrador_(msg));
+}
+
+/** CORRIDA REAL: solo los mails que VOS etiquetaste. Deja borradores. */
+function mirrorRevisarMails() {
+  const elPedir = obtenerEtiqueta_(CONFIG.ETIQUETA_PEDIR);
+  const elListo = obtenerEtiqueta_(CONFIG.ETIQUETA_LISTO);
+  const hilos = GmailApp.search(&#x27;label:&#x27; + queryLabel_(CONFIG.ETIQUETA_PEDIR), 0, CONFIG.MAX_HILOS);
+  let hechos = 0, saltados = 0;
+  hilos.forEach(function (hilo) {
+    try {
+      const msg = ultimoEntrante_(hilo);
+      if (!msg) { saltados++; return; }
+      const texto = redactarBorrador_(msg);
+      if (!texto) { saltados++; return; }
+      hilo.createDraftReply(texto);   // ← SOLO borrador. Nunca envía.
+      hilo.removeLabel(elPedir);      // sale de la cola: ya está hecho
+      hilo.addLabel(elListo);
+      hechos++;
+    } catch (e) {
+      Logger.log(&#x27;Error en un hilo: &#x27; + e);
+    }
+  });
+  Logger.log(&#x27;MIRROR dejó &#x27; + hechos + &#x27; borrador(es). Saltados: &#x27; + saltados + &#x27;.&#x27;);
+}
+
+/** Disparador automático (cada 15 min). Igual SOLO toca los mails que etiquetaste. */
+function mirrorInstalarDisparador() {
+  mirrorQuitarDisparador();
+  ScriptApp.newTrigger(&#x27;mirrorRevisarMails&#x27;).timeBased().everyMinutes(15).create();
+  Logger.log(&#x27;✅ Listo: cada 15 min MIRROR revisa SOLO los mails con «&#x27; +
+             CONFIG.ETIQUETA_PEDIR + &#x27;» y deja borradores.&#x27;);
+}
+
+/** Quita el disparador automático. */
+function mirrorQuitarDisparador() {
+  ScriptApp.getProjectTriggers().forEach(function (t) {
+    if (t.getHandlerFunction() === &#x27;mirrorRevisarMails&#x27;) ScriptApp.deleteTrigger(t);
+  });
+  Logger.log(&#x27;Disparador detenido (si existía).&#x27;);
+}
+
+
+// ─────────────────────────── internos ───────────────────────────
+
+/** Llama a la IA a través del proxy del usuario (estilo OpenAI). Sin clave acá:
+ *  la clave vive como secreto dentro del proxy. */
+function llamarIA_(mensajes) {
+  const url = CONFIG.PROXY_URL.replace(/\/+$/, &#x27;&#x27;) + &#x27;/&#x27; + CONFIG.RUTA;
+  const payload = {
+    model: CONFIG.MODELO,
+    messages: mensajes,
+    temperature: CONFIG.TEMPERATURA,
+    max_tokens: CONFIG.MAX_TOKENS
+  };
+  const res = UrlFetchApp.fetch(url, {
+    method: &#x27;post&#x27;,
+    contentType: &#x27;application/json&#x27;,
+    headers: { &#x27;Authorization&#x27;: &#x27;Bearer &#x27; }, // el proxy inyecta la clave real
+    payload: JSON.stringify(payload),
+    muteHttpExceptions: true
+  });
+  const code = res.getResponseCode();
+  const data = JSON.parse(res.getContentText() || &#x27;{}&#x27;);
+  if (code === 429) throw new Error(&#x27;La cuota gratis del motor está ocupada (429). Reintentá luego o bajá MAX_HILOS.&#x27;);
+  if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
+  if (code &gt;= 400) throw new Error(&#x27;El proxy respondió &#x27; + code + &#x27;. Revisá PROXY_URL y RUTA.&#x27;);
+  const c = data.choices &amp;&amp; data.choices[0] &amp;&amp; data.choices[0].message &amp;&amp; data.choices[0].message.content;
+  return (c || &#x27;&#x27;).replace(/&lt;\|[^|]*\|&gt;/g, &#x27;&#x27;).replace(/&lt;think&gt;[\s\S]*?&lt;\/think&gt;/gi, &#x27;&#x27;).trim();
+}
+
+/** Construye el prompt y devuelve el cuerpo del borrador. */
+function redactarBorrador_(msg) {
+  const sys =
+    &#x27;Sos la extensión digital de tu usuario: redactás mails EN SU NOMBRE, con su voz y su estilo. &#x27; +
+    &#x27;No sos un asistente genérico — escribís como lo haría tu usuario.\n\n&#x27; +
+    &#x27;QUIÉN SOS (perfil de tu usuario):\n&#x27; + CONFIG.PERFIL + &#x27;\n\n&#x27; +
+    &#x27;TAREA: redactá un BORRADOR de respuesta al mail que te paso. Reglas:\n&#x27; +
+    &#x27;- Idioma: &#x27; + CONFIG.IDIOMA + &#x27; (pero respetá el idioma del mail entrante si es otro).\n&#x27; +
+    &#x27;- Tono y registro: los del perfil de arriba.\n&#x27; +
+    &#x27;- HONESTIDAD: no inventes datos, fechas, cifras ni compromisos que no surjan del mail o del perfil. &#x27; +
+    &#x27;Si falta un dato, dejá un hueco entre corchetes, ej: [confirmar fecha], para que tu usuario lo complete.\n&#x27; +
+    &#x27;- Devolvé SOLO el cuerpo del mail (sin asunto, sin &quot;Para:&quot;, sin explicaciones tuyas).\n&#x27; +
+    (CONFIG.FIRMA ? &#x27;- Cerrá con la firma: &#x27; + CONFIG.FIRMA + &#x27;\n&#x27; : &#x27;&#x27;);
+  const entrante =
+    &#x27;MAIL ENTRANTE\nDe: &#x27; + msg.getFrom() + &#x27;\nAsunto: &#x27; + msg.getSubject() + &#x27;\n\n&#x27; +
+    recortar_(msg.getPlainBody(), CONFIG.MAX_CHARS_ENTRANTE);
+  return llamarIA_([
+    { role: &#x27;system&#x27;, content: sys },
+    { role: &#x27;user&#x27;, content: entrante }
+  ]);
+}
+
+/** Último mensaje ENTRANTE del hilo (no escrito por vos). */
+function ultimoEntrante_(hilo) {
+  const yo = (Session.getActiveUser().getEmail() || &#x27;&#x27;).toLowerCase();
+  const msgs = hilo.getMessages();
+  for (let i = msgs.length - 1; i &gt;= 0; i--) {
+    const from = (msgs[i].getFrom() || &#x27;&#x27;).toLowerCase();
+    if (yo &amp;&amp; from.indexOf(yo) !== -1) continue;
+    return msgs[i];
+  }
+  return null;
+}
+
+function obtenerEtiqueta_(nombre) {
+  return GmailApp.getUserLabelByName(nombre) || GmailApp.createLabel(nombre);
+}
+/** Formato del nombre de etiqueta para la búsqueda (espacios → guiones). */
+function queryLabel_(nombre) {
+  return String(nombre).replace(/\s+/g, &#x27;-&#x27;);
+}
+function recortar_(s, max) {
+  s = String(s || &#x27;&#x27;).replace(/\r/g, &#x27;&#x27;).trim();
+  return s.length &gt; max ? s.slice(0, max) + &#x27;\n…[recortado]&#x27; : s;
+}
+</pre>
+    <p style="font-size:11px;color:#8484a8;line-height:1.6;margin:1rem 0;">Honesto: para escribir el borrador, MIRROR le manda el texto del mail a tu proveedor de IA (el de tu proxy), que lo procesa según sus políticas. Por eso elegís vos, mail por mail, cuáles contestar — evitá etiquetar mails con datos sensibles. Cada borrador lo revisás y lo enviás vos.</p>
+    <div style="text-align:center;margin-top:1.6rem;">
+      <button onclick="cerrarGmail()" style="background:rgba(112,112,255,0.12);border:1px solid rgba(112,112,255,0.4);color:#cfcfff;border-radius:8px;padding:10px 22px;cursor:pointer;font-family:'Space Mono', ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', 'DejaVu Sans Mono', monospace;font-size:13px;">Entendido ▸</button>
+    </div>
+    <div style="text-align:center;margin-top:1.8rem;font-size:10px;letter-spacing:0.15em;color:#5a5a7a;">MIRROR «El Origen» · una idea original de Darío Alejandro Tello</div>
+  </div>
+</div>
+<div id="legal-ov" style="position:fixed;inset:0;z-index:100000;display:none;overflow-y:auto;background:radial-gradient(ellipse 80% 60% at 50% 0%, #11112a 0%, #05050c 70%);color:#d8d8f0;font-family:'Space Mono', ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', 'DejaVu Sans Mono', monospace;padding:0;">
+  <div style="max-width:760px;margin:0 auto;padding:2.4rem 1.4rem 4rem;">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;border-bottom:1px solid rgba(120,120,255,0.18);padding-bottom:1rem;margin-bottom:1.6rem;">
+      <div>
+        <div style="font-size:10px;letter-spacing:0.3em;color:#646488;text-transform:uppercase;">Proyecto MIRROR · Lo que tenés que saber</div>
+        <div style="font-family:'Cormorant Garamond', Georgia, 'Times New Roman', serif;font-size:30px;font-weight:300;color:#f4f4ff;line-height:1.15;">Privacidad y <em style="color:#7070ff;font-style:italic;">Licencia</em></div>
+      </div>
+      <button onclick="cerrarLegal()" style="flex-shrink:0;background:transparent;border:1px solid rgba(120,120,255,0.3);color:#9494c4;border-radius:6px;padding:8px 14px;cursor:pointer;font-family:'Space Mono', ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', 'DejaVu Sans Mono', monospace;font-size:12px;">✕ cerrar</button>
+    </div>
+
+    <p style="font-size:13.5px;line-height:1.7;color:#bcbcd8;margin-bottom:1.8rem;">Acá te decimos, sin vueltas, <b style="color:#e8e8ff;">dónde viven tus datos</b> y <b style="color:#e8e8ff;">bajo qué licencia</b> está esto. La regla es simple: <b style="color:#4ade80;">tus datos son tuyos</b> y nadie te miente sobre lo que pasa con ellos.</p>
+
+    <!-- PRIVACIDAD -->
+    <div style="border:1px solid rgba(120,120,255,0.14);border-radius:12px;padding:1.2rem 1.3rem;margin-bottom:1.3rem;background:rgba(120,120,255,0.03);">
+      <div style="font-family:'Cormorant Garamond', Georgia, 'Times New Roman', serif;font-size:24px;color:#cfcfff;margin-bottom:0.8rem;">🔒 Tus datos en <em style="color:#7070ff;font-style:italic;">tu</em> base. Sin servidor central.</div>
+      <ul style="font-size:13px;line-height:1.8;color:#c4c4dc;padding-left:1.15rem;margin:0;">
+        <li><b style="color:#e8e8ff;">No hay servidor central.</b> MIRROR no tiene una base donde se junten los datos de todas las personas. No existe ese lugar.</li>
+        <li><b style="color:#e8e8ff;">Tu memoria vive en TU Firebase</b> — la base de datos que creaste vos, en tu cuenta. Lo que charlás, tus recuerdos y los documentos que subís se guardan ahí, bajo tu control (los audios solo se transcriben: no se guardan).</li>
+        <li><b style="color:#e8e8ff;">Tu clave de IA vive en TU proxy</b> (tu Worker de Cloudflare), del lado del servidor. Nunca viaja al navegador ni pasa por nosotros.</li>
+        <li><b style="color:#e8e8ff;">La plataforma no mira.</b> Quien hizo la plataforma no tiene acceso a tu memoria: no hay analítica, no hay rastreo, no se vende nada — entre otras cosas porque no lo tenemos. Quién más puede entrar a tu base lo deciden <b>sus reglas de acceso</b>, que configurás vos (más abajo).</li>
+        <li><b style="color:#e8e8ff;">Lo borrás cuando quieras.</b> Con <i>borrar memoria</i> en el pie, o directo desde tu Firebase. Es tuyo: lo controlás vos.</li>
+      </ul>
+      <div style="margin-top:0.9rem;font-size:11.5px;color:#ffd9a0;background:rgba(255,180,0,0.06);border:1px solid rgba(255,180,0,0.22);border-radius:8px;padding:9px 12px;line-height:1.55;">⚠ <b>Honestidad:</b> para responderte, MIRROR le manda tu mensaje (y los recuerdos o fragmentos de documentos que hagan falta para contestarte) al proveedor de IA que vos elegiste (Groq, OpenAI, etc.). Ese proveedor lo procesa según <b>sus</b> políticas. MIRROR solo te conecta con él; no se queda con nada. Las reglas de acceso a tu Firebase las configurás vos (te las muestra la guía): vos decidís quién entra a tu memoria.</div>
+    </div>
+
+    <!-- LICENCIA -->
+    <div style="border:1px solid rgba(120,120,255,0.14);border-radius:12px;padding:1.2rem 1.3rem;margin-bottom:1.3rem;background:rgba(120,120,255,0.03);">
+      <div style="font-family:'Cormorant Garamond', Georgia, 'Times New Roman', serif;font-size:24px;color:#cfcfff;margin-bottom:0.8rem;">📜 Código libre. <em style="color:#7070ff;font-style:italic;">Marca</em> protegida.</div>
+      <ul style="font-size:13px;line-height:1.8;color:#c4c4dc;padding-left:1.15rem;margin:0;">
+        <li><b style="color:#4ade80;">El código es libre — Apache 2.0.</b> Podés usarlo, estudiarlo, modificarlo y distribuirlo, incluso para fines comerciales, mientras respetes los términos de la licencia.</li>
+        <li><b style="color:#e8e8ff;">La marca NO se cede.</b> El nombre «MIRROR — El Origen», la idea y el rumbo del proyecto son de <b style="color:#cfcfff;">Darío Alejandro Tello</b> (protegido por el archivo NOTICE). El código es de todos; la marca, no.</li>
+        <li><b style="color:#e8e8ff;">Si publicás tu propia copia</b>, conservá el aviso de licencia y de autoría. Es lo único que se pide.</li>
+      </ul>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:1rem;">
+        <a href="https://github.com/dariotello/mirror-el-origen-plataforma" target="_blank" rel="noopener" style="text-decoration:none;background:rgba(112,112,255,0.12);border:1px solid rgba(112,112,255,0.35);color:#aeaeff;border-radius:6px;padding:7px 14px;font-size:12px;">⌥ Repositorio en GitHub</a>
+        <a href="https://github.com/dariotello/mirror-el-origen-plataforma/blob/main/LICENSE" target="_blank" rel="noopener" style="text-decoration:none;background:rgba(112,112,255,0.12);border:1px solid rgba(112,112,255,0.35);color:#aeaeff;border-radius:6px;padding:7px 14px;font-size:12px;">📜 Ver licencia (Apache 2.0)</a>
+        <a href="https://github.com/dariotello/mirror-el-origen-plataforma/blob/main/NOTICE" target="_blank" rel="noopener" style="text-decoration:none;background:rgba(112,112,255,0.12);border:1px solid rgba(112,112,255,0.35);color:#aeaeff;border-radius:6px;padding:7px 14px;font-size:12px;">© Aviso de marca (NOTICE)</a>
+      </div>
+    </div>
+
+    <!-- ROLES Y LÍMITES · v38-roles (H1.bis, 1/08/2026) — la pieza que faltaba: quién decide
+         qué, y qué NO promete la plataforma. Se escribe en criollo a propósito; la licencia
+         Apache 2.0 ya trae este contenido en jurídico (secciones 7 y 8), pero nadie lo lee
+         ahí. Una salvedad que no se entiende no protege a nadie. -->
+    <div style="border:1px solid rgba(255,180,0,0.22);border-radius:12px;padding:1.2rem 1.3rem;margin-bottom:1.3rem;background:rgba(255,180,0,0.04);">
+      <div style="font-family:'Cormorant Garamond', Georgia, 'Times New Roman', serif;font-size:24px;color:#ffe1b0;margin-bottom:0.8rem;">⚖️ Quién <em style="color:#ffb347;font-style:italic;">responde</em> por qué</div>
+      <ul style="font-size:13px;line-height:1.8;color:#c4c4dc;padding-left:1.15rem;margin:0;">
+        <li><b style="color:#e8e8ff;">La plataforma aporta la arquitectura, no maneja datos.</b> Es un archivo que corre entero en tu navegador. No hay servidor nuestro: no vemos, no guardamos y no podemos recuperar nada de lo que escribas o cargues.</li>
+        <li><b style="color:#e8e8ff;">Vos elegís y vos respondés.</b> La base donde se guarda tu memoria, el proxy por donde salen tus mensajes y el motor de IA que responde <b>los elegís vos</b>. Lo que esos servicios hagan con lo que reciben se rige por <b>sus</b> términos, no por los nuestros. Leelos.</li>
+        <li><b style="color:#e8e8ff;">Si cargás datos de otras personas</b> —alumnos, pacientes, clientes, participantes de una investigación— <b>el responsable de esos datos sos vos</b>, con las obligaciones que eso traiga donde vivas. La plataforma no puede asumir algo que ni siquiera ve.</li>
+        <li><b style="color:#e8e8ff;">Si armás un MIRROR y se lo das a otras personas</b>, sos vos quien decidió qué se guarda y dónde: contales lo mismo que este panel te cuenta a vos. El panel <i>«🤖 qué hago con lo tuyo»</i> del pie ya se los dice, y sale de tu configuración real.</li>
+        <li><b style="color:#4ade80;">Compartir tu MIRROR no entrega tu base.</b> El link de compartir lleva la vitrina —nombre, modos, color, tu presentación— y nada más: <b>base, proxy y PIN no viajan</b>. Quien lo abra se arma el suyo. Por eso la regla sana es <b>una base por persona</b>: solo se comparte una base si vos pasás la dirección a mano (y entonces esas personas se leen entre ellas — para eso hacen falta reglas con autenticación).</li>
+        <li><b style="color:#e8e8ff;">Con menores, un adulto acompañando.</b> La herramienta no reemplaza eso.</li>
+      </ul>
+      <div style="margin-top:0.9rem;font-size:12px;color:#ffd9a0;background:rgba(255,180,0,0.07);border:1px solid rgba(255,180,0,0.25);border-radius:8px;padding:10px 12px;line-height:1.6;">
+        <b>Sin garantías, dicho de frente.</b> Esto es software libre bajo Apache 2.0 y se entrega <b>tal como está</b>: puede fallar, quedarse sin servicio o equivocarse, y nadie garantiza que sirva para un fin determinado ni responde por daños derivados de su uso (es lo que dicen las secciones 7 y 8 de la licencia, traducido al criollo).<br><br>
+        <b>No es asesoramiento profesional</b> — ni médico, ni legal, ni contable, ni psicológico — y <b>no es un servicio de emergencia</b>. Si hay riesgo para vos o para alguien, buscá ayuda humana ya. Para lo importante, consultá con una persona matriculada.<br><br>
+        <b>Es una IA y se equivoca.</b> Verificá lo que importe antes de actuar sobre eso.
+      </div>
+    </div>
+
+    <div style="text-align:center;margin-top:1.8rem;font-size:10px;letter-spacing:0.15em;color:#5a5a7a;">MIRROR «El Origen» · una idea original de Darío Alejandro Tello</div>
+    <div style="text-align:center;margin-top:1.2rem;">
+      <button onclick="cerrarLegal()" style="background:rgba(112,112,255,0.12);border:1px solid rgba(112,112,255,0.4);color:#cfcfff;border-radius:8px;padding:10px 22px;cursor:pointer;font-family:'Space Mono', ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', 'DejaVu Sans Mono', monospace;font-size:13px;">Entendido ▸</button>
+    </div>
+  </div>
+</div>
+
+<div class="app" id="app">
+  <header>
+    <div class="symbol" id="symbol" title="Tocá el logo: pulso de MIRROR"><canvas id="hdrOrb" width="340" height="96"></canvas></div>
+    <div class="htext">
+      <div class="hlabel">Proyecto MIRROR</div>
+      <div class="htitle" id="htitle">El <em>Origen</em></div>
+      <div class="hinfo">
+        <div class="pdot"></div>
+        <span class="hlabelg" id="hstatus">MIRROR activo</span>
+      </div>
+    </div>
+    <div class="mode-toggle">
+      <button class="mtbtn active-mirror" id="btn-mirror" onclick="setMode('mirror')">MIRROR</button>
+      <button class="mtbtn" id="btn-tars" onclick="setMode('tars')">TARS</button>
+      <button class="mtbtn" id="btn-jurado" onclick="setMode('jurado')">⚖ EXAMINADOR</button>
+      <button class="mtbtn" id="btn-conn" onclick="setMode('conn')">⬡ CONEX</button>
+    </div>
+  </header>
+
+  <!-- CHAT -->
+  <div class="chat" id="chat">
+    <div class="msg">
+      <div class="av mav">◈</div>
+      <div class="bubble" style="font-family:'Cormorant Garamond', Georgia, 'Times New Roman', serif;font-size:16px;font-weight:300;line-height:1.85;">
+        Hola. Soy MIRROR.<br>Preguntame lo que quieras.
+      </div>
+    </div>
+  </div>
+
+  <!-- CONEXIONES PANEL -->
+  <div class="conn-panel" id="conn-panel">
+    <div class="conn-section-title">Tu MIRROR</div>
+    <div class="conn-card" id="conn-card-config">
+      <div class="conn-card-header">
+        <div class="conn-status-dot on"></div>
+        <span class="conn-card-name">Configuración · armá o ajustá tu MIRROR</span>
+        <span class="conn-card-badge badge-on">Editable</span>
+      </div>
+      <div class="conn-card-desc">Cambiá los nombres de los modos, tu motor de IA, tus direcciones o tu perfil cuando quieras.</div>
+      <div class="conn-card-footer" style="margin-top:0.75rem;">
+        <button class="conn-btn conn-btn-query" onclick="abrirConstructor()">⚙ Abrir el constructor</button>
+      </div>
+    </div>
+
+    <div class="conn-section-title" style="margin-top:0.5rem;">Fuentes de datos autorizadas</div>
+
+    <!-- CARD: Base de datos externa -->
+    <div class="conn-card" id="conn-card-tesis">
+      <div class="conn-card-header">
+        <div class="conn-status-dot off" id="conn-dot-tesis"></div>
+        <span class="conn-card-name">Base de datos externa</span>
+        <span class="conn-card-badge badge-off" id="conn-badge-tesis">Desconectada</span>
+      </div>
+      <div class="conn-card-desc">Conectá tu propia base de datos (otra Firebase, de solo lectura) para que tu entidad analítica estudie tus registros, con la forma que vos les des. Configurá su dirección en FB_EXTERNA.</div>
+      <div class="conn-card-url" id="conn-url-ext">— configurá FB_EXTERNA —</div>
+      <div class="conn-card-footer" id="conn-footer-tesis" style="margin-top:0.75rem;">
+        <button class="conn-btn conn-btn-connect" onclick="connectTesis()" style="padding:7px 18px;font-size:11px;">🔓 Conectar base de datos</button>
+      </div>
+      <div class="conn-stats" id="conn-stats-tesis" style="display:none;">
+        <div class="conn-stat"><span class="conn-stat-val" id="stat-total">—</span><span class="conn-stat-lbl">Registros</span></div>
+        <div class="conn-stat"><span class="conn-stat-val" id="stat-dims">—</span><span class="conn-stat-lbl">Dimensiones</span></div>
+      </div>
+    </div>
+
+    <!-- CARD: Firebase MIRROR (info) -->
+    <div class="conn-card connected">
+      <div class="conn-card-header">
+        <div class="conn-status-dot on"></div>
+        <span class="conn-card-name">Memoria · MIRROR</span>
+        <span class="conn-card-badge badge-on">Conectada</span>
+      </div>
+      <div class="conn-card-desc">Base de datos propia de MIRROR. Almacena conversaciones, documentos RAG y perfil persistente.</div>
+      <div class="conn-card-url">tu Firebase · configurada en FB_URL</div>
+      <div class="conn-card-footer">
+        <span class="conn-last-sync">Siempre activa · Solo lectura/escritura de MIRROR</span>
+      </div>
+    </div>
+
+    <!-- CARD: Perfil del usuario -->
+    <div class="conn-card connected" id="conn-card-perfil">
+      <div class="conn-card-header">
+        <div class="conn-status-dot on"></div>
+        <span class="conn-card-name">Perfil · tu identidad</span>
+        <span class="conn-card-badge badge-on" id="conn-badge-perfil">Activo</span>
+      </div>
+      <div class="conn-card-desc" id="perfil-desc">Núcleo identitario de MIRROR. Define quién sos vos en cada respuesta.</div>
+      <div class="conn-card-footer" style="margin-top:0.75rem;flex-wrap:wrap;gap:8px;">
+        <button class="conn-btn conn-btn-query" onclick="editarPerfil()">✏️ Editar perfil</button>
+        <span class="conn-last-sync" id="perfil-sync"></span>
+      </div>
+    </div>
+
+    <!-- PRÓXIMAMENTE -->
+    <div class="conn-section-title" style="margin-top:0.5rem;">Próximamente</div>
+    <div class="conn-card connected">
+      <div class="conn-card-header">
+        <div class="conn-status-dot on"></div>
+        <span class="conn-card-name">Gmail · Borradores</span>
+        <span class="conn-card-badge badge-on">disponible</span>
+      </div>
+      <div class="conn-card-desc">Tu MIRROR lee los mails que elijas y te deja borradores de respuesta con tu estilo, para revisar. Nunca envía solo. Gratis: reusa tu proxy.</div>
+      <div class="conn-card-footer" style="margin-top:0.75rem;">
+        <button class="conn-btn conn-btn-query" onclick="abrirGmail()">📧 Configurar borradores de Gmail</button>
+      </div>
+    </div>
+    <div class="conn-card" style="opacity:0.4;">
+      <div class="conn-card-header">
+        <div class="conn-status-dot off"></div>
+        <span class="conn-card-name">WhatsApp · Mensajes</span>
+        <span class="conn-card-badge badge-off">v0.8</span>
+      </div>
+      <div class="conn-card-desc">Integración con WhatsApp para comunicación contextualizada.</div>
+    </div>
+    <div class="conn-card" id="card-vision" style="opacity:0.4;">
+      <div class="conn-card-header">
+        <div class="conn-status-dot off" id="vision-dot"></div>
+        <span class="conn-card-name">Ver imágenes</span>
+        <span class="conn-card-badge badge-off" id="vision-badge">próximamente</span>
+      </div>
+      <div class="conn-card-desc" id="vision-desc">Hoy tu MIRROR transcribe lo que se <b>dice</b> en un audio o video (memoria de audio). Entender lo que se <b>ve</b> —imágenes, escenas— necesita un modelo de visión: está en construcción.</div>
+    </div>
+  </div>
+
+  <div class="iarea">
+    <div class="fpreview" id="fpreview"></div>
+    <div class="imgpreview" id="imgpreview"></div>
+    <div class="rag-panel" id="ragpanel">
+      <div class="rag-header">
+        <span>DOCUMENTOS EN MEMORIA</span>
+        <button onclick="toggleRagPanel()">cerrar</button>
+      </div>
+      <div class="rag-items" id="ragitems"></div>
+    </div>
+    <!-- v38-barra (9/08/2026) — PORTE DEL «+» DEL MIRROR v4.4 (pedido de Darío en su auditoría
+         en vivo). Antes la barra tenía 7 controles apretando el campo. Ahora: el «+» despliega
+         la bandeja (documento, web, imagen, hablá-y-actúo) y en la barra quedan solo el campo,
+         el micrófono y enviar. Los onclick y los ids que usa el JS quedan intactos. -->
+    <div class="toolstray oculto" id="toolsTray" role="menu" aria-label="Herramientas">
+      <!-- v38-barra2 (9/08): el 📷 foto (visión) pasó de la barra al «+», como pidió Darío. Conserva
+           id="imgbtn" para que aplicarCapacidades siga prendiéndolo/apagándolo según haya visión. -->
+      <label class="ttool" id="imgbtn" for="imginput" role="menuitem" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" onclick="cerrarTools()" style="display:none"><span aria-hidden="true">📷</span> foto</label>
+      <label class="ttool" for="finput" role="menuitem" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" onclick="cerrarTools()"><span aria-hidden="true">⊕</span> documento</label>
+      <button class="ttool" id="wbtn" onclick="cerrarTools();sendWeb();return false;" role="menuitem"><span aria-hidden="true">🌐</span> web</button>
+      <button class="ttool" id="invbtn" onclick="cerrarTools();investigarDesdeCaja();return false;" role="menuitem" title="Investigación a fondo: arma un plan, busca en varias fuentes y te escribe un informe con citas verificables"><span aria-hidden="true">🔎</span> investigar a fondo</button>
+      <button class="ttool" id="imggen-btn" onclick="cerrarTools();generarImagen();return false;" role="menuitem"><span aria-hidden="true">🎨</span> imagen</button>
+      <button class="ttool" id="charlabtn" onclick="charlaIniciar();return false;" role="menuitem" title="Charla por voz manos libres: hablás, te contesta en voz alta y vuelve a escucharte"><span aria-hidden="true">🎧</span> <span class="lbl">charla por voz</span></button>
+      <button class="ttool accbtn" id="accbtn" onclick="vozAccion();return false;" role="menuitem"><span id="accIco" aria-hidden="true">🎤</span> <span id="accLbl">hablá y actúo</span></button>
+    </div>
+    <div class="iwrap">
+      <button class="toolsbtn" id="toolsBtn" onclick="toggleTools()" title="Documento, web, imagen, voz-acción" aria-label="Más herramientas" aria-expanded="false">+</button>
+      <input type="file" id="finput" accept=".pdf,.docx,.txt,.md,.xlsx,.xls,.csv,.tsv,.mp3,.wav,.m4a,.ogg,.webm,.mp4,.mpeg,.mpga,.flac" style="display:none" onchange="handleFile(this)">
+      <input type="file" id="imginput" accept="image/*" style="display:none" onchange="handleImagen(this)">
+      <textarea id="inp" placeholder="Escribí acá..." rows="1" onkeydown="hkey(event)" oninput="aresize(this)"></textarea>
+      <button class="micbtn" id="micbtn" onclick="toggleMic()" title="Dictar por voz (es-AR)" aria-label="Dictar por voz">🎙</button>
+      <button class="sbtn" id="sbtn" onclick="send()" aria-label="Enviar mensaje">↑</button>
+    </div>
+    <div class="fnote">
+      <span class="fcredit">MIRROR · sobre "El Origen", idea de Darío A. Tello</span>
+      <!-- v38-pieorden (9/08/2026) — PORTE DEL ORGANIZADOR DEL MIRROR v4.4 (auditoría en vivo de
+           Darío: «las solapas se amontonan abajo»). A la vista queda lo que se usa seguido + el
+           audio; el resto se pliega en «⋯ más». Cada pastilla NO-audio lleva data-pie (clave
+           estable) para que el organizador la mueva entre «a la vista» y «⋯ más». El audio (voz,
+           🌐 idioma, ▾ voces, sonido, volumen) queda FIJO. Los onclick e ids quedan intactos. -->
+      <span data-pie="memoria" onclick="abrirMemoria()" title="Ver, buscar, borrar y exportar todo lo que tu MIRROR recuerda">◈ mi memoria</span>
+      <span data-pie="datos" id="anabtn" onclick="anaAbrir()" title="Analizar datos CSV — la matemática se calcula en tu dispositivo, no en la nube">📊 datos</span>
+      <span data-pie="documentos" onclick="showDocs()">📎 mis documentos</span>
+      <span data-pie="informe" onclick="abrirModalInforme()">📄 generar informe</span>
+      <span id="ttsbtn" onclick="toggleTTS()" title="Leer las respuestas en voz alta">🔇 voz</span><span id="idiBtn" onclick="i18nRotar()" title="Cambiar el idioma de la app y del dictado (español · English · português)">🌐 ES</span><span id="vozsel" onclick="abrirSelectorVoz()" title="Elegir la voz de lectura">▾</span>
+      <span class="fsound" id="sndBtn" onclick="toggleSound()" title="Música ambiental y firma sonora «El Origen» · on/off">🔇 sonido</span><span class="fvolwrap"><span class="fvolico" aria-hidden="true">–</span><input type="range" class="fvol" id="volSlider" min="2" max="100" step="1" value="20" oninput="setVolUsuario(this.value/100)" title="Volumen de la música" aria-label="Volumen de la música"><span class="fvolico" aria-hidden="true">+</span><span class="fvolpct" id="volPct" aria-hidden="true">20%</span></span>
+      <span class="fmas" id="fmasBtn" onclick="toggleMas()" title="Mostrar más opciones" role="button" aria-expanded="false">⋯ más</span>
+      <span class="fmore-group oculto" id="fmoreGroup">
+        <span data-pie="contactos" onclick="abrirAgenda()" title="Tus contactos guardados (teléfonos y mails) — viven en este dispositivo">📇 contactos</span>
+        <span data-pie="compartir" onclick="abrirCompartir()" title="Compartí tu MIRROR por un link de solo lectura (sin claves ni memoria)">🔗 compartir</span>
+        <span data-pie="encuestas" id="encbtn" onclick="encAbrir()" title="Crear encuestas y ver sus respuestas — sin Google Forms, en tu Firebase">📋 encuestas</span>
+        <span data-pie="presentacion" class="fpres" id="presBtn" onclick="openPres()" title="Pantalla completa para la defensa">◬ presentación</span>
+        <span data-pie="carta" onclick="cartaAClaude()" title="✉ La carta a Claude: diagnóstico honesto exportado SOLO a tu dispositivo — vos decidís si la mandás">✉ carta</span>
+        <span data-pie="cebolla" onclick="cebAbrir()" title="El estado interno de tu MIRROR en números — energía, sintonía, claridad… vive en tu dispositivo" style="display:none">🧅 estado</span>
+        <span data-pie="cumplimiento" onclick="cumpliAbrir()" title="Qué guarda, dónde vive, qué viaja y qué NO hace con lo tuyo">🤖 qué hago con lo tuyo</span>
+        <span data-pie="privacidad" onclick="abrirLegal()" title="Privacidad y licencia">🔒 privacidad · licencia</span>
+        <span data-pie="llevar" onclick="addMsg('mirror',portaExportar())" title="Llevate TODO lo tuyo en un archivo, con sello de integridad">📦 llevarme todo</span>
+        <span data-pie="temporal" onclick="temporalToggle()" title="Una charla que no se guarda y no usa tus recuerdos. Se apaga al recargar.">🕶 charla temporal</span>
+        <span data-pie="borrar" onclick="clearMem()">🗑 borrar memoria</span>
+        <span data-pie="comprende" onclick="semAbrir()" title="Que tu MIRROR encuentre por significado, no solo por palabras — corre en tu dispositivo">🧠 memoria que entiende</span>
+        <span data-pie="facil" onclick="facilToggle()" title="Letra grande y solo lo esencial">Aa modo fácil</span>
+        <span data-pie="actualizar" onclick="actAbrir()" title="Tu versión, lo nuevo y buscar actualizaciones">🔄 actualizar</span>
+        <span class="fpieord" onclick="pieOrdenarAbrir()" title="Elegí qué solapas ves afuera y cuáles quedan en «⋯ más»">🧩 ordenar el pie</span>
+      </span>
+      <span class="fver" data-ver title="versión de la plataforma — verificá que sea la última deployada" style="opacity:0.5;letter-spacing:0.12em;font-size:10px;margin-left:auto;"></span>
+    </div>
+    <!-- v38-porta (H2): entrada del archivo para reponer lo del usuario. Oculta: se abre desde el chat. -->
+    <input type="file" id="portafile" accept="application/json,.json" style="display:none" onchange="portaArchivoElegido(event)">
+    <!-- v38-pieorden (9/08/2026): el ORGANIZADOR DEL PIE, portado del MIRROR. Cada quien elige
+         qué solapas ve afuera y cuáles en «⋯ más». Se guarda en el dispositivo y se aplica al
+         abrir. NO toca el audio (voz, voces, sonido, volumen), que queda fijo. -->
+    <div class="modal-overlay" id="pieord-modal">
+      <div class="modal" style="max-width:460px;">
+        <h3>🧩 Ordenar el pie</h3>
+        <div class="cumpli-body">
+          <div class="cumpli-sec"><p>Elegí qué solapas querés ver <b>afuera</b> (a mano) y cuáles guardar en <b>«⋯ más»</b>. Se guarda en este dispositivo. Los controles de audio (voz, idioma, voces, sonido y volumen) quedan siempre a la vista.</p></div>
+          <div id="pieord-lista" class="pieord-lista"></div>
+        </div>
+        <div class="modal-btns">
+          <button class="mbtn mbtn-perm" onclick="pieOrdenarGuardar()">guardar</button>
+          <button class="mbtn mbtn-session" onclick="pieOrdenarReset()">volver al orden de fábrica</button>
+          <button class="mbtn mbtn-cancel" onclick="pieOrdenarCerrar()">cerrar</button>
+        </div>
+      </div>
+    </div>
+    <!-- v38-agenda3 (9/08/2026): el PANEL DE CONTACTOS visible, portado del MIRROR (Darío: «faltó
+         la solapa contactos»). Lee y escribe la MISMA agenda local (mirror_agenda) que ya usan los
+         comandos de voz; no toca la capa ACTÚA. Vive en el dispositivo, no sale de acá. -->
+    <div class="modal-overlay" id="agenda-modal">
+      <div class="modal" style="max-width:540px;">
+        <h3>📇 Tu agenda de contactos</h3>
+        <p>Los teléfonos y mails que tu MIRROR tiene guardados. Viven en <b>este dispositivo</b>; cuando los uso en la charla, lo que se guarda va sin el número ni el mail. Cuando le pedís «mandale un WhatsApp a X», los saca de esta lista.</p>
+        <div class="voz-lista" id="agenda-lista"></div>
+        <div style="border-top:1px solid var(--border);margin-top:10px;padding-top:10px;">
+          <div style="font-size:11px;opacity:0.7;margin-bottom:6px;">🗓 Tus tareas / pendientes — lo que agendaste vive acá, en tu dispositivo, y te lo recuerdo</div>
+          <div class="voz-lista" id="tareas-lista"></div>
+        </div>
+        <div style="border-top:1px solid var(--border);margin-top:10px;padding-top:10px;">
+          <div style="font-size:11px;opacity:0.7;margin-bottom:6px;">Agregar o actualizar un contacto</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;">
+            <input type="text" id="ag-nombre" placeholder="nombre" style="flex:1 1 120px;font-size:12px;background:var(--glass);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:7px;" aria-label="Nombre del contacto">
+            <input type="text" id="ag-tel" placeholder="teléfono" style="flex:1 1 120px;font-size:12px;background:var(--glass);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:7px;" aria-label="Teléfono">
+            <input type="text" id="ag-mail" placeholder="mail (opcional)" style="flex:1 1 140px;font-size:12px;background:var(--glass);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:7px;" aria-label="Mail">
+          </div>
+        </div>
+        <div class="modal-btns" style="margin-top:0.8rem;">
+          <button class="mbtn mbtn-perm" onclick="agendaAgregarDesdePanel()">＋ guardar contacto</button>
+          <button class="mbtn mbtn-session" onclick="(document.getElementById('ag-import')||{}).click&&document.getElementById('ag-import').click()" title="Importá tus contactos desde un .vcf o .csv exportado del celular (o de Google Contactos). Se leen acá, en tu dispositivo — no viaja nada.">📥 importar del celu</button>
+          <input type="file" id="ag-import" accept=".vcf,.csv,.txt,text/vcard,text/csv" onchange="contactosImportarArchivo(event)" style="display:none;" aria-label="Importar contactos desde archivo .vcf o .csv">
+      <details class="ag-ayuda" style="flex:1 1 100%;margin-top:6px;font-size:11.5px;color:var(--text-dim);">
+        <summary style="cursor:pointer;color:var(--text-dim);list-style:revert;">¿cómo paso todos mis contactos de una?</summary>
+        <div style="margin-top:6px;line-height:1.55;">
+          <b>Desde la compu (te trae todos):</b> entrá a <b>contacts.google.com</b> con tu cuenta → menú de la izquierda → <b>Exportar</b> → elegí <b>vCard (.vcf)</b> → Exportar (se baja un archivo). Después tocá acá <b>📥 importar del celu</b> y elegí ese archivo.<br>
+          <b>Desde el celular:</b> Contactos → Ajustes → <b>Exportar a .vcf</b>, y después importás ese archivo.<br>
+          <span style="opacity:0.75;">Se lee todo en tu dispositivo — no viaja nada. No piso los contactos que ya tenías y te aviso cuántos entraron.</span>
+        </div>
+      </details>
+          <button class="mbtn mbtn-cancel" onclick="cerrarAgenda()">✕ cerrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ v22 · PALANCA D — VISTA DE SOLO LECTURA (lo que ve quien abre un link compartido) ════ -->
+<div id="share-view">
+  <div class="sv-monolith"></div>
+  <div class="sv-name" id="sv-name">MIRROR</div>
+  <div class="sv-sub">una carta de presentación · El Origen</div>
+  <div class="sv-owner" id="sv-owner" style="display:none"></div>
+  <div class="sv-card">
+    <div class="sv-row" id="sv-row-rol" style="display:none"><div class="sv-k">Quién soy</div><div class="sv-val" id="sv-rol"></div></div>
+    <div class="sv-row" id="sv-row-estilo" style="display:none"><div class="sv-k">Cómo hablo</div><div class="sv-val" id="sv-estilo"></div></div>
+    <div class="sv-row" id="sv-row-algo" style="display:none"><div class="sv-k">En lo que ando</div><div class="sv-val" id="sv-algo"></div></div>
+  </div>
+  <div class="sv-note">Estás viendo una <b>vista de solo lectura</b>: la carta de presentación de una entidad digital.<br>No se puede chatear con él — sus claves, su memoria y sus direcciones son privadas de su dueño.</div>
+  <button class="sv-cta" id="sv-cta" onclick="window.location.href = window.location.pathname + window.location.search">✦ Creá tu propio MIRROR</button>
+  <button class="sv-cta" id="sv-volver" style="display:none" onclick="cerrarVistaPrevia()">◂ volver</button>
+</div>
+
+<!-- ════ MODAL COMPARTIR (lo ve el dueño para generar el link) ════ -->
+<div id="share-ov" style="position:fixed;inset:0;z-index:100000;display:none;overflow-y:auto;background:radial-gradient(ellipse 80% 60% at 50% 0%, #11112a 0%, #05050c 70%);color:#d8d8f0;font-family:'Space Mono', ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', 'DejaVu Sans Mono', monospace;padding:0;">
+  <div class="share-box">
+    <div class="share-h1">Compartí tu <span id="share-appname">MIRROR</span></div>
+    <div class="share-p">Generá un link para que cualquiera conozca tu MIRROR: su nombre, su forma de hablar y en qué te ayuda. Quien lo abra ve una <b>presentación de solo lectura</b> — y un botón para crear el suyo.</div>
+    <div class="share-yes">✓ Se comparte: el nombre, los modos, el color, tu rol, tu estilo y en qué andás.</div>
+    <div class="share-no">✗ NO se comparte (queda solo en tu equipo): tu clave de IA, tu proxy, tu Firebase, tu PIN, tu memoria ni tu ubicación.</div>
+    <div class="share-linkrow">
+      <input id="share-link" readonly onclick="this.select()" value="">
+      <button class="share-btn" onclick="copiarLinkCompartir()">📋 Copiar</button>
+      <button class="share-btn" id="share-native" style="display:none" onclick="compartirNativo()">↗ Compartir…</button>
+    </div>
+    <div class="share-msg" id="share-msg"></div>
+    <div class="share-linkrow">
+      <button class="share-btn" onclick="previsualizarCompartir()">👁 Previsualizar lo que verán</button>
+      <button class="share-btn" onclick="cerrarCompartir()">✕ Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════ v24 · banner «nueva versión disponible» ════ -->
+<div id="pwa-update">
+  <span class="pwa-u-txt">✦ Nueva versión <b id="pwa-update-ver"></b> lista</span>
+  <button class="pwa-u-go" onclick="pwaActualizar()">Actualizar</button>
+  <button class="pwa-u-x" onclick="pwaDescartarUpdate()" title="Ahora no">✕</button>
+</div>
+
+<!-- ════ v27 · PALANCA B — clave de Pollinations (imágenes) ════ -->
+<div id="polli-ov" style="position:fixed;inset:0;z-index:100000;display:none;overflow-y:auto;background:radial-gradient(ellipse 80% 60% at 50% 0%, #11112a 0%, #05050c 70%);color:#d8d8f0;font-family:'Space Mono', ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', 'DejaVu Sans Mono', monospace;">
+  <div class="share-box">
+    <div class="share-h1">Crear imágenes 🎨</div>
+    <div class="share-p">Tu MIRROR puede generar imágenes desde texto con <b>Pollinations</b> (servicio aparte — <b>hoy es PAGO</b>). Para usarlo necesitás tu propia clave <b>pk_</b> con créditos.</div>
+    <div class="share-yes">✓ Registrate en <b>enter.pollinations.ai</b> → creá una <b>clave publishable</b> (empieza con <b>pk_</b>) y cargale créditos: <b>Pollinations dejó de ser gratis</b>. La pk_ es segura para usar acá.</div>
+    <div class="share-no">✗ No uses la clave secreta (sk_): esa es para servidores, nunca para el navegador. Pegá la <b>pk_</b>.</div>
+    <div class="share-linkrow">
+      <input id="polli-key-input" placeholder="pk_..." style="flex:1;min-width:200px;font-family:'Space Mono', ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', 'DejaVu Sans Mono', monospace;font-size:12px;color:#cfcfff;background:rgba(10,10,28,0.8);border:1px solid rgba(120,120,255,0.3);border-radius:8px;padding:11px 12px;">
+      <button class="share-btn" onclick="guardarPolliKey()">Guardar</button>
+    </div>
+    <div class="share-msg" id="polli-msg"></div>
+    <div class="share-linkrow">
+      <button class="share-btn" onclick="cerrarPolliKey()">✕ Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<script>
