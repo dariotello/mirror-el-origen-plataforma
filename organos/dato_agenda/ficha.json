@@ -1,0 +1,54 @@
+{
+  "name": "dato-agenda",
+  "description": "Da el mail, número, WhatsApp o dirección de un contacto guardado, con su tarjeta, sin pasar por el modelo. Usar cuando piden un dato de un contacto o dicen «la tenés en contactos».",
+  "nombre": "Dato de agenda (átomo)",
+  "tipo": "átomo",
+  "se_ensambla_en": "manos",
+  "version": "1.0",
+  "proposito": "Contestar desde el código, sin el modelo, un dato de un contacto guardado (mail, número, WhatsApp, dirección), con su tarjeta de un toque. Es una pieza chica que se enchufa sola a las manos y se puede dormir sin romper nada.",
+  "disparadores": [
+    "pedido de un dato de un contacto: «¿Me pasás la dirección de mail de Laura?», «dame el número de Juan», «¿cuál es el WhatsApp de Ana?»",
+    "remisión a la agenda después de un pedido: «LA TENÉS EN CONTACTOS», «está en mis contactos», «fijate en la agenda»"
+  ],
+  "entradas": [
+    "el pedido tal cual lo escribió el usuario",
+    "el último intercambio de la charla (solo para saber de quién y de qué dato se hablaba)",
+    "la agenda de contactos del dispositivo"
+  ],
+  "salidas": [
+    "el dato pedido en pantalla, con su tarjeta (mailto, tel, wa.me o Maps)",
+    "«no lo tengo» de frente, solo si el pedido habla de agenda o contactos",
+    "la pregunta «¿cuál?» si hay dos contactos que coinciden"
+  ],
+  "herramientas": [
+    "actuaContacto / actuaCandidatos / actuaPedirPrecisar (de las manos)",
+    "actuaTarjeta y los armadores de enlaces de las manos"
+  ],
+  "permisos": {
+    "lee": [
+      "agenda de contactos del dispositivo",
+      "el último intercambio de la charla"
+    ],
+    "escribe": [],
+    "propone": [
+      "la tarjeta del dato"
+    ],
+    "nunca": [
+      "mandarle el dato al modelo",
+      "dejar el mail o el número en la charla guardada (va tapado)",
+      "inventar un dato que no está en la agenda",
+      "contestar «no lo tengo» a una pregunta general que no habla de la agenda (esa es del modelo)"
+    ]
+  },
+  "limites": [
+    "Solo modo espejo (como las manos).",
+    "Entiende el último intercambio de esta sesión: si recargaste la página, decime de nuevo de quién."
+  ],
+  "banco": [
+    "pruebas/bancos/TEST_dato_agenda.js",
+    "pruebas/navegador/t_1106.js"
+  ],
+  "estado": "despierto",
+  "codigo": "organos/dato_agenda/codigo.js",
+  "dormible": true
+}

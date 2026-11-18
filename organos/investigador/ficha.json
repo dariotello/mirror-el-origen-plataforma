@@ -1,0 +1,44 @@
+{
+  "nombre": "Investigador (🔎 investigación a fondo + 📄 documento completo)",
+  "version": "1.1",
+  "proposito": "Investigar a fondo con fuentes reales (plan → búsquedas → informe con citas que controla el código) y leer un documento ENTERO por partes; que ese trabajo siga disponible cuando el usuario repregunta. Es el embrión del Analista (Etapa 2).",
+  "disparadores": [
+    "«investigá a fondo …» o «+» → 🔎",
+    "«analizá el documento completo …» con documentos cargados",
+    "repreguntas sobre el último trabajo: «decime las conclusiones», «lo que investigaste»"
+  ],
+  "entradas": [
+    "la pregunta del usuario",
+    "resultados de Tavily por el proxy del usuario",
+    "sus documentos (de sesión y guardados) y su memoria, marcados aparte"
+  ],
+  "salidas": [
+    "informe con [n] y lista de fuentes armada por la app (no la inventa el modelo)",
+    "aviso ARRIBA si la web no aportó nada citable",
+    "análisis del documento con [Pn] y cuánto se leyó",
+    "⬇ .md con la fecha en 24 h",
+    "el último informe como material de la repregunta"
+  ],
+  "herramientas": [
+    "callGroqResiliente (motor del núcleo)",
+    "Tavily vía /tavily del proxy del usuario",
+    "getRagContext y getRecuerdosContext (núcleo)"
+  ],
+  "permisos": {
+    "lee": ["documentos del usuario", "memoria del usuario (solo en el espejo)"],
+    "escribe": ["el historial normal de la charla"],
+    "propone": ["leer un documento entero (botón: no lo corre solo)"],
+    "nunca": ["enviar nada a nadie", "poner teléfonos, mails ni direcciones en una búsqueda", "inventar fuentes: las [n] que no existen se borran y se avisa"]
+  },
+  "limites": [
+    "Sin web no arma un «informe»: dice por qué.",
+    "La calidad de las fuentes es la del buscador; puede leerlas mal y lo dice al pie.",
+    "Un documento de más de 12 partes se lee en parte, y lo dice con el porcentaje."
+  ],
+  "banco": [
+    "pruebas/navegador/t_1023.js#G·H",
+    "pruebas/navegador/t_1029.js#A"
+  ],
+  "estado": "despierto",
+  "codigo": "organos/investigador/codigo.js"
+}

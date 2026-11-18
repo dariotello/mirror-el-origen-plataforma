@@ -1,0 +1,52 @@
+{
+  "nombre": "Manos (ACTÚA)",
+  "version": "1.0",
+  "proposito": "Preparar acciones de un toque (llamar, WhatsApp, mail, calendario, compartir, mapas, música) y anotar tareas, sin mandar nada solas.",
+  "disparadores": [
+    "pedidos de acción reconocidos por reglas (ACTUA_CMDS): «mandale…», «agendame…», «compartí esto…», «cómo llego a…»",
+    "la marca [ACCION:{…}] del modelo, solo si el pedido del usuario la justifica"
+  ],
+  "entradas": [
+    "el pedido tal cual lo escribió el usuario",
+    "la agenda de contactos del dispositivo",
+    "las tareas del dispositivo"
+  ],
+  "salidas": [
+    "tarjetas con el enlace listo (wa.me, mailto, calendario, Maps, YouTube, selector de compartir)",
+    "tareas en 📋 (en el dispositivo)"
+  ],
+  "herramientas": [
+    "enlaces estándar del navegador (tel:, wa.me, mailto:, Google Calendar, Maps)",
+    "navigator.share o portapapeles"
+  ],
+  "permisos": {
+    "lee": [
+      "agenda de contactos del dispositivo",
+      "tareas del dispositivo"
+    ],
+    "escribe": [
+      "tareas y contactos en el dispositivo (localStorage)"
+    ],
+    "propone": [
+      "la tarjeta de cada acción"
+    ],
+    "nunca": [
+      "apretar «enviar», llamar o publicar por el usuario (último toque humano)",
+      "usar un número que no esté en la agenda ni en el pedido"
+    ]
+  },
+  "limites": [
+    "El navegador no puede mandar por el usuario: siempre queda el último toque.",
+    "Sin número guardado ni dictado, no arma WhatsApp ni llamada.",
+    "En la mayoría de las compus no hay selector de compartir: copia el texto."
+  ],
+  "banco": [
+    "pruebas/bancos/TEST_ADVERSARIO_v44_F2C1C2.js",
+    "pruebas/bancos/TEST_tareas.js",
+    "pruebas/bancos/TEST_caldate.js",
+    "pruebas/bancos/TEST_contactos.js",
+    "pruebas/navegador/t_1029.js#B·C"
+  ],
+  "estado": "despierto",
+  "codigo": "organos/manos/codigo.js"
+}

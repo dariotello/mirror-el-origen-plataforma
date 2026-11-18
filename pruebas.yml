@@ -1,0 +1,46 @@
+# Red de pruebas de la plataforma (23/10/2026).
+# Corre SOLA en cada pull request (y en cada push a main). Si algo falla, el PR queda en ROJO
+# antes del Merge. Gratis en repos públicos; en privados usa minutos gratis del plan de GitHub.
+name: Pruebas de la plataforma
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch: {}   # botón «Run workflow» en la pestaña Actions, para correrla a mano
+
+permissions:
+  contents: read          # solo lee el repo: no escribe, no publica, no deploya
+
+concurrency:
+  group: pruebas-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pruebas:
+    name: Sintaxis, bancos y navegador
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [20, 22]
+    steps:
+      - name: Bajar el repo
+        uses: actions/checkout@v4
+
+      - name: Node ${{ matrix.node }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+
+      - name: Instalar Playwright + Chromium
+        working-directory: pruebas
+        run: |
+          npm install --no-save --no-audit --no-fund playwright@1.63.0
+          npx playwright install --with-deps chromium
+
+      - name: Correr todas las pruebas sobre index.html
+        env:
+          PRUEBAS_PARALELO: 2   # de a dos navegadores: las pruebas miden tiempos y una máquina cargada da falsos rojos
+        run: node pruebas/correr.js
