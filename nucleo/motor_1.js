@@ -801,7 +801,7 @@ function vozAccion(){
   micAccion=true; vozAccionUI();
   try{ toggleMic(); }catch(e){ micAccion=false; vozAccionUI(); try{ regError('vozaccion:mic',e) }catch(_){} }
 }
-function vozAccionResolver(){
+async function vozAccionResolver(){ // v40-nube: async, para traer de la nube el átomo que haga falta
   const inp=document.getElementById('inp');
   const texto=String((inp&&inp.value)||'').trim();
   micAccion=false;
@@ -810,7 +810,10 @@ function vozAccionResolver(){
   if(!texto){ addMsg('mirror','No te escuché nada — dale de nuevo, o escribilo y listo.'); return; }
   if(inp){ inp.value=''; try{ aresize(inp); }catch(e){} }
   // 1) la capa local, que resuelve sin gastar un token ni salir a la red
-  try{ if(actuaInterceptar(texto)) return; }catch(e){ try{ regError('vozaccion:actua',e) }catch(_){} }
+  try{ if(typeof nubePrepararManos==='function') await nubePrepararManos(texto); }catch(e){}
+  let _act=false; try{ _act=actuaInterceptar(texto); }catch(e){ try{ regError('vozaccion:actua',e) }catch(_){} }
+  try{ if(typeof nubeSoltarManos==='function') nubeSoltarManos(); }catch(e){}
+  if(_act) return;
   // 2) no la reconoció: camino de siempre. El modelo tiene sus marcas y arma la tarjeta.
   if(inp){ inp.value=texto; try{ aresize(inp); }catch(e){} }
   try{ send(); }catch(e){ try{ regError('vozaccion:send',e) }catch(_){} }

@@ -28,7 +28,8 @@ async function decir(p, q, ms){ const a = (await p.evaluate(() => document.getEl
   console.log('\n━━━ B · la tabla periódica (ENTIDAD_PIEZAS) y dormir/despertar ━━━');
   { const h = await abrir({ fb:true, cfg:CFG, ls:{ mirror_agenda: JSON.stringify(AG) } }); const p = h.page;
     const log = await groqFalso(p, () => 'RESPUESTA_MODELO');
-    const cat = await p.evaluate(() => typeof ENTIDAD_PIEZAS !== 'undefined' ? ENTIDAD_PIEZAS : null);
+    // v40-nube (23/11): desde la 2026-11-23.1 «Dato de agenda» vive en la nube: el catálogo de piezas es el del núcleo + el de atomos/
+    const cat = await p.evaluate(async () => { if (typeof nubeCatalogo === 'function') await nubeCatalogo(); return typeof piezasCatalogo === 'function' ? piezasCatalogo() : (typeof ENTIDAD_PIEZAS !== 'undefined' ? ENTIDAD_PIEZAS : null); });
     t('ENTIDAD_PIEZAS existe y trae las 5 piezas de las fichas', Array.isArray(cat) && ['agente','dato_agenda','investigador','manos'].every(id => cat.some(x => x.id === id)), cat && cat.map(x => x.id));
     t('  el átomo dice que es átomo, dónde se ensambla y que se puede dormir', !!(cat || []).find(x => x.id === 'dato_agenda' && x.tipo === 'átomo' && x.se_ensambla_en === 'manos' && x.dormible === true));
     let r = await decir(p, '¿qué piezas tenés?', 1500);
@@ -36,7 +37,7 @@ async function decir(p, q, ms){ const a = (await p.evaluate(() => document.getEl
     r = await decir(p, 'dormí la pieza de agenda', 1500);
     t('«dormí la pieza de agenda» → dormida', /quedó dormida/.test(r), r.slice(0, 200));
     r = await decir(p, '¿Me pasás la dirección de mail de Laura?', 1800);
-    t('dormida: el átomo NO actúa (va al modelo como en la 29.2, sin el mail)', log.length > 0 && !/laura\.pena00/.test(r), r.slice(0, 200));
+    t('dormida: el átomo NO da el mail (desde la 23.1 la app avisa que la pieza duerme — hallazgo 3 del 18/11; antes iba al modelo)', !/laura\.pena00/.test(r) && (log.length > 0 || /está dormida/.test(r)), r.slice(0, 200));
     r = await decir(p, 'despertá la pieza de agenda', 1500);
     t('«despertá la pieza de agenda» → despierta', /despierta otra vez/.test(r), r.slice(0, 200));
     const n0 = log.length; r = await decir(p, '¿Me pasás la dirección de mail de Laura?', 1800);

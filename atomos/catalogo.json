@@ -1,0 +1,238 @@
+{
+ "_que_es": "Catálogo de la nube — GENERADO por armar.js desde nube/atomos/*/ficha.json y nube/recetas/*.json. NO SE EDITA A MANO. El cargador del núcleo lo lee y trae solo lo que cada pedido necesita.",
+ "atomos": [
+  {
+   "id": "armador",
+   "nombre": "Armador (átomo lógico)",
+   "name": "armador",
+   "description": "Ensambla una herramienta desde una receta JSON validada contra el catálogo, y la devuelve lista para mostrar y desarmar.",
+   "tipo": "átomo",
+   "clase": "lógica",
+   "version": "1.0",
+   "estado": "despierto",
+   "dormible": false,
+   "eventos": [],
+   "metodos": [
+    "armar",
+    "validar"
+   ],
+   "limites": [
+    "La receta describe la pantalla y los enlaces; no trae código.",
+    "Una herramienta por vez."
+   ],
+   "archivo": "armador.js",
+   "huella": "7499160f26f42dbedc807f77255be8ca",
+   "bytes": 3958
+  },
+  {
+   "id": "boton",
+   "nombre": "Botón (átomo de pantalla)",
+   "name": "boton",
+   "description": "Un botón con su texto. Evento «toca».",
+   "tipo": "átomo",
+   "clase": "pantalla",
+   "version": "1.0",
+   "estado": "despierto",
+   "dormible": false,
+   "eventos": [
+    "toca"
+   ],
+   "metodos": [],
+   "limites": [
+    "Solo avisa que lo tocaron: lo que pasa después lo dice la receta."
+   ],
+   "archivo": "boton.js",
+   "huella": "69f35a77ddcce2e98cbf360d37531522",
+   "bytes": 1226
+  },
+  {
+   "id": "calcular",
+   "nombre": "Calcular (átomo lógico)",
+   "name": "calcular",
+   "description": "Resuelve una cuenta (+ − × ÷ ^ % y paréntesis) con el código, sin el modelo y sin eval.",
+   "tipo": "átomo",
+   "clase": "lógica",
+   "version": "1.0",
+   "estado": "despierto",
+   "dormible": false,
+   "eventos": [],
+   "metodos": [
+    "ejecutar"
+   ],
+   "limites": [
+    "Solo aritmética: no funciones (seno, raíz) ni unidades, todavía."
+   ],
+   "archivo": "calcular.js",
+   "huella": "215a0f42c8a88241b806577c8236de0c",
+   "bytes": 2914
+  },
+  {
+   "id": "campo",
+   "nombre": "Campo (átomo de pantalla)",
+   "name": "campo",
+   "description": "Una línea para escribir. Evento «enter»; métodos valor, poner y limpiar.",
+   "tipo": "átomo",
+   "clase": "pantalla",
+   "version": "1.0",
+   "estado": "despierto",
+   "dormible": false,
+   "eventos": [
+    "enter"
+   ],
+   "metodos": [
+    "valor",
+    "poner",
+    "limpiar"
+   ],
+   "limites": [
+    "Una sola línea."
+   ],
+   "archivo": "campo.js",
+   "huella": "fd830442186654273688427a8016b3c5",
+   "bytes": 1663
+  },
+  {
+   "id": "dato_agenda",
+   "nombre": "Dato de agenda (átomo)",
+   "name": "dato-agenda",
+   "description": "Da el mail, número, WhatsApp o dirección de un contacto guardado, con su tarjeta, sin pasar por el modelo. Usar cuando piden un dato de un contacto o dicen «la tenés en contactos».",
+   "tipo": "átomo",
+   "clase": "lógica",
+   "version": "1.1",
+   "estado": "despierto",
+   "dormible": true,
+   "eventos": [],
+   "metodos": [],
+   "limites": [
+    "Solo modo espejo (como las manos).",
+    "Entiende el último intercambio de esta sesión: si recargaste la página, decime de nuevo de quién.",
+    "Vive en la nube: se trae cuando el pedido la necesita y se suelta al terminar el turno. Sin red, lo digo y no invento el dato."
+   ],
+   "archivo": "dato_agenda.js",
+   "huella": "b7df33c4f647767f8514000f0cbd0b46",
+   "bytes": 10742,
+   "se_ensambla_en": "manos",
+   "pista": "e-?mail|mail|correo|whats?app|wasap|wsp|n[uú]mero|tel[eé]fono|celu|m[oó]vil|direcci[oó]n|domicilio|d[oó]nde\\s+vive|agenda|contactos?",
+   "aviso_si": "(?:me\\s+pas[aá]s|pas[aá]me|me\\s+das|dame|dec[ií]me|cu[aá]l\\s+es|ten[eé]s)\\b.*\\b(?:mail|correo|whats?app|n[uú]mero|tel[eé]fono|celu|direcci[oó]n)\\b|(?:ten[eé]s|est[aá]|fij[aá]te|busc[aá]\\w*)\\s+en\\s+(?:la\\s+|mi\\s+|mis\\s+|tu\\s+|tus\\s+|los\\s+)?(?:agenda|contactos)"
+  },
+  {
+   "id": "lista",
+   "nombre": "Lista (átomo de pantalla)",
+   "name": "lista",
+   "description": "Ítems que se agregan, se tachan con un toque y se quitan con ✕. Métodos agregar y vaciar.",
+   "tipo": "átomo",
+   "clase": "pantalla",
+   "version": "1.0",
+   "estado": "despierto",
+   "dormible": false,
+   "eventos": [],
+   "metodos": [
+    "agregar",
+    "vaciar"
+   ],
+   "limites": [
+    "Vive mientras la herramienta está armada: al desarmar se va (guardar en tu compu es la etapa que sigue)."
+   ],
+   "archivo": "lista.js",
+   "huella": "494457fcb6752c6e3e15de43e4bb6e29",
+   "bytes": 1741
+  },
+  {
+   "id": "plantillas_tramite",
+   "nombre": "Plantillas de trámites (átomo)",
+   "name": "plantillas-tramite",
+   "description": "Arma plantillas de trámites (inasistencia, turno, reclamo, certificado, autorización) sin el modelo; lo que no se dijo queda entre <corchetes>.",
+   "tipo": "átomo",
+   "clase": "lógica",
+   "version": "1.1",
+   "estado": "despierto",
+   "dormible": false,
+   "eventos": [],
+   "metodos": [],
+   "limites": [
+    "Cinco plantillas: inasistencia, turno, reclamo, certificado y autorización.",
+    "Vive en la nube: sin red, lo digo."
+   ],
+   "archivo": "plantillas_tramite.js",
+   "huella": "dae4e974b61b7bd78f49873b5c63ced1",
+   "bytes": 7578,
+   "se_ensambla_en": "manos",
+   "pista": "\\b(?:plantilla|machote)s?\\b|\\btr[aá]mites?\\b|\\bmodelo\\s+de\\s+(?:nota|carta|escrito|solicitud)\\b|(?:necesito|quiero|ten[gé]o\\s+que|ayudame\\s+a|arm[aá]me|hac[eé]me|redact[aá]me|escrib[ií]me)\\s+.*(?:justificar|inasistencia|ausencia|turno|reclamo|queja|certificado|constancia|autorizaci[oó]n|autorizar)",
+   "aviso_si": "\\b(?:plantilla|machote)s?\\b|\\btr[aá]mites?\\b|\\bmodelo\\s+de\\s+(?:nota|carta|escrito|solicitud)\\b|(?:necesito|quiero|ten[gé]o\\s+que|ayudame\\s+a|arm[aá]me|hac[eé]me|redact[aá]me|escrib[ií]me)\\s+.*(?:justificar|inasistencia|ausencia|turno|reclamo|queja|certificado|constancia|autorizaci[oó]n|autorizar)"
+  },
+  {
+   "id": "superficie",
+   "nombre": "Superficie (átomo de pantalla)",
+   "name": "superficie",
+   "description": "El papel donde se arma una herramienta en la conversación: título, «✕ desarmar» y una nota. Lo usan todas las recetas.",
+   "tipo": "átomo",
+   "clase": "pantalla",
+   "version": "1.0",
+   "estado": "despierto",
+   "dormible": false,
+   "eventos": [],
+   "metodos": [],
+   "limites": [
+    "Una herramienta por vez: armar otra desarma la anterior."
+   ],
+   "archivo": "superficie.js",
+   "huella": "a5b5b4cd60f391784ef978e249596e29",
+   "bytes": 2297,
+   "rol": "superficie"
+  },
+  {
+   "id": "texto",
+   "nombre": "Texto (átomo de pantalla)",
+   "name": "texto",
+   "description": "Muestra un resultado como texto plano. Método poner.",
+   "tipo": "átomo",
+   "clase": "pantalla",
+   "version": "1.0",
+   "estado": "despierto",
+   "dormible": false,
+   "eventos": [],
+   "metodos": [
+    "poner"
+   ],
+   "limites": [
+    "Texto plano: nunca HTML."
+   ],
+   "archivo": "texto.js",
+   "huella": "52949f194f4208b3115a65ca4fee8707",
+   "bytes": 1005
+  }
+ ],
+ "recetas": [
+  {
+   "id": "calculadora",
+   "nombre": "🧮 Calculadora",
+   "description": "Una calculadora que hace las cuentas con el código (no con el modelo).",
+   "version": "1.0",
+   "pide": "^\\s*(?:che,?\\s*)?(?:arm[aá](?:me)?|abr[ií](?:me)?|tra[eé](?:me)?|quiero|necesito|dame|pas[aá]me|mostr[aá]me)\\s+(?:una\\s+|la\\s+|tu\\s+)?calculadora\\s*[.!?]*\\s*$",
+   "atomos": [
+    "superficie",
+    "campo",
+    "boton",
+    "texto",
+    "calcular"
+   ],
+   "archivo": "recetas/calculadora.json",
+   "huella": "04108753575512dbb7f4f842a01334de"
+  },
+  {
+   "id": "lista",
+   "nombre": "📝 Lista de tareas",
+   "description": "Una lista para anotar tareas o compras, tacharlas y quitarlas.",
+   "version": "1.0",
+   "pide": "^\\s*(?:che,?\\s*)?(?:arm[aá](?:me)?|abr[ií](?:me)?|tra[eé](?:me)?|quiero|necesito|dame|hac[eé]me)\\s+(?:una\\s+|la\\s+)?lista\\s+(?:de\\s+)?(?:tareas|pendientes|compras|cosas\\s+para\\s+hacer)\\s*[.!?]*\\s*$",
+   "atomos": [
+    "superficie",
+    "campo",
+    "boton",
+    "lista"
+   ],
+   "archivo": "recetas/lista.json",
+   "huella": "fd4542492f2289c0d2114712b2f575c1"
+  }
+ ]
+}

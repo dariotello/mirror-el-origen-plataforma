@@ -1,0 +1,52 @@
+{
+  "name": "armador",
+  "tipo": "átomo",
+  "vive_en": "nube",
+  "version": "1.0",
+  "estado": "despierto",
+  "codigo": "nube/atomos/armador/codigo.js",
+  "dormible": false,
+  "banco": [
+    "pruebas/bancos/TEST_nube.js",
+    "pruebas/navegador/t_1123.js"
+  ],
+  "nombre": "Armador (átomo lógico)",
+  "clase": "lógica",
+  "description": "Ensambla una herramienta desde una receta JSON validada contra el catálogo, y la devuelve lista para mostrar y desarmar.",
+  "proposito": "Que cualquier herramienta se arme igual: receta → validar → traer átomos → pantalla y enlaces. Nada escrito a medida para una sola app.",
+  "disparadores": [
+    "un pedido que coincide con una receta del catálogo («armame una calculadora»)"
+  ],
+  "entradas": [
+    "la receta (JSON) y el catálogo"
+  ],
+  "salidas": [
+    "la herramienta armada, o el motivo de por qué no se pudo"
+  ],
+  "herramientas": [
+    "el cargador del núcleo (traer y soltar)",
+    "fetch de la receta"
+  ],
+  "permisos": {
+    "lee": [
+      "el catálogo y las recetas de la nube"
+    ],
+    "escribe": [],
+    "propone": [
+      "la herramienta armada en el chat"
+    ],
+    "nunca": [
+      "ejecutar código que venga en una receta",
+      "usar un átomo que no esté en el catálogo"
+    ]
+  },
+  "limites": [
+    "La receta describe la pantalla y los enlaces; no trae código.",
+    "Una herramienta por vez."
+  ],
+  "eventos": [],
+  "metodos": [
+    "armar",
+    "validar"
+  ]
+}

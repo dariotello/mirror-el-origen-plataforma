@@ -1,0 +1,54 @@
+{
+  "name": "plantillas-tramite",
+  "description": "Arma plantillas de trámites (inasistencia, turno, reclamo, certificado, autorización) sin el modelo; lo que no se dijo queda entre <corchetes>.",
+  "nombre": "Plantillas de trámites (átomo)",
+  "tipo": "átomo",
+  "clase": "lógica",
+  "vive_en": "nube",
+  "se_ensambla_en": "manos",
+  "version": "1.1",
+  "proposito": "Dejar armado el esqueleto honesto de un trámite común, con la tarjeta para compartirlo. Vive en la nube y se trae al pedirlo.",
+  "disparadores": [
+    "«plantilla de inasistencia del 5 de agosto por gripe»",
+    "«necesito hacer un reclamo»",
+    "«¿qué plantillas tenés?»"
+  ],
+  "entradas": [
+    "el pedido tal cual",
+    "el nombre del perfil (para la firma)"
+  ],
+  "salidas": [
+    "la plantilla en una tarjeta para compartir",
+    "la lista de plantillas"
+  ],
+  "herramientas": [
+    "compartirTarjeta (de las manos)"
+  ],
+  "permisos": {
+    "lee": [
+      "el nombre del perfil"
+    ],
+    "escribe": [],
+    "propone": [
+      "la tarjeta con la plantilla"
+    ],
+    "nunca": [
+      "inventar nombres, fechas, DNI o motivos que no se dijeron"
+    ]
+  },
+  "limites": [
+    "Cinco plantillas: inasistencia, turno, reclamo, certificado y autorización.",
+    "Vive en la nube: sin red, lo digo."
+  ],
+  "banco": [
+    "pruebas/bancos/TEST_ADVERSARIO_v44_F2C1C2.js",
+    "pruebas/navegador/t_1123.js"
+  ],
+  "estado": "despierto",
+  "codigo": "nube/atomos/plantillas_tramite/codigo.js",
+  "dormible": false,
+  "pista": "\\b(?:plantilla|machote)s?\\b|\\btr[aá]mites?\\b|\\bmodelo\\s+de\\s+(?:nota|carta|escrito|solicitud)\\b|(?:necesito|quiero|ten[gé]o\\s+que|ayudame\\s+a|arm[aá]me|hac[eé]me|redact[aá]me|escrib[ií]me)\\s+.*(?:justificar|inasistencia|ausencia|turno|reclamo|queja|certificado|constancia|autorizaci[oó]n|autorizar)",
+  "aviso_si": "\\b(?:plantilla|machote)s?\\b|\\btr[aá]mites?\\b|\\bmodelo\\s+de\\s+(?:nota|carta|escrito|solicitud)\\b|(?:necesito|quiero|ten[gé]o\\s+que|ayudame\\s+a|arm[aá]me|hac[eé]me|redact[aá]me|escrib[ií]me)\\s+.*(?:justificar|inasistencia|ausencia|turno|reclamo|queja|certificado|constancia|autorizaci[oó]n|autorizar)",
+  "eventos": [],
+  "metodos": []
+}

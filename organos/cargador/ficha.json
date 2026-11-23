@@ -1,0 +1,55 @@
+{
+  "name": "cargador-nube",
+  "description": "Trae de la nube solo los átomos que un pedido necesita, los usa y los suelta; para una herramienta trae el armador. Sin red, lo dice.",
+  "nombre": "Cargador de la nube",
+  "tipo": "órgano",
+  "se_ensambla_en": "núcleo",
+  "version": "1.0",
+  "proposito": "Que la app arranque sin piezas y opere en la nube: traer, usar y soltar átomos; armar y desarmar herramientas desde recetas.",
+  "disparadores": [
+    "un pedido que coincide con la pista de un átomo de las manos («¿me pasás el mail de Laura?»)",
+    "un pedido de herramienta del catálogo («armame una calculadora»)",
+    "«cerrá la calculadora» / «✕ desarmar»"
+  ],
+  "entradas": [
+    "el pedido del usuario",
+    "atomos/catalogo.json (la nube)"
+  ],
+  "salidas": [
+    "el átomo enchufado durante el turno",
+    "la herramienta armada en el chat",
+    "el aviso honesto si la nube no llega"
+  ],
+  "herramientas": [
+    "fetch y <script> del navegador (mismo sitio)",
+    "ACTUA_CMDS de las manos",
+    "piezaDespierta (piezas)"
+  ],
+  "permisos": {
+    "lee": [
+      "el catálogo y los átomos de la nube"
+    ],
+    "escribe": [
+      "una copia del catálogo (solo fichas) en este dispositivo, de respaldo"
+    ],
+    "propone": [
+      "la herramienta armada"
+    ],
+    "nunca": [
+      "dejar un átomo cargado después de usarlo",
+      "usar un átomo que no está en el catálogo",
+      "inventar un dato cuando la pieza no llega"
+    ]
+  },
+  "limites": [
+    "Necesita red para traer una pieza: sin red lo dice.",
+    "Una herramienta por vez."
+  ],
+  "banco": [
+    "pruebas/bancos/TEST_nube.js",
+    "pruebas/navegador/t_1123.js"
+  ],
+  "estado": "despierto",
+  "codigo": "organos/cargador/codigo.js",
+  "dormible": false
+}

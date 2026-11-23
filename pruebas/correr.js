@@ -68,7 +68,7 @@ titulo('2) Bancos');
   const bancos = fs.readdirSync(dirB).filter(f => /^TEST_.*\.js$/.test(f)).sort();
   for (const b of bancos) fs.copyFileSync(path.join(dirB, b), path.join(base, 'MIRROR', b));
   for (const b of bancos) {
-    const r = cp.spawnSync(process.execPath, [path.join(base, 'MIRROR', b)], { cwd: path.join(base, 'MIRROR'), encoding: 'utf8', timeout: 5 * 60 * 1000, maxBuffer: 64 * 1024 * 1024 });
+    const r = cp.spawnSync(process.execPath, [path.join(base, 'MIRROR', b)], { cwd: path.join(base, 'MIRROR'), env: Object.assign({}, process.env, { REPO_RAIZ: RAIZ }), encoding: 'utf8', timeout: 5 * 60 * 1000, maxBuffer: 64 * 1024 * 1024 });
     const out = (r.stdout || '') + (r.stderr || '');
     const resumen = out.trim().split('\n').filter(l => /VERDE|pasan|fallan|FALL|❌|Error/.test(l)).slice(-1)[0] || out.trim().split('\n').slice(-1)[0] || '';
     const mal = r.status !== 0 || r.error;

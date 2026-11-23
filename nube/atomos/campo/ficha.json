@@ -1,0 +1,51 @@
+{
+  "name": "campo",
+  "tipo": "átomo",
+  "vive_en": "nube",
+  "version": "1.0",
+  "estado": "despierto",
+  "codigo": "nube/atomos/campo/codigo.js",
+  "dormible": false,
+  "banco": [
+    "pruebas/bancos/TEST_nube.js",
+    "pruebas/navegador/t_1123.js"
+  ],
+  "nombre": "Campo (átomo de pantalla)",
+  "clase": "pantalla",
+  "description": "Una línea para escribir. Evento «enter»; métodos valor, poner y limpiar.",
+  "proposito": "Que el usuario escriba algo dentro de una herramienta (una cuenta, un ítem, un nombre).",
+  "disparadores": [
+    "recetas que necesitan que el usuario escriba"
+  ],
+  "entradas": [
+    "placeholder"
+  ],
+  "salidas": [
+    "lo escrito, cuando otro átomo lo pide"
+  ],
+  "herramientas": [
+    "el DOM del navegador"
+  ],
+  "permisos": {
+    "lee": [],
+    "escribe": [
+      "solo su propio pedacito de pantalla, dentro de la herramienta armada"
+    ],
+    "propone": [],
+    "nunca": [
+      "guardar lo escrito fuera de la herramienta",
+      "ejecutar código que venga del modelo o de la receta"
+    ]
+  },
+  "limites": [
+    "Una sola línea."
+  ],
+  "eventos": [
+    "enter"
+  ],
+  "metodos": [
+    "valor",
+    "poner",
+    "limpiar"
+  ]
+}

@@ -1,0 +1,53 @@
+{
+ "id": "calculadora",
+ "nombre": "🧮 Calculadora",
+ "version": "1.0",
+ "description": "Una calculadora que hace las cuentas con el código (no con el modelo).",
+ "pide": "^\\s*(?:che,?\\s*)?(?:arm[aá](?:me)?|abr[ií](?:me)?|tra[eé](?:me)?|quiero|necesito|dame|pas[aá]me|mostr[aá]me)\\s+(?:una\\s+|la\\s+|tu\\s+)?calculadora\\s*[.!?]*\\s*$",
+ "atomos": [
+  "superficie",
+  "campo",
+  "boton",
+  "texto",
+  "calcular"
+ ],
+ "pantalla": [
+  {
+   "id": "cuenta",
+   "atomo": "campo",
+   "props": {
+    "placeholder": "Escribí la cuenta, por ejemplo (3+4)*2"
+   }
+  },
+  {
+   "id": "igual",
+   "atomo": "boton",
+   "props": {
+    "texto": "="
+   }
+  },
+  {
+   "id": "res",
+   "atomo": "texto",
+   "props": {
+    "texto": ""
+   }
+  }
+ ],
+ "enlaces": [
+  {
+   "cuando": "igual.toca",
+   "tomar": "cuenta",
+   "pasar_por": "calcular",
+   "entregar_a": "res",
+   "metodo": "poner"
+  },
+  {
+   "cuando": "cuenta.enter",
+   "tomar": "cuenta",
+   "pasar_por": "calcular",
+   "entregar_a": "res",
+   "metodo": "poner"
+  }
+ ]
+}

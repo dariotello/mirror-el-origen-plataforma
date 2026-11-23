@@ -41,3 +41,20 @@ pruebas/            ← la red de pruebas (corre sola en cada pull request)
 ## Átomos (06/11/2026)
 
 Un **átomo** es un órgano mínimo: una sola habilidad, con su ficha y su banco, que **se ensambla solo** en otro órgano (`"se_ensambla_en"` en la ficha). Combinados, forman herramientas. El primero es `dato_agenda/`: se mete adelante en las reglas de las manos y, si se lo duerme (`"estado": "dormido"` en la ficha y en `DATO_AGENDA_ESTADO`), no matchea nada y la app sigue como antes.
+
+## ☁ La nube (23/11/2026 · build 2026-11-23.1)
+
+Darío (22/11): «…QUE LA APP OPEREN EN LA NUBE ARMANDO Y DESARMANDO LO QUE EL USUARIO NECESITA Y SE LO TRAE, CUANDO EL USUARIO NO LO NECESITA MÁS SE DESENSAMBLA…».
+
+```
+nube/atomos/<átomo>/   ← FUENTE de cada átomo de la nube: codigo.js (el cuerpo de su fábrica, termina en `return {…}`) + ficha.json
+nube/recetas/<id>.json ← FUENTE de cada herramienta: qué átomos usa, su pantalla y sus enlaces (JSON, sin código)
+atomos/                ← lo que se SIRVE (lo genera `node armar.js`; no se edita a mano): un .js por átomo, recetas/ y catalogo.json
+organos/cargador/      ← el único que queda en el index: lee el catálogo, trae, enchufa y suelta
+```
+
+- **La app arranca sin piezas.** Un pedido de las manos (un dato de agenda, una plantilla de trámite) trae SOLO el átomo cuya «pista» coincide, contesta y lo suelta al terminar el turno. Si el átomo dejó un «hueco» en la fila de las manos, vuelve a SU lugar.
+- **Herramientas:** «armame una calculadora» / «armame una lista de tareas» traen el átomo `armador`, que valida la receta contra el catálogo (ningún átomo inventado, ningún evento o método que no exista) y la arma en la charla. «✕ desarmar» suelta todo.
+- **Sumar una herramienta nueva = una receta nueva** (y, si hace falta, un átomo nuevo con ficha y banco). El index no se toca.
+- `node armar.js` publica `atomos/` y `node armar.js --verificar` da rojo si lo publicado no es exactamente lo que arman las fuentes.
+- Sin red: lo dice de frente. El catálogo (solo fichas, unos KB) queda en el dispositivo como respaldo para poder avisar.
