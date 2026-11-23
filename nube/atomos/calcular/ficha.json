@@ -1,0 +1,45 @@
+{
+  "name": "calcular",
+  "tipo": "átomo",
+  "vive_en": "nube",
+  "version": "1.0",
+  "estado": "despierto",
+  "codigo": "nube/atomos/calcular/codigo.js",
+  "dormible": false,
+  "banco": [
+    "pruebas/bancos/TEST_nube.js",
+    "pruebas/navegador/t_1123.js"
+  ],
+  "nombre": "Calcular (átomo lógico)",
+  "clase": "lógica",
+  "description": "Resuelve una cuenta (+ − × ÷ ^ % y paréntesis) con el código, sin el modelo y sin eval.",
+  "proposito": "Que las cuentas las haga el código, exactas, y que si no se entienden se diga.",
+  "disparadores": [
+    "recetas que calculan (la 🧮 calculadora)"
+  ],
+  "entradas": [
+    "la cuenta escrita"
+  ],
+  "salidas": [
+    "«= resultado» o «No entiendo esa cuenta (…)»"
+  ],
+  "herramientas": [
+    "un analizador propio, sin eval"
+  ],
+  "permisos": {
+    "lee": [],
+    "escribe": [],
+    "propone": [],
+    "nunca": [
+      "usar eval ni Function",
+      "inventar un resultado"
+    ]
+  },
+  "limites": [
+    "Solo aritmética: no funciones (seno, raíz) ni unidades, todavía."
+  ],
+  "eventos": [],
+  "metodos": [
+    "ejecutar"
+  ]
+}

@@ -105,6 +105,67 @@ for (const o of (fs.existsSync(dirO) ? fs.readdirSync(dirO).filter(d => fs.statS
 }
 enReceta.filter(a => /^organos\//.test(a)).forEach(a => { const o = a.split('/')[1]; if (!fs.existsSync(path.join(dirO, o, 'ficha.json'))) fallas.push('la receta arma «' + a + '» pero el órgano «' + o + '» no tiene ficha'); });
 
+// 3b) ☁ LA NUBE (v40-nube, 23/11/2026) — Darío (22/11): «…QUE LA APP OPEREN EN LA NUBE ARMANDO Y DESARMANDO LO QUE EL USUARIO
+//     NECESITA Y SE LO TRAE…». Los átomos de nube/atomos/ y las recetas de nube/recetas/ NO se pegan en el index: se publican
+//     en atomos/ (al lado del index, en el mismo Worker gratis) con su catálogo generado. El index no crece por herramienta.
+//     Mismas reglas que un órgano: ficha completa, banco existente, node --check (envuelto en su fábrica). Y cada receta se
+//     valida contra el catálogo: ningún átomo inventado, ningún evento o método que el átomo no declare.
+const nubeArchivos = {};   // ruta relativa → Buffer
+(function nube(){
+  const dA = path.join(RAIZ, 'nube', 'atomos'), dR = path.join(RAIZ, 'nube', 'recetas');
+  if (!fs.existsSync(dA)) return;
+  const cat = { _que_es: 'Catálogo de la nube — GENERADO por armar.js desde nube/atomos/*/ficha.json y nube/recetas/*.json. NO SE EDITA A MANO. El cargador del núcleo lo lee y trae solo lo que cada pedido necesita.', atomos: [], recetas: [] };
+  for (const id of fs.readdirSync(dA).filter(d => fs.statSync(path.join(dA, d)).isDirectory()).sort()){
+    const fF = path.join(dA, id, 'ficha.json');
+    if (!fs.existsSync(fF)) { fallas.push('átomo de la nube «' + id + '»: sin ficha.json'); continue; }
+    let fi; try { fi = JSON.parse(fs.readFileSync(fF, 'utf8')); } catch (e) { fallas.push('átomo de la nube «' + id + '»: ficha.json no es JSON válido'); continue; }
+    const faltan = CAMPOS.concat(['clase', 'name', 'description']).filter(c => fi[c] === undefined || fi[c] === '' || (Array.isArray(fi[c]) && !fi[c].length));
+    if (faltan.length) fallas.push('átomo de la nube «' + id + '»: la ficha no declara ' + faltan.join(', '));
+    if (fi.vive_en !== 'nube') fallas.push('átomo de la nube «' + id + '»: su ficha tiene que decir "vive_en": "nube"');
+    if (!/^(pantalla|lógica)$/.test(fi.clase || '')) fallas.push('átomo de la nube «' + id + '»: clase tiene que ser pantalla o lógica');
+    (fi.banco || []).forEach(b => { if (!fs.existsSync(path.join(RAIZ, String(b).split('#')[0]))) fallas.push('átomo de la nube «' + id + '»: su banco «' + b + '» no existe'); });
+    ['pista', 'aviso_si'].forEach(k => { if (fi[k]) try { new RegExp(fi[k], 'i'); } catch (e) { fallas.push('átomo de la nube «' + id + '»: ' + k + ' no es una expresión válida'); } });
+    if (!fi.codigo || !fs.existsSync(path.join(RAIZ, fi.codigo))) { fallas.push('átomo de la nube «' + id + '»: falta su código'); continue; }
+    const cuerpo = leer(fi.codigo).toString('utf8');
+    const env = Buffer.from('/* ☁ ÁTOMO DE LA NUBE «' + id + '» v' + fi.version + ' — GENERADO por armar.js desde ' + fi.codigo + '. NO SE EDITA A MANO.\n'
+      + '   Lo trae el cargador del núcleo (organos/cargador) cuando un pedido lo necesita, y lo suelta al terminar. */\n'
+      + '(function(){\nvar fabrica = function(){\n' + cuerpo.replace(/\n?$/, '\n') + '};\n'
+      + "if (typeof window !== 'undefined' && typeof window.__atomoNubeLlega === 'function') window.__atomoNubeLlega(" + JSON.stringify(id) + ', ' + JSON.stringify(fi.version) + ', fabrica);\n'
+      + "else if (typeof module !== 'undefined' && module.exports) module.exports = fabrica;\n})();\n", 'utf8');
+    const fT = path.join(tmp, 'nube__' + id + '.js'); fs.writeFileSync(fT, env);
+    const r = cp.spawnSync(process.execPath, ['--check', fT], { encoding: 'utf8' });
+    if (r.status !== 0) fallas.push('átomo de la nube «' + id + '» no pasa node --check: ' + (String(r.stderr).split('\n').find(l => /Error/.test(l)) || 'error de sintaxis'));
+    nubeArchivos['atomos/' + id + '.js'] = env;
+    const e = { id, nombre: fi.nombre, name: fi.name, description: fi.description, tipo: fi.tipo || 'átomo', clase: fi.clase, version: fi.version,
+      estado: fi.estado, dormible: fi.dormible === true, eventos: fi.eventos || [], metodos: fi.metodos || [], limites: fi.limites || [],
+      archivo: id + '.js', huella: md5(env), bytes: env.length };
+    ['rol', 'se_ensambla_en', 'pista', 'aviso_si'].forEach(k => { if (fi[k]) e[k] = fi[k]; });
+    cat.atomos.push(e);
+  }
+  const porId = {}; cat.atomos.forEach(a => porId[a.id] = a);
+  for (const f of (fs.existsSync(dR) ? fs.readdirSync(dR).filter(f => /\.json$/.test(f)).sort() : [])){
+    let rc; try { rc = JSON.parse(leer('nube/recetas/' + f).toString('utf8')); } catch (e) { fallas.push('receta «' + f + '»: no es JSON válido'); continue; }
+    const mal = m => fallas.push('receta «' + f + '»: ' + m);
+    if (!rc.id || rc.id + '.json' !== f) mal('el id tiene que ser el nombre del archivo');
+    if (!rc.nombre || !rc.pide || !Array.isArray(rc.atomos) || !rc.atomos.length) mal('le falta nombre, pide o atomos');
+    try { new RegExp(rc.pide, 'i'); } catch (e) { mal('«pide» no es una expresión válida'); }
+    (rc.atomos || []).forEach(a => { if (!porId[a]) mal('usa el átomo «' + a + '», que no está en el catálogo (no se inventan átomos)'); });
+    if ((rc.atomos || []).indexOf('superficie') < 0) mal('toda herramienta se arma sobre «superficie»');
+    const ids = {};
+    (rc.pantalla || []).forEach(p => { if (!/^[a-z_][a-z0-9_]*$/.test(p.id || '') || ids[p.id]) mal('pieza de pantalla con id raro o repetido: ' + p.id); ids[p.id] = p.atomo;
+      if ((rc.atomos || []).indexOf(p.atomo) < 0 || !porId[p.atomo] || porId[p.atomo].clase !== 'pantalla') mal('la pieza «' + p.id + '» usa «' + p.atomo + '», que no es un átomo de pantalla de la receta'); });
+    (rc.enlaces || []).forEach((en, k) => { const [o, ev] = String(en.cuando || '').split('.');
+      if (!ids[o] || !porId[ids[o]] || porId[ids[o]].eventos.indexOf(ev) < 0) mal('enlace ' + (k + 1) + ': «' + en.cuando + '» no es un evento que exista');
+      if (en.tomar && (!ids[en.tomar] || porId[ids[en.tomar]].metodos.indexOf('valor') < 0)) mal('enlace ' + (k + 1) + ': no se puede tomar el valor de «' + en.tomar + '»');
+      if (en.pasar_por && ((rc.atomos || []).indexOf(en.pasar_por) < 0 || !porId[en.pasar_por] || porId[en.pasar_por].clase !== 'lógica')) mal('enlace ' + (k + 1) + ': «' + en.pasar_por + '» no es un átomo lógico de la receta');
+      if (!ids[en.entregar_a] || porId[ids[en.entregar_a]].metodos.indexOf(en.metodo || 'poner') < 0) mal('enlace ' + (k + 1) + ': «' + en.entregar_a + '» no tiene el método «' + (en.metodo || 'poner') + '»'); });
+    const b = Buffer.from(JSON.stringify(rc, null, 1) + '\n', 'utf8');
+    nubeArchivos['atomos/recetas/' + f] = b;
+    cat.recetas.push({ id: rc.id, nombre: rc.nombre, description: rc.description || '', version: rc.version || '', pide: rc.pide, atomos: rc.atomos, archivo: 'recetas/' + f, huella: md5(b) });
+  }
+  nubeArchivos['atomos/catalogo.json'] = Buffer.from(JSON.stringify(cat, null, 1) + '\n', 'utf8');
+})();
+
 // 4) el ADN, sellado
 if (!fs.existsSync(fSello)) fallas.push('el ADN no está sellado (falta adn/adn.json): node armar.js --sellar-adn adn-1.0 "primer sello"');
 else { const s = JSON.parse(fs.readFileSync(fSello, 'utf8')); const h = md5(leer('adn/adn_fabrica.js')); if (h !== s.huella) fallas.push('el ADN cambió (huella ' + h + ') y el sello dice ' + s.huella + ' (' + s.version + '): si fue a propósito, sellalo con node armar.js --sellar-adn adn-X.Y "por qué"'); }
@@ -119,4 +180,19 @@ if (args.includes('--verificar')) {
     fallas.push('index.html NO es el que arman las piezas (primera diferencia en la línea ' + html.slice(0, i).toString('utf8').split('\n').length + ', pieza «' + cual + '»). Tocaste una pieza: corré node armar.js. Tocaste el index: corré node armar.js --desarmar.');
   } else console.log('✅ index.html es exactamente el que arman las piezas.');
 } else if (!fallas.length) { fs.writeFileSync(SALIDA, html); console.log('✅ escribí ' + path.relative(RAIZ, SALIDA)); }
+// ☁ la nube: se publica en atomos/ (o se verifica que lo publicado sea exactamente lo que arman las fuentes)
+if (Object.keys(nubeArchivos).length && iS < 0) {
+  const dP = path.join(RAIZ, 'atomos');
+  const hoy = []; (function rec(d, pre){ if (!fs.existsSync(d)) return; for (const f of fs.readdirSync(d)) { const q = path.join(d, f); if (fs.statSync(q).isDirectory()) rec(q, pre + f + '/'); else hoy.push('atomos/' + pre + f); } })(dP, '');
+  if (args.includes('--verificar')) {
+    const distintos = Object.keys(nubeArchivos).filter(k => !fs.existsSync(path.join(RAIZ, k)) || !LF(fs.readFileSync(path.join(RAIZ, k))).equals(nubeArchivos[k]));
+    const sobran = hoy.filter(k => !nubeArchivos[k]);
+    if (distintos.length || sobran.length) fallas.push('la nube (atomos/) no es la que arman las fuentes de nube/: ' + distintos.concat(sobran.map(k => k + ' (sobra)')).join(', ') + '. Corré node armar.js.');
+    else console.log('✅ la nube (atomos/) es exactamente la que arman las fuentes: ' + Object.keys(nubeArchivos).length + ' archivos.');
+  } else if (!fallas.length) {
+    hoy.filter(k => !nubeArchivos[k]).forEach(k => { try { fs.unlinkSync(path.join(RAIZ, k)); } catch (e) {} });
+    for (const k in nubeArchivos) { fs.mkdirSync(path.dirname(path.join(RAIZ, k)), { recursive: true }); fs.writeFileSync(path.join(RAIZ, k), nubeArchivos[k]); }
+    console.log('☁ publiqué la nube en atomos/: ' + Object.keys(nubeArchivos).length + ' archivos (' + Object.values(nubeArchivos).reduce((a, b) => a + b.length, 0) + ' bytes).');
+  }
+}
 if (fallas.length) { console.log('\n❌ ROJO:\n' + fallas.map(f => '   · ' + f).join('\n')); process.exit(1); }

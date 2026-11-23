@@ -1,0 +1,48 @@
+{
+  "name": "lista",
+  "tipo": "átomo",
+  "vive_en": "nube",
+  "version": "1.0",
+  "estado": "despierto",
+  "codigo": "nube/atomos/lista/codigo.js",
+  "dormible": false,
+  "banco": [
+    "pruebas/bancos/TEST_nube.js",
+    "pruebas/navegador/t_1123.js"
+  ],
+  "nombre": "Lista (átomo de pantalla)",
+  "clase": "pantalla",
+  "description": "Ítems que se agregan, se tachan con un toque y se quitan con ✕. Métodos agregar y vaciar.",
+  "proposito": "Juntar cosas en una lista dentro de una herramienta (tareas, compras, pendientes).",
+  "disparadores": [
+    "recetas de listas"
+  ],
+  "entradas": [
+    "cada ítem"
+  ],
+  "salidas": [
+    "la lista en pantalla"
+  ],
+  "herramientas": [
+    "el DOM del navegador"
+  ],
+  "permisos": {
+    "lee": [],
+    "escribe": [
+      "solo su propio pedacito de pantalla, dentro de la herramienta armada"
+    ],
+    "propone": [],
+    "nunca": [
+      "guardar lo escrito fuera de la herramienta",
+      "ejecutar código que venga del modelo o de la receta"
+    ]
+  },
+  "limites": [
+    "Vive mientras la herramienta está armada: al desarmar se va (guardar en tu compu es la etapa que sigue)."
+  ],
+  "eventos": [],
+  "metodos": [
+    "agregar",
+    "vaciar"
+  ]
+}

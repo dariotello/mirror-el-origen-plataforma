@@ -1,0 +1,47 @@
+{
+  "name": "texto",
+  "tipo": "átomo",
+  "vive_en": "nube",
+  "version": "1.0",
+  "estado": "despierto",
+  "codigo": "nube/atomos/texto/codigo.js",
+  "dormible": false,
+  "banco": [
+    "pruebas/bancos/TEST_nube.js",
+    "pruebas/navegador/t_1123.js"
+  ],
+  "nombre": "Texto (átomo de pantalla)",
+  "clase": "pantalla",
+  "description": "Muestra un resultado como texto plano. Método poner.",
+  "proposito": "Mostrar el resultado de un átomo lógico.",
+  "disparadores": [
+    "recetas que muestran un resultado"
+  ],
+  "entradas": [
+    "el texto a mostrar"
+  ],
+  "salidas": [
+    "el texto en pantalla"
+  ],
+  "herramientas": [
+    "el DOM del navegador"
+  ],
+  "permisos": {
+    "lee": [],
+    "escribe": [
+      "solo su propio pedacito de pantalla, dentro de la herramienta armada"
+    ],
+    "propone": [],
+    "nunca": [
+      "guardar lo escrito fuera de la herramienta",
+      "ejecutar código que venga del modelo o de la receta"
+    ]
+  },
+  "limites": [
+    "Texto plano: nunca HTML."
+  ],
+  "eventos": [],
+  "metodos": [
+    "poner"
+  ]
+}

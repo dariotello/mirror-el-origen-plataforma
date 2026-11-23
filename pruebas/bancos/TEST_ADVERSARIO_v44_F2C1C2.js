@@ -137,7 +137,9 @@ function contexto(conShare, opciones) {
 }
 
 for (const [etiqueta, archivo] of [['MIRROR', F_MIRROR], ['PLATAFORMA', F_PLAT]].filter(([, a]) => fs.existsSync(a))) { // [repo] sin MIRROR/index.html se saltea
-  const src = fs.readFileSync(archivo, 'utf8');
+  let src = fs.readFileSync(archivo, 'utf8');
+  /* v40-nube (23/11): desde la 2026-11-23.1 las plantillas de trámites (C4) viven en la nube. Se prueban desde su átomo. */
+  if (!/const TRAMITE_PLANTILLAS/.test(src)) { const r = [process.env.REPO_RAIZ, path.join(path.dirname(archivo), 'PARA_DEPLOYAR_PLATAFORMA', 'PARA_EL_REPO')].filter(Boolean).map(x => path.join(x, 'nube', 'atomos', 'plantillas_tramite', 'codigo.js')).find(f => fs.existsSync(f)); if (r) src += '\n' + fs.readFileSync(r, 'utf8'); }
   const P = etiqueta + ' · ';
 
   // ══════════ C1 — helpers de compartir ══════════

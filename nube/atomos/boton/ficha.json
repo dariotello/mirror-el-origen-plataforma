@@ -1,0 +1,47 @@
+{
+  "name": "boton",
+  "tipo": "átomo",
+  "vive_en": "nube",
+  "version": "1.0",
+  "estado": "despierto",
+  "codigo": "nube/atomos/boton/codigo.js",
+  "dormible": false,
+  "banco": [
+    "pruebas/bancos/TEST_nube.js",
+    "pruebas/navegador/t_1123.js"
+  ],
+  "nombre": "Botón (átomo de pantalla)",
+  "clase": "pantalla",
+  "description": "Un botón con su texto. Evento «toca».",
+  "proposito": "Disparar un enlace de la receta con un toque.",
+  "disparadores": [
+    "recetas con una acción"
+  ],
+  "entradas": [
+    "texto del botón"
+  ],
+  "salidas": [
+    "el evento «toca»"
+  ],
+  "herramientas": [
+    "el DOM del navegador"
+  ],
+  "permisos": {
+    "lee": [],
+    "escribe": [
+      "solo su propio pedacito de pantalla, dentro de la herramienta armada"
+    ],
+    "propone": [],
+    "nunca": [
+      "guardar lo escrito fuera de la herramienta",
+      "ejecutar código que venga del modelo o de la receta"
+    ]
+  },
+  "limites": [
+    "Solo avisa que lo tocaron: lo que pasa después lo dice la receta."
+  ],
+  "eventos": [
+    "toca"
+  ],
+  "metodos": []
+}

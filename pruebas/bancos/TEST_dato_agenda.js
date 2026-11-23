@@ -9,12 +9,18 @@ let ok=0,bad=0;
 function t(l,c,e){ if(c){ok++;} else {bad++; console.log('  ❌ '+l+(e!==undefined?'  → '+String(e).slice(0,240):''));} }
 function grabFunc(H,name){ const i=H.indexOf('function '+name+'('); if(i<0)return''; let d=0,k=H.indexOf('{',i); for(let p=k;p<H.length;p++){const c=H[p]; if(c==='{')d++; else if(c==='}'){d--; if(d===0)return H.slice(i,p+1);}} return ''; }
 const H=fs.readFileSync(FILE,'utf8');
+// v40-nube (23/11): desde la 2026-11-23.1 el átomo NO vive en el index: vive en la nube (nube/atomos/dato_agenda/codigo.js, el
+// cuerpo de su fábrica). Si el index todavía lo trae (builds viejas), se prueba de ahí, como antes.
 const i0=H.indexOf('/* ══════════ v40-datoagenda'), i1=H.indexOf('/* ══════════ FIN v40-datoagenda');
-t('el átomo está ensamblado en el index', i0>0 && i1>i0);
-if (i0<0||i1<0){ console.log('\n❌ '+bad+' fallos de '+(ok+bad)); process.exit(1); }
-// la ficha manda el estado (en el repo está en organos/dato_agenda/ficha.json; en la carpeta de Darío, al lado de PARA_EL_REPO)
-const fichaCand=[path.join(BASE,'..','organos','dato_agenda','ficha.json'), path.join(BASE,'PLATAFORMA','PARA_DEPLOYAR_PLATAFORMA','PARA_EL_REPO','organos','dato_agenda','ficha.json')].filter(f=>fs.existsSync(f));
-if (fichaCand.length){ const fi=JSON.parse(fs.readFileSync(fichaCand[0],'utf8')); const m=/const DATO_AGENDA_ESTADO = '([a-z]+)'/.exec(H); t('el estado del código es el de la ficha', m && m[1]===fi.estado, (m&&m[1])+' vs '+fi.estado); }
+const repo=[process.env.REPO_RAIZ, path.join(BASE,'..'), path.join(BASE,'PLATAFORMA','PARA_DEPLOYAR_PLATAFORMA','PARA_EL_REPO')].filter(Boolean).find(r=>fs.existsSync(path.join(r,'nube','atomos','dato_agenda','codigo.js')));
+const enIndex = i0>0 && i1>i0;
+const COD = enIndex ? H.slice(i0,i1) : (repo ? fs.readFileSync(path.join(repo,'nube','atomos','dato_agenda','codigo.js'),'utf8') : '');
+t('el átomo existe (en el index de una build vieja, o en la nube)', !!COD);
+if (!COD){ console.log('\n❌ '+bad+' fallos de '+(ok+bad)); process.exit(1); }
+if (!enIndex) t('en la nube: el index ya NO trae el átomo (la app arranca sin la pieza)', H.indexOf('function datoAgendaEntender(')<0);
+const ENSAMBLAR = enIndex ? COD : 'var __inst=(function(){\n'+COD+'\n})(); ACTUA_CMDS.unshift(__inst.regla);';
+const fichaCand=[repo&&path.join(repo,'nube','atomos','dato_agenda','ficha.json'), path.join(BASE,'..','organos','dato_agenda','ficha.json')].filter(f=>f&&fs.existsSync(f));
+if (fichaCand.length){ const fi=JSON.parse(fs.readFileSync(fichaCand[0],'utf8')); const m=/const DATO_AGENDA_ESTADO = '([a-z]+)'/.exec(COD); t('el estado del código es el de la ficha', m && m[1]===fi.estado, (m&&m[1])+' vs '+fi.estado); }
 const funcs=['_normNombre','actuaCandidatos','actuaContacto','actuaPedirPrecisar','actuaMailDirOk','actuaTelURL','actuaMailURL','actuaMapsURL'].map(n=>grabFunc(H,n)).join('\n');
 function caja(agenda){
   const sb={String,RegExp,Object,Array,Math,JSON,console,
@@ -23,7 +29,7 @@ function caja(agenda){
   vm.createContext(sb);
   vm.runInContext('var history=[]; var ACTUA_CMDS=[]; function actuaAgenda(){ try{ return JSON.parse(localStorage.getItem("mirror_agenda")||"{}") }catch(e){ return {} } }\n'
     +'function actuaTarjeta(){ __tarjetas.push(Array.from(arguments)); return true; } function actuaPendPedir(a,m){ __pend.push(a); } function actuaWaURL(n,m){ return "https://wa.me/"+String(n).replace(/\\D/g,""); } function regError(){}\n'
-    +funcs+'\n'+H.slice(i0,i1),sb);
+    +funcs+'\n'+ENSAMBLAR,sb);
   sb.decir=function(txt){ const c=sb.ACTUA_CMDS[0]; const m=c.re.exec(txt); if(!m) return null; const r=c.run(m); sb.history.push({role:'user',content:txt},{role:'assistant',content:r}); return r; };
   sb.modelo=function(txt,resp){ sb.history.push({role:'user',content:txt},{role:'assistant',content:resp}); };
   return sb;

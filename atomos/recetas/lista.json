@@ -1,0 +1,50 @@
+{
+ "id": "lista",
+ "nombre": "📝 Lista de tareas",
+ "version": "1.0",
+ "description": "Una lista para anotar tareas o compras, tacharlas y quitarlas.",
+ "pide": "^\\s*(?:che,?\\s*)?(?:arm[aá](?:me)?|abr[ií](?:me)?|tra[eé](?:me)?|quiero|necesito|dame|hac[eé]me)\\s+(?:una\\s+|la\\s+)?lista\\s+(?:de\\s+)?(?:tareas|pendientes|compras|cosas\\s+para\\s+hacer)\\s*[.!?]*\\s*$",
+ "atomos": [
+  "superficie",
+  "campo",
+  "boton",
+  "lista"
+ ],
+ "pantalla": [
+  {
+   "id": "item",
+   "atomo": "campo",
+   "props": {
+    "placeholder": "Escribí una tarea y Enter"
+   }
+  },
+  {
+   "id": "sumar",
+   "atomo": "boton",
+   "props": {
+    "texto": "＋ agregar"
+   }
+  },
+  {
+   "id": "items",
+   "atomo": "lista",
+   "props": {}
+  }
+ ],
+ "enlaces": [
+  {
+   "cuando": "sumar.toca",
+   "tomar": "item",
+   "entregar_a": "items",
+   "metodo": "agregar",
+   "limpiar": true
+  },
+  {
+   "cuando": "item.enter",
+   "tomar": "item",
+   "entregar_a": "items",
+   "metodo": "agregar",
+   "limpiar": true
+  }
+ ]
+}

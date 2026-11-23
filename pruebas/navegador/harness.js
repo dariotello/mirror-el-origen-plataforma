@@ -2,6 +2,7 @@
 const { chromium } = require('playwright');
 const http = require('http'), fs = require('fs'), path = require('path');
 const FILE = process.env.FILE;
+const NUBE_DIR = process.env.NUBE_DIR || path.join(__dirname, '..', '..', 'atomos'); // v40-nube
 async function abrir(opts){
   opts = opts || {};
   const html = fs.readFileSync(FILE, 'utf8');
@@ -14,10 +15,19 @@ async function abrir(opts){
       return;
     }
     if (q.url.startsWith('/fb')) { s.writeHead(200,{'content-type':'application/json','access-control-allow-origin':'*'}); s.end('null'); return; }
+    /* v40-nube (23/11): la nube de la app (atomos/) se sirve al lado del index, como en el Worker. opts.nube === false → sin nube
+       (404); opts.nubeFalla(ruta) → true = esa pieza no llega. srv._nube registra lo que se pidió. */
+    if (q.url.startsWith('/atomos/')) {
+      const ruta = decodeURIComponent(q.url.split('?')[0].slice('/atomos/'.length));
+      srv._nube.push(ruta);
+      const f = path.join(NUBE_DIR, ruta);
+      if (opts.nube === false || (opts.nubeFalla && opts.nubeFalla(ruta)) || ruta.indexOf('..') >= 0 || !fs.existsSync(f) || !fs.statSync(f).isFile()) { s.writeHead(404); s.end(); return; }
+      s.writeHead(200, { 'content-type': /\.json$/.test(f) ? 'application/json' : 'text/javascript; charset=utf-8' }); s.end(fs.readFileSync(f)); return;
+    }
     if (q.url !== '/' && !q.url.startsWith('/?')) { s.writeHead(404); s.end(); return; }
     s.writeHead(200, {'content-type':'text/html; charset=utf-8'}); s.end(html);
   });
-  srv._reqs = [];
+  srv._reqs = []; srv._nube = [];
   await new Promise(r => srv.listen(0, r));
   const port = srv.address().port, base = 'http://localhost:' + port;
   const browser = await chromium.launch({ channel:'chromium', args:['--disable-dev-shm-usage','--autoplay-policy=no-user-gesture-required'] });

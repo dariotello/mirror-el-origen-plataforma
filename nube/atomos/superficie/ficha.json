@@ -1,0 +1,46 @@
+{
+  "name": "superficie",
+  "tipo": "átomo",
+  "vive_en": "nube",
+  "version": "1.0",
+  "estado": "despierto",
+  "codigo": "nube/atomos/superficie/codigo.js",
+  "dormible": false,
+  "banco": [
+    "pruebas/bancos/TEST_nube.js",
+    "pruebas/navegador/t_1123.js"
+  ],
+  "nombre": "Superficie (átomo de pantalla)",
+  "clase": "pantalla",
+  "rol": "superficie",
+  "description": "El papel donde se arma una herramienta en la conversación: título, «✕ desarmar» y una nota. Lo usan todas las recetas.",
+  "proposito": "Darle a cada herramienta armada su lugar en el chat y su botón para desarmarla.",
+  "disparadores": [
+    "cualquier receta de la nube (siempre es el primer átomo)"
+  ],
+  "entradas": [
+    "título y nota de la receta"
+  ],
+  "salidas": [
+    "el panel en el chat con su cuerpo vacío"
+  ],
+  "herramientas": [
+    "el DOM del navegador"
+  ],
+  "permisos": {
+    "lee": [],
+    "escribe": [
+      "solo su propio pedacito de pantalla, dentro de la herramienta armada"
+    ],
+    "propone": [],
+    "nunca": [
+      "guardar lo escrito fuera de la herramienta",
+      "ejecutar código que venga del modelo o de la receta"
+    ]
+  },
+  "limites": [
+    "Una herramienta por vez: armar otra desarma la anterior."
+  ],
+  "eventos": [],
+  "metodos": []
+}
